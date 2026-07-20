@@ -7,6 +7,7 @@ import { DashboardSidebar } from '@/components/layout/DashboardSidebar';
 import { DashboardTopbar } from '@/components/layout/DashboardTopbar';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { FloatingWhatsApp } from '@/components/ui/FloatingWhatsApp';
+import { FloatingSubscription } from '@/components/ui/FloatingSubscription';
 import Link from 'next/link';
 
 function daysLeft(expiryStr?: string): number | null {
@@ -176,6 +177,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         position="bottom-left"
         pulseColor="#3b82f6" /* Blue pulse for dashboard support */
       />
+
+      {/* Floating subscription button (only shows during trial/expired status) */}
+      <FloatingSubscription position="bottom-right" />
     </div>
   );
 }

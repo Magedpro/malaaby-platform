@@ -9,6 +9,7 @@ import { FaqSection } from '@/components/landing/FaqSection';
 import { ContactSection } from '@/components/landing/ContactSection';
 import { Footer } from '@/components/layout/Footer';
 import { FloatingWhatsApp } from '@/components/ui/FloatingWhatsApp';
+import { FloatingSubscription } from '@/components/ui/FloatingSubscription';
 
 export default function Home() {
   return (
@@ -30,6 +31,8 @@ export default function Home() {
         message="مرحباً، أريد الاستفسار عن تسجيل ملعبي في منصة ملعبي 🏟️"
         tooltip="تواصل معنا لتسجيل ملعبك"
       />
+      {/* زر الاشتراك العائم المذهب */}
+      <FloatingSubscription position="bottom-left" />
     </>
   );
 }

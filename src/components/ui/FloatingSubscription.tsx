@@ -18,10 +18,10 @@ export const FloatingSubscription: React.FC<FloatingSubscriptionProps> = ({
 
   const subStatus = (stadium as any)?.subscriptionStatus;
 
-  // Only show the floating subscription button if they are in trial mode or if they are not logged in / visitors
-  // Or if their subscription is expired/suspended. If active, we can still show it or hide it.
-  // The user requested: "اريد اثناء التجربة وجود ايقونة الاشتراك في اي وقت" -> So during trial ("trial" mode).
-  const isTrial = !user || subStatus === 'trial';
+  // Show it if:
+  // 1. Not logged in (public landing page visitors)
+  // 2. Logged in and the stadium status is 'trial', 'expired', 'suspended', or not set
+  const isTrial = !user || (user.role === 'owner' && (subStatus === 'trial' || subStatus === 'expired' || subStatus === 'suspended' || !subStatus));
 
   useEffect(() => {
     if (isTrial) {
@@ -30,7 +30,7 @@ export const FloatingSubscription: React.FC<FloatingSubscriptionProps> = ({
     } else {
       setVisible(false);
     }
-  }, [isTrial, subStatus]);
+  }, [isTrial, subStatus, user]);
 
   if (!visible) return null;
 

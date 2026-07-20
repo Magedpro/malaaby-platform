@@ -23,7 +23,13 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
   const subExpiry = (stadium as any)?.subscriptionExpiry;
   const daysLeft = subExpiry ? Math.ceil((new Date(subExpiry).getTime() - Date.now()) / 86400000) : null;
   const showSubWarning = subStatus === 'trial' || subStatus === 'expired' || (daysLeft !== null && daysLeft <= 30);
-  const subBadge = subStatus === 'expired' ? '!' : (daysLeft !== null && daysLeft <= 7 && daysLeft > 0) ? `${daysLeft}` : undefined;
+  
+  // Show remaining days in the sidebar badge (e.g. 58 days, or 'منتهي' / '!')
+  const subBadge = subStatus === 'expired' || (daysLeft !== null && daysLeft <= 0)
+    ? 'منتهي'
+    : (daysLeft !== null)
+      ? `${daysLeft} يوم`
+      : undefined;
 
   const menuItems = [
     { label: 'نظرة عامة', path: '/dashboard', icon: '📊' },
@@ -63,7 +69,16 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
                 <span className="nav-badge">{item.badge}</span>
               )}
               {(item as any).subBadge && (
-                <span className="nav-badge" style={{ background: 'var(--danger)' }}>{(item as any).subBadge}</span>
+                <span className="nav-badge" style={{ 
+                  background: (item as any).subBadge === 'منتهي' ? 'var(--danger)' : 'var(--warning)', 
+                  color: '#fff',
+                  borderRadius: 'var(--radius-md)', 
+                  padding: '2px 8px', 
+                  fontSize: '0.75rem',
+                  whiteSpace: 'nowrap',
+                  height: 'auto',
+                  lineHeight: '1.2'
+                }}>{(item as any).subBadge}</span>
               )}
             </Link>
           );

@@ -82,7 +82,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         />
 
         {/* Trial Warning Banner */}
-        {isTrial && !isOnSubscriptionPage && remaining !== null && remaining <= 30 && (
+        {isTrial && !isOnSubscriptionPage && remaining !== null && remaining > 0 && (
           <div style={{
             background: 'linear-gradient(135deg, rgba(245,158,11,0.15), rgba(245,158,11,0.05))',
             borderBottom: '1px solid rgba(245,158,11,0.3)',
@@ -94,8 +94,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             gap: '0.5rem',
           }}>
             <p style={{ fontSize: '0.875rem', color: 'var(--warning)', fontWeight: 600 }}>
-              ⏳ أنت في الفترة التجريبية المجانية — تنتهي خلال <strong>{remaining} يوم</strong>.
-              اشترك الآن لتجنب انقطاع الخدمة.
+              ⏳ أنت الآن في الفترة التجريبية المجانية (60 يوماً) — متبقي لك <strong>{remaining} يوم</strong> للاستخدام المجاني.
+              يمكنك الاشتراك في أي وقت لتفعيل الخطة المدفوعة.
             </p>
             <Link
               href="/dashboard/subscription"

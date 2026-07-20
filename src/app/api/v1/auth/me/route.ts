@@ -19,11 +19,17 @@ export async function GET() {
     if (user.role === 'owner' && user.stadiumSlug) {
       const stadium = await Stadiums.findBySlug(user.stadiumSlug);
       if (stadium) {
+        // Fallback for older stadiums that don't have subscription fields
+        const defaultExpiry = new Date(new Date(stadium.createdAt || user.createdAt || Date.now()).getTime() + 60 * 24 * 60 * 60 * 1000).toISOString();
+        
         stadiumInfo = {
           name: stadium.name,
           slug: stadium.slug,
           isActive: stadium.isActive,
-          subscriptionStatus: stadium.subscriptionStatus,
+          subscriptionStatus: stadium.subscriptionStatus || 'trial',
+          subscriptionExpiry: stadium.subscriptionExpiry || defaultExpiry,
+          subscriptionPlanId: stadium.subscriptionPlanId || 'plan-basic',
+          pendingSubscription: stadium.pendingSubscription,
           approvalStatus: stadium.approvalStatus
         };
       }

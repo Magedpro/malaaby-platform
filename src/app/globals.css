@@ -929,16 +929,58 @@ input, textarea, select {
   justify-content: center;
   text-align: center;
   overflow: hidden;
+  background: #040C12;
 }
 
 .hero-bg {
   position: absolute;
   inset: 0;
-  background-image: url('https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=1600&h=900&fit=crop');
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
   z-index: 0;
+  background:
+    radial-gradient(ellipse 70% 55% at 15% 10%, rgba(22, 163, 74, 0.22) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 40% at 50% 0%, rgba(16, 185, 129, 0.15) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 60% at 90% 30%, rgba(20, 184, 166, 0.12) 0%, transparent 65%),
+    radial-gradient(ellipse 80% 40% at 10% 100%, rgba(22, 163, 74, 0.14) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 30% at 50% 50%, rgba(34, 197, 94, 0.06) 0%, transparent 70%),
+    linear-gradient(175deg, #060F17 0%, #0A1520 40%, #060D14 100%);
+}
+
+.hero-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(22, 163, 74, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(22, 163, 74, 0.07) 1px, transparent 1px),
+    radial-gradient(circle 160px at 50% 50%, transparent 155px, rgba(22, 163, 74, 0.08) 156px, transparent 165px),
+    radial-gradient(circle 4px at 50% 50%, rgba(22, 163, 74, 0.3) 0%, transparent 100%);
+  background-size: 80px 80px, 80px 80px, 100% 100%, 100% 100%;
+  opacity: 0.6;
+  animation: heroGridFloat 20s ease-in-out infinite alternate;
+}
+
+.hero-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle 180px at 20% 25%, rgba(22, 163, 74, 0.18) 0%, transparent 70%),
+    radial-gradient(circle 120px at 80% 70%, rgba(16, 185, 129, 0.12) 0%, transparent 70%),
+    radial-gradient(circle 90px at 65% 15%, rgba(34, 197, 94, 0.1) 0%, transparent 70%),
+    radial-gradient(circle 200px at 35% 85%, rgba(22, 163, 74, 0.1) 0%, transparent 70%);
+  animation: orbsPulse 8s ease-in-out infinite alternate;
+}
+
+@keyframes heroGridFloat {
+  0%   { transform: translate(0, 0) scale(1); }
+  50%  { transform: translate(-15px, -10px) scale(1.02); }
+  100% { transform: translate(10px, 8px) scale(0.98); }
+}
+
+@keyframes orbsPulse {
+  0%   { opacity: 0.7; transform: scale(1); }
+  50%  { opacity: 1; transform: scale(1.05); }
+  100% { opacity: 0.8; transform: scale(0.97); }
 }
 
 .hero-overlay {
@@ -946,16 +988,64 @@ input, textarea, select {
   inset: 0;
   background: linear-gradient(
     to bottom,
-    rgba(8, 14, 20, 0.7) 0%,
-    rgba(8, 14, 20, 0.85) 60%,
-    rgba(8, 14, 20, 1) 100%
+    rgba(4, 12, 18, 0.15) 0%,
+    rgba(4, 12, 18, 0.35) 50%,
+    rgba(4, 12, 18, 0.95) 100%
   );
   z-index: 1;
 }
 
+.hero::before {
+  content: '';
+  position: absolute;
+  width: 3px; height: 3px;
+  background: rgba(34, 197, 94, 0.8);
+  border-radius: 50%;
+  box-shadow:
+    120px 80px 0 rgba(34,197,94,0.6),
+    280px 180px 0 rgba(16,185,129,0.5),
+    450px 60px 0 rgba(22,163,74,0.7),
+    620px 250px 0 rgba(34,197,94,0.4),
+    800px 100px 0 rgba(16,185,129,0.6),
+    950px 320px 0 rgba(22,163,74,0.5),
+    150px 400px 0 rgba(34,197,94,0.3),
+    380px 480px 0 rgba(16,185,129,0.4),
+    700px 430px 0 rgba(22,163,74,0.6),
+    1050px 200px 0 rgba(34,197,94,0.5),
+    200px 550px 0 rgba(22,163,74,0.3),
+    520px 520px 0 rgba(16,185,129,0.4),
+    850px 550px 0 rgba(34,197,94,0.3),
+    1100px 480px 0 rgba(22,163,74,0.4),
+    320px 650px 0 rgba(16,185,129,0.3),
+    650px 680px 0 rgba(22,163,74,0.5),
+    900px 650px 0 rgba(34,197,94,0.3);
+  z-index: 0;
+  animation: particlesFloat 15s ease-in-out infinite alternate;
+  top: 0; left: 0;
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: -2px; left: 50%;
+  transform: translateX(-50%);
+  width: 130%;
+  height: 120px;
+  background: linear-gradient(to top, #040C12, transparent);
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  z-index: 2;
+}
+
+@keyframes particlesFloat {
+  0%   { transform: translateY(0px) translateX(0px); opacity: 0.8; }
+  33%  { transform: translateY(-30px) translateX(15px); opacity: 1; }
+  66%  { transform: translateY(-15px) translateX(-10px); opacity: 0.9; }
+  100% { transform: translateY(-40px) translateX(20px); opacity: 0.7; }
+}
+
 .hero-content {
   position: relative;
-  z-index: 2;
+  z-index: 3;
   max-width: 860px;
   padding: 0 1.5rem;
 }
@@ -965,14 +1055,16 @@ input, textarea, select {
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1.25rem;
-  background: var(--primary-subtle);
-  border: 1px solid var(--border-primary);
+  background: rgba(22, 163, 74, 0.12);
+  border: 1px solid rgba(22, 163, 74, 0.35);
   border-radius: var(--radius-full);
   color: var(--primary-light);
   font-size: var(--font-size-sm);
   font-weight: 600;
   margin-bottom: 1.5rem;
   animation: fadeInDown 0.6s ease forwards;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 0 20px rgba(22, 163, 74, 0.15), inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
 .hero-title {
@@ -980,19 +1072,21 @@ input, textarea, select {
   font-weight: 900;
   line-height: 1.2;
   margin-bottom: 1.5rem;
-  background: linear-gradient(135deg, #ffffff 0%, var(--primary-light) 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #86efac 50%, #22C55E 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   animation: fadeInUp 0.7s 0.1s ease both;
+  filter: drop-shadow(0 0 40px rgba(34,197,94,0.3));
 }
 
 .hero-subtitle {
   font-size: var(--font-size-xl);
-  color: var(--text-secondary);
+  color: rgba(148, 163, 184, 0.9);
   max-width: 600px;
   margin: 0 auto 2.5rem;
   animation: fadeInUp 0.7s 0.2s ease both;
+  line-height: 1.8;
 }
 
 .hero-actions {
@@ -1009,12 +1103,19 @@ input, textarea, select {
   justify-content: center;
   margin-top: 4rem;
   animation: fadeInUp 0.7s 0.5s ease both;
+  padding: 1.5rem 2rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(22, 163, 74, 0.15);
+  border-radius: var(--radius-xl);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
 .hero-stat-value {
   font-size: var(--font-size-3xl);
   font-weight: 800;
   color: var(--primary-light);
+  text-shadow: 0 0 20px rgba(34, 197, 94, 0.5);
 }
 
 .hero-stat-label {

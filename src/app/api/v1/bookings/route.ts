@@ -172,6 +172,7 @@ export async function POST(request: NextRequest) {
     // 5.6 Send Email notification (if enabled)
     const recipientEmail = stadium.notificationEmail || stadium.email;
     if (prefs.email && recipientEmail) {
+      // Get the main app URL (configured as NEXT_PUBLIC_APP_URL on Vercel: https://malaaby.vercel.app)
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
       const dashboardUrl = `${appUrl}/dashboard/bookings`;
 

@@ -1,0 +1,407 @@
+{
+  "users": [
+    {
+      "id": "user-admin",
+      "name": "مدير المنصة",
+      "email": "admin@malaaby.com",
+      "passwordHash": "fbef8dffdb9796ecc513bb3010230ea5d33c18f8c563955fc01f8f26ac8927d2",
+      "role": "super_admin",
+      "isActive": true,
+      "createdAt": "2026-07-01T17:48:41.886Z"
+    },
+    {
+      "id": "user-owner",
+      "name": "الكابتن خليل",
+      "email": "owner@malaaby.com",
+      "passwordHash": "9eef3ea264356cbd40af087e135c60374398e2ac72778aa9d3179034ba78693b",
+      "role": "owner",
+      "stadiumSlug": "khalil",
+      "phone": "01012345678",
+      "isActive": true,
+      "createdAt": "2026-07-01T17:48:41.886Z"
+    },
+    {
+      "name": "Mohamed Maged",
+      "email": "magedprooo8@gmail.com",
+      "passwordHash": "4edd6cd33eb666dbd5b2ddb08e0367b26c8075225ddcccccad90e5c2c6ac1a8d",
+      "role": "super_admin",
+      "stadiumSlug": "abomaged",
+      "phone": "01126947405",
+      "isActive": true,
+      "id": "2a85bb3f5b914c64",
+      "createdAt": "2026-07-01T17:52:46.637Z"
+    }
+  ],
+  "stadiums": [
+    {
+      "slug": "khalil",
+      "ownerId": "user-owner",
+      "name": "ملاعب الغرين فيلد (الخليل)",
+      "description": "مجمع رياضي متكامل بأحدث النجيلة الصناعية المعتمدة من الفيفا، متوفر إضاءة ليلية قوية ومقاعد للمشاهدين وكافتيريا متكاملة.",
+      "phone": "01012345678",
+      "whatsapp": "+201012345678",
+      "city": "القاهرة",
+      "address": "شارع التسعين الشمالي، التجمع الخامس، بجوار الجامعة الأمريكية",
+      "googleMapsUrl": "https://maps.google.com",
+      "logo": "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=100&h=100&fit=crop",
+      "coverImage": "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=1200&h=400&fit=crop",
+      "vodafoneCash": "01012345678",
+      "instaPay": "khalil@instapay",
+      "paymentInstructions": "يرجى تحويل قيمة الحجز كاملة لتأكيد الحجز، ثم رفع صورة التحويل هنا.",
+      "subscriptionPlanId": "plan-pro",
+      "subscriptionStatus": "active",
+      "subscriptionExpiry": "2026-07-31T17:48:41.886Z",
+      "isActive": true,
+      "approvalStatus": "approved",
+      "createdAt": "2026-07-01T17:48:41.886Z"
+    },
+    {
+      "slug": "abomaged",
+      "ownerId": "2a85bb3f5b914c64",
+      "name": "معلب ابو ماجد",
+      "phone": "01126947405",
+      "city": "سوهاج",
+      "address": "مركز جرجا شارع مصطغي كامل",
+      "logo": "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=100&h=100&fit=crop",
+      "coverImage": "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=1200&h=400&fit=crop",
+      "vodafoneCash": "01008432559",
+      "instaPay": "01008432559",
+      "paymentInstructions": "يرجى تحويل قيمة الحجز كاملة لتأكيد الحجز، ثم رفع صورة التحويل هنا.",
+      "subscriptionStatus": "trial",
+      "subscriptionPlanId": "plan-basic",
+      "subscriptionExpiry": "2026-07-08T17:52:46.638Z",
+      "isActive": true,
+      "approvalStatus": "approved",
+      "createdAt": "2026-07-01T17:52:46.639Z"
+    }
+  ],
+  "fields": [
+    {
+      "id": "field-1",
+      "stadiumSlug": "khalil",
+      "name": "الملعب الرئيسي (خماسي)",
+      "description": "ملعب خماسي ممتاز مغطى بنجيلة ترتان ممتازة ومناسب للمباريات السريعة والمثيرة.",
+      "pricePerHour": 150,
+      "bookingDuration": 60,
+      "openingTime": "08:00",
+      "closingTime": "23:00",
+      "coverImage": "https://images.unsplash.com/photo-1568194157720-8eae79728929?w=600&h=400&fit=crop",
+      "status": "available",
+      "workingDays": {
+        "saturday": {
+          "open": true,
+          "from": "08:00",
+          "to": "23:00"
+        },
+        "sunday": {
+          "open": true,
+          "from": "08:00",
+          "to": "23:00"
+        },
+        "monday": {
+          "open": true,
+          "from": "08:00",
+          "to": "23:00"
+        },
+        "tuesday": {
+          "open": true,
+          "from": "08:00",
+          "to": "23:00"
+        },
+        "wednesday": {
+          "open": true,
+          "from": "08:00",
+          "to": "23:00"
+        },
+        "thursday": {
+          "open": true,
+          "from": "08:00",
+          "to": "23:00"
+        },
+        "friday": {
+          "open": true,
+          "from": "08:00",
+          "to": "23:00"
+        }
+      },
+      "createdAt": "2026-07-01T17:48:41.886Z"
+    },
+    {
+      "id": "field-2",
+      "stadiumSlug": "khalil",
+      "name": "الملعب الاحترافي (سباعي)",
+      "description": "ملعب سباعي واسع ومفتوح للمباريات الكبيرة مع عشب طبيعي ممتاز وكشافات ليلية ممتازة.",
+      "pricePerHour": 250,
+      "bookingDuration": 90,
+      "openingTime": "08:00",
+      "closingTime": "23:00",
+      "coverImage": "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=600&h=400&fit=crop",
+      "status": "available",
+      "workingDays": {
+        "saturday": {
+          "open": true,
+          "from": "08:00",
+          "to": "23:00"
+        },
+        "sunday": {
+          "open": true,
+          "from": "08:00",
+          "to": "23:00"
+        },
+        "monday": {
+          "open": true,
+          "from": "08:00",
+          "to": "23:00"
+        },
+        "tuesday": {
+          "open": true,
+          "from": "08:00",
+          "to": "23:00"
+        },
+        "wednesday": {
+          "open": true,
+          "from": "08:00",
+          "to": "23:00"
+        },
+        "thursday": {
+          "open": true,
+          "from": "08:00",
+          "to": "23:00"
+        },
+        "friday": {
+          "open": true,
+          "from": "08:00",
+          "to": "23:00"
+        }
+      },
+      "createdAt": "2026-07-01T17:48:41.886Z"
+    }
+  ],
+  "bookings": [],
+  "subscriptionPlans": [
+    {
+      "id": "plan-basic",
+      "name": "أساسي",
+      "nameEn": "Basic",
+      "description": "مثالي لملعب واحد",
+      "price": 99,
+      "yearlyPrice": 999,
+      "maxFields": 1,
+      "features": [
+        "ملعب واحد",
+        "لوحة تحكم أساسية",
+        "إدارة الحجوزات",
+        "دعم عادي"
+      ],
+      "isActive": true,
+      "isPopular": false,
+      "createdAt": "2026-07-01T17:48:41.886Z"
+    },
+    {
+      "id": "plan-pro",
+      "name": "برو",
+      "nameEn": "Pro",
+      "description": "للملاعب المتوسطة",
+      "price": 199,
+      "yearlyPrice": 1999,
+      "maxFields": 5,
+      "features": [
+        "حتى 5 ملاعب",
+        "تقارير متقدمة",
+        "تقويم تفاعلي",
+        "دعم ذو أولوية",
+        "إحصائيات الإيرادات"
+      ],
+      "isActive": true,
+      "isPopular": true,
+      "createdAt": "2026-07-01T17:48:41.886Z"
+    },
+    {
+      "id": "plan-premium",
+      "name": "بريميوم",
+      "nameEn": "Premium",
+      "description": "للملاعب الكبرى",
+      "price": 349,
+      "yearlyPrice": 3499,
+      "maxFields": -1,
+      "features": [
+        "ملاعب غير محدودة",
+        "تقارير كاملة",
+        "تكاملات مستقبلية",
+        "دعم مخصص",
+        "API للتطبيقات"
+      ],
+      "isActive": true,
+      "isPopular": false,
+      "createdAt": "2026-07-01T17:48:41.886Z"
+    }
+  ],
+  "notifications": [],
+  "supportTickets": [],
+  "activityLogs": [
+    {
+      "action": "owner_registration",
+      "performedBy": "2a85bb3f5b914c64",
+      "performedByName": "Mohamed Maged",
+      "targetId": "abomaged",
+      "targetType": "stadium",
+      "details": {
+        "stadiumName": "معلب ابو ماجد"
+      },
+      "id": "d98482f96ae14abe",
+      "createdAt": "2026-07-01T17:52:46.652Z"
+    },
+    {
+      "action": "user_login",
+      "performedBy": "user-admin",
+      "performedByName": "مدير المنصة",
+      "targetId": "user-admin",
+      "targetType": "user",
+      "details": {
+        "role": "super_admin"
+      },
+      "id": "3deeb20616e54b95",
+      "createdAt": "2026-07-01T17:59:26.953Z"
+    },
+    {
+      "action": "admin_update_settings",
+      "performedBy": "user-admin",
+      "performedByName": "مدير المنصة",
+      "targetId": "platform",
+      "targetType": "settings",
+      "id": "7603767306d54604",
+      "createdAt": "2026-07-01T18:02:33.769Z"
+    }
+  ],
+  "cities": [
+    {
+      "id": "city-1",
+      "name": "القاهرة",
+      "isActive": true,
+      "createdAt": "2026-07-01T17:48:41.886Z"
+    },
+    {
+      "id": "city-2",
+      "name": "الجيزة",
+      "isActive": true,
+      "createdAt": "2026-07-01T17:48:41.886Z"
+    },
+    {
+      "id": "city-3",
+      "name": "الإسكندرية",
+      "isActive": true,
+      "createdAt": "2026-07-01T17:48:41.886Z"
+    },
+    {
+      "id": "city-4",
+      "name": "المنصورة",
+      "isActive": true,
+      "createdAt": "2026-07-01T17:48:41.886Z"
+    },
+    {
+      "id": "city-5",
+      "name": "طنطا",
+      "isActive": true,
+      "createdAt": "2026-07-01T17:48:41.886Z"
+    },
+    {
+      "id": "city-6",
+      "name": "الزقازيق",
+      "isActive": true,
+      "createdAt": "2026-07-01T17:48:41.886Z"
+    },
+    {
+      "id": "city-7",
+      "name": "الإسماعيلية",
+      "isActive": true,
+      "createdAt": "2026-07-01T17:48:41.886Z"
+    },
+    {
+      "id": "city-8",
+      "name": "بورسعيد",
+      "isActive": true,
+      "createdAt": "2026-07-01T17:48:41.886Z"
+    },
+    {
+      "id": "city-9",
+      "name": "السويس",
+      "isActive": true,
+      "createdAt": "2026-07-01T17:48:41.886Z"
+    },
+    {
+      "id": "city-10",
+      "name": "المنيا",
+      "isActive": true,
+      "createdAt": "2026-07-01T17:48:41.886Z"
+    },
+    {
+      "id": "city-11",
+      "name": "أسيوط",
+      "isActive": true,
+      "createdAt": "2026-07-01T17:48:41.886Z"
+    },
+    {
+      "id": "city-12",
+      "name": "سوهاج",
+      "isActive": true,
+      "createdAt": "2026-07-01T17:48:41.886Z"
+    },
+    {
+      "id": "city-13",
+      "name": "الأقصر",
+      "isActive": true,
+      "createdAt": "2026-07-01T17:48:41.886Z"
+    },
+    {
+      "id": "city-14",
+      "name": "أسوان",
+      "isActive": true,
+      "createdAt": "2026-07-01T17:48:41.886Z"
+    },
+    {
+      "id": "city-15",
+      "name": "شرم الشيخ",
+      "isActive": true,
+      "createdAt": "2026-07-01T17:48:41.886Z"
+    },
+    {
+      "id": "city-16",
+      "name": "الغردقة",
+      "isActive": true,
+      "createdAt": "2026-07-01T17:48:41.886Z"
+    },
+    {
+      "id": "city-17",
+      "name": "دمياط",
+      "isActive": true,
+      "createdAt": "2026-07-01T17:48:41.886Z"
+    },
+    {
+      "id": "city-18",
+      "name": "الفيوم",
+      "isActive": true,
+      "createdAt": "2026-07-01T17:48:41.886Z"
+    },
+    {
+      "id": "city-19",
+      "name": "بني سويف",
+      "isActive": true,
+      "createdAt": "2026-07-01T17:48:41.886Z"
+    },
+    {
+      "id": "city-20",
+      "name": "قنا",
+      "isActive": true,
+      "createdAt": "2026-07-01T17:48:41.886Z"
+    }
+  ],
+  "platformSettings": {
+    "platformName": "ملعبي",
+    "platformNameEn": "Malaaby",
+    "supportEmail": "magedprooo8@gmail.com",
+    "supportWhatsApp": "01126947405",
+    "ownerApprovalRequired": false,
+    "maintenanceMode": false,
+    "updatedAt": "2026-07-01T18:02:33.765Z"
+  }
+}

@@ -23,16 +23,7 @@ export const FloatingSubscription: React.FC<FloatingSubscriptionProps> = ({
   // 2. Logged in and the stadium status is 'trial', 'expired', 'suspended', or not set
   const isTrial = !user || (user.role === 'owner' && (subStatus === 'trial' || subStatus === 'expired' || subStatus === 'suspended' || !subStatus));
 
-  useEffect(() => {
-    if (isTrial) {
-      const timer = setTimeout(() => setVisible(true), 1200);
-      return () => clearTimeout(timer);
-    } else {
-      setVisible(false);
-    }
-  }, [isTrial, subStatus, user]);
-
-  if (!visible) return null;
+  if (!isTrial) return null;
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -61,8 +52,6 @@ export const FloatingSubscription: React.FC<FloatingSubscriptionProps> = ({
         position: 'fixed',
         zIndex: 9998, // Just below WhatsApp button
         ...posStyle,
-        opacity: visible ? 1 : 0,
-        transform: visible ? 'scale(1)' : 'scale(0)',
         transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
       }}
     >

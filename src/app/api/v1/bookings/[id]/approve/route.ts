@@ -19,8 +19,8 @@ export async function POST(
       return NextResponse.json({ success: false, error: 'الحجز غير موجود أو لا تملك صلاحية مراجعته' }, { status: 404 });
     }
 
-    if (booking.status !== 'pending') {
-      return NextResponse.json({ success: false, error: 'الحجز ليس معلقاً للمراجعة' }, { status: 400 });
+    if (booking.status !== 'pending' && booking.status !== 'cancelled' && booking.status !== 'rejected') {
+      return NextResponse.json({ success: false, error: 'هذا الحجز لا يمكن إعادة تفعيله أو تأكيده' }, { status: 400 });
     }
 
     // Double check conflict before confirming (prevents race conditions)

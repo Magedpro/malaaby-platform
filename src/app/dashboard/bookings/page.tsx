@@ -218,6 +218,9 @@ export default function BookingsManagement() {
                       {b.status === 'confirmed' && (
                         <Button variant="secondary" size="sm" onClick={() => { setSelectedBooking(b); setCancelReason(''); setCancelOpen(true); }}>🚫 إلغاء</Button>
                       )}
+                      {(b.status === 'cancelled' || b.status === 'rejected') && (
+                        <Button variant="warning" size="sm" onClick={() => handleApprove(b.id)} isLoading={actionLoading}>🔄 تفعيل</Button>
+                      )}
                     </td>
                   </tr>
                 );
@@ -241,6 +244,10 @@ export default function BookingsManagement() {
           ) : selectedBooking?.status === 'confirmed' ? (
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <Button variant="secondary" onClick={() => { setDetailOpen(false); setCancelReason(''); setCancelOpen(true); }}>🚫 إلغاء الحجز</Button>
+            </div>
+          ) : (selectedBooking?.status === 'cancelled' || selectedBooking?.status === 'rejected') ? (
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <Button variant="warning" onClick={() => handleApprove(selectedBooking.id)} isLoading={actionLoading}>🔄 إعادة تفعيل الحجز</Button>
             </div>
           ) : undefined
         }

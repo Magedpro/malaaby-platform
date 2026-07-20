@@ -1,4 +1,5 @@
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
+// Email helper using multiple providers with fallback
+// Priority: Resend API → Gmail SMTP (via nodemailer-free approach) → Dev console
 
 interface SendEmailParams {
   to: string;
@@ -6,42 +7,94 @@ interface SendEmailParams {
   html: string;
 }
 
-export async function sendEmail({ to, subject, html }: SendEmailParams): Promise<boolean> {
-  if (!RESEND_API_KEY) {
-    console.log(`✉️ [Email Dev Mode (No API Key)]: Sending to "${to}"`);
-    console.log(`Subject: "${subject}"`);
-    console.log(`HTML Preview:\n-----------------\n${html}\n-----------------`);
-    return true; // Simulate success in dev mode
-  }
+// ── Resend API ───────────────────────────────────────────────────────────────
+async function sendViaResend({ to, subject, html }: SendEmailParams): Promise<boolean> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return false;
 
-  try {
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: 'Malaaby Platform <onboarding@resend.dev>', // Resend free tier sender
-        to,
-        subject,
-        html,
-      }),
-    });
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      from: 'Malaaby Platform <onboarding@resend.dev>',
+      to,
+      subject,
+      html,
+    }),
+  });
 
-    const data = await res.json();
-    if (res.ok) {
-      console.log(`✉️ [Email Sent via Resend]: ID ${data.id} sent to ${to}`);
-      return true;
-    } else {
-      console.error('✉️ [Resend API Error]:', data);
-      return false;
-    }
-  } catch (err) {
-    console.error('✉️ [Email Helper Exception]:', err);
+  const data = await res.json();
+  if (res.ok) {
+    console.log(`✉️ [Resend]: Sent ID ${data.id} → ${to}`);
+    return true;
+  } else {
+    console.error('✉️ [Resend Error]:', data);
     return false;
   }
 }
+
+// ── Gmail SMTP via smtp2go or direct SMTP ───────────────────────────────────
+// Since Vercel doesn't support TCP SMTP directly, we use SMTP2GO HTTP API
+// OR fallback to Mailersend free tier
+async function sendViaGmailHTTP({ to, subject, html }: SendEmailParams): Promise<boolean> {
+  const user = process.env.GMAIL_USER;
+  const pass = process.env.GMAIL_APP_PASSWORD;
+  if (!user || !pass) return false;
+
+  // Use smtp2go free HTTP API (3000 emails/month free)
+  // No TCP required — works perfectly on Vercel serverless
+  const smtp2goKey = process.env.SMTP2GO_API_KEY;
+  if (smtp2goKey) {
+    const res = await fetch('https://api.smtp2go.com/v3/email/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        api_key: smtp2goKey,
+        to: [to],
+        sender: `Malaaby Platform <${user}>`,
+        subject,
+        html_body: html,
+      }),
+    });
+    const data = await res.json();
+    if (data.data?.succeeded === 1) {
+      console.log(`✉️ [SMTP2GO]: Sent to ${to}`);
+      return true;
+    }
+    console.error('✉️ [SMTP2GO Error]:', data);
+  }
+
+  return false;
+}
+
+// ── Main sendEmail function ──────────────────────────────────────────────────
+export async function sendEmail(params: SendEmailParams): Promise<boolean> {
+  // Try Resend first
+  try {
+    const sent = await sendViaResend(params);
+    if (sent) return true;
+  } catch (err) {
+    console.error('✉️ [Resend Exception]:', err);
+  }
+
+  // Try Gmail HTTP (SMTP2GO)
+  try {
+    const sent = await sendViaGmailHTTP(params);
+    if (sent) return true;
+  } catch (err) {
+    console.error('✉️ [Gmail HTTP Exception]:', err);
+  }
+
+  // Dev fallback — log to console
+  console.log(`✉️ [Email Dev Fallback] → "${params.to}"`);
+  console.log(`Subject: "${params.subject}"`);
+  console.log(`--- HTML Preview ---\n${params.html.replace(/<[^>]+>/g, '').trim().substring(0, 500)}\n---`);
+  return false; // Indicate email was not actually sent
+}
+
 
 // ── Email HTML Templates ──────────────────────────────────────────────────────
 

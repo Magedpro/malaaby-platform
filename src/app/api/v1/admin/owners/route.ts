@@ -29,6 +29,8 @@ export async function GET(request: NextRequest) {
           city: stadium?.city || '',
           subscriptionStatus: stadium?.subscriptionStatus || '',
           subscriptionExpiry: stadium?.subscriptionExpiry || '',
+          subscriptionPlanId: stadium?.subscriptionPlanId || '',
+          pendingSubscription: stadium?.pendingSubscription || null,
           approvalStatus: stadium?.approvalStatus || '',
           createdAt: u.createdAt,
         };

@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
 
     const {
       fieldId, date, startTime, endTime,
-      customerName, customerPhone, notes,
+      customerName, customerPhone, customerEmail, notes,
       paymentScreenshot, stadiumSlug
     } = body;
 
@@ -120,6 +120,7 @@ export async function POST(request: NextRequest) {
       stadiumSlug: slug,
       customerName: customerName.trim(),
       customerPhone: customerPhone.trim(),
+      customerEmail: customerEmail ? customerEmail.trim() : undefined,
       notes: (notes || '').trim(),
       date,
       startTime,

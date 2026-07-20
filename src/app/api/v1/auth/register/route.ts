@@ -69,9 +69,9 @@ export async function POST(request: NextRequest) {
       vodafoneCash: vodafoneCash || '',
       instaPay: instaPay || '',
       paymentInstructions: 'يرجى تحويل قيمة الحجز كاملة لتأكيد الحجز، ثم رفع صورة التحويل هنا.',
-      subscriptionStatus: 'trial', // Default 7-day trial
+      subscriptionStatus: 'trial', // Default 60-day trial
       subscriptionPlanId: 'plan-basic',
-      subscriptionExpiry: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      subscriptionExpiry: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
       isActive: true,
       approvalStatus: 'approved', // Auto-approved by default in settings
     });

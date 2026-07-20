@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
-import { Bookings, Notifications, Fields, ActivityLogs } from '@/lib/db';
+import { Bookings, Notifications, Fields, ActivityLogs, Stadiums } from '@/lib/db';
 import { formatTime } from '@/lib/utils';
+import { sendEmail, getBookingStatusTemplate } from '@/lib/email';
 
 export async function POST(
   request: NextRequest,
@@ -26,7 +27,6 @@ export async function POST(
     // Double check conflict before confirming (prevents race conditions)
     const hasConflict = await Bookings.hasConflict(booking.fieldId, booking.date, booking.startTime, booking.endTime, booking.id);
     if (hasConflict) {
-      // Auto-reject or notify conflict
       return NextResponse.json({
         success: false,
         error: 'تعذر تأكيد الحجز لوجود حجز مؤكد آخر متعارض في نفس التوقيت.'
@@ -35,6 +35,7 @@ export async function POST(
 
     const updated = await Bookings.update(id, { status: 'confirmed' });
     const field = await Fields.findById(booking.fieldId);
+    const stadium = await Stadiums.findBySlug(booking.stadiumSlug);
 
     // Create client-facing notification (simulated in DB)
     await Notifications.create({
@@ -45,6 +46,23 @@ export async function POST(
       bookingId: booking.id,
       isRead: false,
     });
+
+    // Send customer email if provided
+    const b = booking as any;
+    if (b.customerEmail) {
+      const emailHtml = getBookingStatusTemplate(
+        booking.customerName,
+        stadium?.name || 'الملعب',
+        booking.date,
+        `${formatTime(booking.startTime)} - ${formatTime(booking.endTime)}`,
+        'approved'
+      );
+      sendEmail({
+        to: b.customerEmail,
+        subject: `تم تأكيد حجزك بنجاح! 🎉 - ${stadium?.name || 'الملعب'}`,
+        html: emailHtml
+      }).catch(err => console.error('[Email Approve Notification Error]:', err));
+    }
 
     ActivityLogs.log({
       action: 'approve_booking',

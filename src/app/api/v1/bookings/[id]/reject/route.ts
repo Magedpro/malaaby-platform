@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
-import { Bookings, Notifications, Fields, ActivityLogs } from '@/lib/db';
+import { Bookings, Notifications, Fields, ActivityLogs, Stadiums } from '@/lib/db';
 import { formatTime } from '@/lib/utils';
+import { sendEmail, getBookingStatusTemplate } from '@/lib/email';
 
 export async function POST(
   request: NextRequest,
@@ -35,6 +36,7 @@ export async function POST(
       rejectionReason: reason.trim(),
     });
     const field = await Fields.findById(booking.fieldId);
+    const stadium = await Stadiums.findBySlug(booking.stadiumSlug);
 
     // Create client-facing notification
     await Notifications.create({
@@ -45,6 +47,24 @@ export async function POST(
       bookingId: booking.id,
       isRead: false,
     });
+
+    // Send customer email if provided
+    const b = booking as any;
+    if (b.customerEmail) {
+      const emailHtml = getBookingStatusTemplate(
+        booking.customerName,
+        stadium?.name || 'الملعب',
+        booking.date,
+        `${formatTime(booking.startTime)} - ${formatTime(booking.endTime)}`,
+        'rejected',
+        reason.trim()
+      );
+      sendEmail({
+        to: b.customerEmail,
+        subject: `تحديث بخصوص طلب حجزك ❌ - ${stadium?.name || 'الملعب'}`,
+        html: emailHtml
+      }).catch(err => console.error('[Email Reject Notification Error]:', err));
+    }
 
     ActivityLogs.log({
       action: 'reject_booking',

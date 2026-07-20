@@ -71,6 +71,14 @@ export interface Stadium {
   };
   notificationEmail?: string;
   pushSubscriptions?: any[];
+  pendingSubscription?: {
+    planId: string;
+    senderName: string;
+    senderPhone: string;
+    paymentScreenshot: string;
+    amount: number;
+    createdAt: string;
+  } | null;
 }
 
 export type FieldStatus = 'available' | 'maintenance' | 'closed';
@@ -101,6 +109,7 @@ export interface Booking {
   stadiumSlug: string;
   customerName: string;
   customerPhone: string;
+  customerEmail?: string;
   notes?: string;
   date: string;
   startTime: string;

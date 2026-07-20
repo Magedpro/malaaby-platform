@@ -53,6 +53,7 @@ export default function PublicBookingPage() {
   // Customer form
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
   const [notes, setNotes] = useState('');
   const [paymentFile, setPaymentFile] = useState<File | null>(null);
   const [paymentPreview, setPaymentPreview] = useState('');
@@ -137,6 +138,7 @@ export default function PublicBookingPage() {
           endTime: selectedSlot.endTime,
           customerName: customerName.trim(),
           customerPhone: customerPhone.trim(),
+          customerEmail: customerEmail.trim() || undefined,
           notes: notes.trim(),
           paymentScreenshot,
         }),
@@ -146,7 +148,7 @@ export default function PublicBookingPage() {
         setBookingSuccess(true);
         setBookingOpen(false);
         showToast('تم إرسال طلب حجزك بنجاح! ⚽', 'success');
-        setCustomerName(''); setCustomerPhone(''); setNotes('');
+        setCustomerName(''); setCustomerPhone(''); setCustomerEmail(''); setNotes('');
         setPaymentFile(null); setPaymentPreview('');
         loadSlots();
       } else {
@@ -650,6 +652,13 @@ export default function PublicBookingPage() {
                 💡 هام: يرجى كتابة الرقم الذي تم إرسال فودافون كاش أو التحويل البنكي منه لسرعة مطابقة الدفع وتأكيد الحجز.
               </span>
             </div>
+            <Input 
+              label="البريد الإلكتروني (اختياري)" 
+              type="email" 
+              placeholder="name@example.com (لتلقي تفاصيل تأكيد الحجز)" 
+              value={customerEmail} 
+              onChange={e => setCustomerEmail(e.target.value)} 
+            />
             <div className="form-group">
               <label className="form-label">ملاحظات إضافية (اختياري)</label>
               <textarea className="form-input form-textarea" placeholder="أي ملاحظات للمسؤول..." value={notes} onChange={e => setNotes(e.target.value)} style={{ minHeight: '70px' }} />

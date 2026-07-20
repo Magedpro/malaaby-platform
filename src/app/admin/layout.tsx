@@ -32,6 +32,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { path: '/admin/owners', label: 'إدارة الملاك', icon: '👥' },
     { path: '/admin/subscriptions', label: 'الاشتراكات', icon: '💎' },
     { path: '/admin/cities', label: 'المدن', icon: '🏙️' },
+    { path: '/admin/support', label: 'تذاكر الدعم', icon: '🎫' },
     { path: '/admin/logs', label: 'سجل النشاط', icon: '📝' },
     { path: '/admin/settings', label: 'إعدادات المنصة', icon: '⚙️' },
   ];

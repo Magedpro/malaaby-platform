@@ -44,10 +44,21 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           subscriptionStatus: subscriptionStatus,
           subscriptionExpiry: subscriptionExpiry,
           subscriptionPlanId: subscriptionPlanId,
+          pendingSubscription: null, // Clear pending request upon manual action/approval
         });
       }
       ActivityLogs.log({ action: 'admin_update_subscription', performedBy: session.userId, performedByName: session.name, targetId: id, targetType: 'stadium' });
       return NextResponse.json({ success: true, message: 'تم تحديث الاشتراك' });
+    }
+
+    if (action === 'reject_subscription') {
+      if (user.stadiumSlug) {
+        await Stadiums.update(user.stadiumSlug, {
+          pendingSubscription: null, // Clear the pending request
+        });
+      }
+      ActivityLogs.log({ action: 'admin_reject_subscription', performedBy: session.userId, performedByName: session.name, targetId: id, targetType: 'stadium' });
+      return NextResponse.json({ success: true, message: 'تم رفض الاشتراك وإلغاء الطلب المعلق' });
     }
 
     // Default: update basic info

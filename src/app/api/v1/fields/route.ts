@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     // Check plan limits
     const stadium = await Stadiums.findBySlug(session.stadiumSlug);
-    const maxFields = stadium?.subscriptionPlanId === 'plan-basic' ? 1 : stadium?.subscriptionPlanId === 'plan-pro' ? 5 : -1;
+    const maxFields = stadium?.subscriptionPlanId === 'plan-basic' ? 1 : stadium?.subscriptionPlanId === 'plan-pro' ? 2 : -1;
     const currentFieldsCount = await Fields.countByStadium(session.stadiumSlug);
 
     if (maxFields !== -1 && currentFieldsCount >= maxFields) {

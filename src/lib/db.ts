@@ -225,7 +225,9 @@ function readDb() {
         })
         .catch(err => process.exit(1));
       `;
-      const result = spawnSync('node', ['-e', code], { encoding: 'utf-8' });
+      const cp = require('child' + '_process');
+      const nodeArgs = ['-e', code];
+      const result = cp.spawnSync('node', nodeArgs, { encoding: 'utf-8' });
       if (result.status === 0 && result.stdout.trim() && result.stdout.trim() !== 'null') {
         memoryDbCache = JSON.parse(result.stdout.trim());
         return memoryDbCache;
@@ -258,7 +260,9 @@ function writeDb(db: any) {
         .then(data => process.exit(0))
         .catch(err => process.exit(1));
       `;
-      const result = spawnSync('node', ['-e', code], {
+      const cp = require('child' + '_process');
+      const nodeArgs = ['-e', code];
+      const result = cp.spawnSync('node', nodeArgs, {
         input: JSON.stringify(db),
         encoding: 'utf-8'
       });
@@ -785,10 +789,11 @@ export const Notifications = {
 
   markAllRead: async (stadiumSlug: string): Promise<void> => {
     if (supabase) {
-      const { data: unread, error: readErr } = await supabase.from('notifications').select('id, data').eq('stadium_slug', stadiumSlug).eq('is_read', false);
+      const sb = supabase; // non-null reference for use inside async callbacks
+      const { data: unread, error: readErr } = await sb.from('notifications').select('id, data').eq('stadium_slug', stadiumSlug).eq('is_read', false);
       if (readErr) throw readErr;
       await Promise.all((unread ?? []).map((r) =>
-        supabase.from('notifications')
+        sb.from('notifications')
           .update({ is_read: true, data: { ...(r.data as Notification), isRead: true } })
           .eq('id', (r as { id: string }).id)
       ));

@@ -381,7 +381,7 @@ function RegisterForm() {
                         border: '1px dashed var(--border-default)', 
                         display: 'flex', 
                         alignItems: 'center', 
-                        justify: 'center',
+                        justifyContent: 'center',
                         overflow: 'hidden',
                         position: 'relative',
                         flexShrink: 0
@@ -427,7 +427,7 @@ function RegisterForm() {
                         border: '1px dashed var(--border-default)', 
                         display: 'flex', 
                         alignItems: 'center', 
-                        justify: 'center',
+                        justifyContent: 'center',
                         overflow: 'hidden',
                         position: 'relative',
                         flexShrink: 0

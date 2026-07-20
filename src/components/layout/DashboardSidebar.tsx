@@ -17,7 +17,13 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
   onClose,
 }) => {
   const pathname = usePathname();
-  const { user, logout } = useSession();
+  const { user, stadium, logout } = useSession();
+
+  const subStatus = (stadium as any)?.subscriptionStatus;
+  const subExpiry = (stadium as any)?.subscriptionExpiry;
+  const daysLeft = subExpiry ? Math.ceil((new Date(subExpiry).getTime() - Date.now()) / 86400000) : null;
+  const showSubWarning = subStatus === 'trial' || subStatus === 'expired' || (daysLeft !== null && daysLeft <= 30);
+  const subBadge = subStatus === 'expired' ? '!' : (daysLeft !== null && daysLeft <= 7 && daysLeft > 0) ? `${daysLeft}` : undefined;
 
   const menuItems = [
     { label: 'نظرة عامة', path: '/dashboard', icon: '📊' },
@@ -25,6 +31,7 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
     { label: 'مراجعة الحجوزات', path: '/dashboard/bookings', icon: '🧾' },
     { label: 'تقويم الحجوزات', path: '/dashboard/calendar', icon: '📅' },
     { label: 'إشعارات الملعب', path: '/dashboard/notifications', icon: '🔔', badge: unreadNotifications },
+    { label: 'باقة الاشتراك', path: '/dashboard/subscription', icon: '💳', subBadge, subWarning: showSubWarning },
     { label: 'إعدادات الملعب', path: '/dashboard/settings', icon: '⚙️' },
   ];
 
@@ -48,11 +55,15 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
               href={item.path}
               className={`nav-item ${isActive ? 'active' : ''}`}
               onClick={onClose}
+              style={(item as any).subWarning && !isActive ? { color: 'var(--warning)' } : undefined}
             >
               <span style={{ fontSize: '1.25rem' }}>{item.icon}</span>
               <span>{item.label}</span>
               {item.badge !== undefined && item.badge > 0 && (
                 <span className="nav-badge">{item.badge}</span>
+              )}
+              {(item as any).subBadge && (
+                <span className="nav-badge" style={{ background: 'var(--danger)' }}>{(item as any).subBadge}</span>
               )}
             </Link>
           );

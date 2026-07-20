@@ -172,39 +172,69 @@ export async function POST(request: NextRequest) {
     // 5.6 Send Email notification (if enabled)
     const recipientEmail = stadium.notificationEmail || stadium.email;
     if (prefs.email && recipientEmail) {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      const dashboardUrl = `${appUrl}/dashboard/bookings`;
+
+      // Build payment screenshot section (only if a screenshot was uploaded)
+      const screenshotHtml = booking.paymentScreenshot
+        ? `
+          <div style="margin-top: 20px; padding: 15px; background-color: #f0faf5; border: 1px solid #a8d5b8; border-radius: 8px;">
+            <p style="margin: 0 0 10px 0; font-weight: bold; color: #2b8259;">📎 إيصال التحويل المرفق من العميل:</p>
+            <a href="${booking.paymentScreenshot}" target="_blank" style="display: block;">
+              <img src="${booking.paymentScreenshot}" alt="إيصال التحويل" style="max-width: 100%; border-radius: 6px; border: 1px solid #ccc;" />
+            </a>
+            <p style="margin: 8px 0 0 0; font-size: 12px; color: #666;">انقر على الصورة لعرضها بالحجم الكامل</p>
+          </div>`
+        : `<p style="margin-top: 15px; color: #c0392b; font-weight: bold;">⚠️ لم يتم إرفاق إيصال تحويل مع هذا الطلب.</p>`;
+
       const emailHtml = `
-        <div style="direction: rtl; text-align: right; font-family: Cairo, sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 8px; max-width: 600px; margin: 0 auto; background-color: #fcfcfc;">
-          <h2 style="color: #2b8259;">⚽ طلب حجز جديد بانتظار موافقتك</h2>
-          <p>أهلاً بك، هناك لاعب قام بإنشاء طلب حجز جديد على ملعبك <strong>${stadium.name}</strong>:</p>
-          <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
-            <tr>
-              <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">اسم العميل:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #ddd;">${booking.customerName}</td>
+        <div style="direction: rtl; text-align: right; font-family: Cairo, Arial, sans-serif; padding: 24px; border: 1px solid #e0e0e0; border-radius: 10px; max-width: 620px; margin: 0 auto; background-color: #fcfcfc;">
+          <div style="background: linear-gradient(135deg, #2b8259, #1a5c3e); border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+            <h2 style="color: #fff; margin: 0; font-size: 20px;">⚽ طلب حجز جديد بانتظار موافقتك</h2>
+            <p style="color: #c8e6c9; margin: 6px 0 0 0; font-size: 14px;">منصة ملعبي — إشعار تلقائي</p>
+          </div>
+
+          <p style="color: #333;">أهلاً بك، هناك لاعب قام بإنشاء طلب حجز جديد على ملعبك <strong>${stadium.name}</strong>:</p>
+
+          <table style="width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px;">
+            <tr style="background-color: #f5f5f5;">
+              <td style="padding: 10px 12px; border-bottom: 1px solid #ddd; font-weight: bold; color: #444; width: 40%;">👤 اسم العميل</td>
+              <td style="padding: 10px 12px; border-bottom: 1px solid #ddd; color: #222;">${booking.customerName}</td>
             </tr>
             <tr>
-              <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">رقم الهاتف:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #ddd;">${booking.customerPhone}</td>
+              <td style="padding: 10px 12px; border-bottom: 1px solid #ddd; font-weight: bold; color: #444;">📞 رقم الهاتف</td>
+              <td style="padding: 10px 12px; border-bottom: 1px solid #ddd; color: #222;">${booking.customerPhone}</td>
+            </tr>
+            <tr style="background-color: #f5f5f5;">
+              <td style="padding: 10px 12px; border-bottom: 1px solid #ddd; font-weight: bold; color: #444;">🏟️ الملعب</td>
+              <td style="padding: 10px 12px; border-bottom: 1px solid #ddd; color: #222;">${fieldObj.name}</td>
             </tr>
             <tr>
-              <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">الملعب:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #ddd;">${fieldObj.name}</td>
+              <td style="padding: 10px 12px; border-bottom: 1px solid #ddd; font-weight: bold; color: #444;">📅 التاريخ والوقت</td>
+              <td style="padding: 10px 12px; border-bottom: 1px solid #ddd; color: #222;">${booking.date} | ${formatTime(booking.startTime)} - ${formatTime(booking.endTime)}</td>
             </tr>
-            <tr>
-              <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">التاريخ والوقت:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #ddd;">${booking.date} | ${formatTime(booking.startTime)} - ${formatTime(booking.endTime)}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">المبلغ الإجمالي:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #ddd;">${booking.amount} ج.م.</td>
+            <tr style="background-color: #f5f5f5;">
+              <td style="padding: 10px 12px; font-weight: bold; color: #444;">💰 المبلغ الإجمالي</td>
+              <td style="padding: 10px 12px; color: #2b8259; font-weight: bold; font-size: 16px;">${booking.amount} ج.م.</td>
             </tr>
           </table>
-          <p style="margin-top: 25px;">يرجى التوجه إلى لوحة التحكم لتأكيد الحجز أو إلغائه.</p>
-          <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/bookings" style="display: inline-block; background-color: #2b8259; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold; margin-top: 10px;">الانتقال للوحة التحكم الحجوزات ↗</a>
+
+          ${screenshotHtml}
+
+          <div style="margin-top: 25px; text-align: center; padding: 10px 0;">
+            <a href="${dashboardUrl}" style="display: inline-block; background-color: #2b8259; color: white; padding: 14px 30px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 15px; letter-spacing: 0.5px;">
+              🔗 الانتقال للوحة التحكم — الحجوزات
+            </a>
+          </div>
+
+          <p style="margin-top: 20px; font-size: 12px; color: #999; text-align: center;">
+            هذا البريد أُرسل تلقائياً من منصة ملعبي. يرجى عدم الرد على هذا البريد.
+          </p>
         </div>
       `;
       sendEmail({
         to: recipientEmail,
-        subject: `طلب حجز جديد ⚽ - ${booking.customerName}`,
+        subject: `طلب حجز جديد ⚽ - ${booking.customerName} — ${fieldObj.name}`,
         html: emailHtml
       }).catch(err => console.error('[Email] Notification send failed:', err));
     }

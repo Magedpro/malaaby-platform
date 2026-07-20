@@ -19,9 +19,20 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
   const pathname = usePathname();
   const { user, stadium, logout } = useSession();
 
-  const subStatus = (stadium as any)?.subscriptionStatus;
+  const subStatus = (stadium as any)?.subscriptionStatus || 'trial';
   const subExpiry = (stadium as any)?.subscriptionExpiry;
-  const daysLeft = subExpiry ? Math.ceil((new Date(subExpiry).getTime() - Date.now()) / 86400000) : null;
+  
+  let daysLeft = null;
+  if (subExpiry) {
+    const parsed = Date.parse(subExpiry);
+    if (!isNaN(parsed)) {
+      daysLeft = Math.ceil((parsed - Date.now()) / 86400000);
+    }
+  }
+  if (daysLeft === null && subStatus === 'trial') {
+    daysLeft = 60; // Fallback
+  }
+
   const showSubWarning = subStatus === 'trial' || subStatus === 'expired' || (daysLeft !== null && daysLeft <= 30);
   
   // Show remaining days in the sidebar badge (e.g. 58 days, or 'منتهي' / '!')

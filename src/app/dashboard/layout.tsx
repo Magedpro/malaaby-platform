@@ -12,7 +12,9 @@ import Link from 'next/link';
 
 function daysLeft(expiryStr?: string): number | null {
   if (!expiryStr) return null;
-  return Math.ceil((new Date(expiryStr).getTime() - Date.now()) / 86400000);
+  const parsed = Date.parse(expiryStr);
+  if (isNaN(parsed)) return null;
+  return Math.ceil((parsed - Date.now()) / 86400000);
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -22,9 +24,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  const subStatus = (stadium as any)?.subscriptionStatus;
+  const subStatus = (stadium as any)?.subscriptionStatus || 'trial';
   const subExpiry = (stadium as any)?.subscriptionExpiry;
-  const remaining = daysLeft(subExpiry);
+  
+  let remaining = daysLeft(subExpiry);
+  if (remaining === null && subStatus === 'trial') {
+    remaining = 60; // Fallback to 60 days
+  }
+
   const isExpired = subStatus === 'expired' || (remaining !== null && remaining <= 0 && subStatus !== 'trial');
   const isTrial = subStatus === 'trial';
   const isOnSubscriptionPage = pathname === '/dashboard/subscription';

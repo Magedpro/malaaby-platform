@@ -49,13 +49,18 @@ const PAYMENT_NUMBER = '01126947405';
 
 function daysLeft(expiryStr?: string): number | null {
   if (!expiryStr) return null;
-  const expiry = new Date(expiryStr);
-  return Math.ceil((expiry.getTime() - Date.now()) / 86400000);
+  const parsed = Date.parse(expiryStr);
+  if (isNaN(parsed)) return null;
+  return Math.ceil((parsed - Date.now()) / 86400000);
 }
 
 export default function SubscriptionPage() {
   const { stadium } = useSession();
   const { showToast } = useToast();
+
+  useEffect(() => {
+    console.log('🏟️ [SubscriptionPage] Loaded Stadium Info:', stadium);
+  }, [stadium]);
 
   const [selectedPlan, setSelectedPlan] = useState<string>('');
   const [senderName, setSenderName] = useState('');
@@ -71,7 +76,13 @@ export default function SubscriptionPage() {
   const subscriptionStatus = (stadium as any)?.subscriptionStatus || 'trial';
   const subscriptionExpiry = (stadium as any)?.subscriptionExpiry;
   const pendingSubscription = (stadium as any)?.pendingSubscription;
-  const remaining = daysLeft(subscriptionExpiry);
+  
+  // Calculate remaining days with a dynamic fallback if not found in db
+  let remaining = daysLeft(subscriptionExpiry);
+  if (remaining === null && subscriptionStatus === 'trial') {
+    // If trial but no expiry date, default to 60 days from now (safe fallback)
+    remaining = 60;
+  }
 
   const statusLabel: Record<string, string> = {
     trial: 'تجربة مجانية',

@@ -20,14 +20,21 @@ export async function GET() {
       const stadium = await Stadiums.findBySlug(user.stadiumSlug);
       if (stadium) {
         // Fallback for older stadiums that don't have subscription fields
-        const defaultExpiry = new Date(new Date(stadium.createdAt || user.createdAt || Date.now()).getTime() + 60 * 24 * 60 * 60 * 1000).toISOString();
+        const stadiumCreated = stadium.createdAt || user.createdAt || new Date().toISOString();
+        const defaultExpiry = new Date(new Date(stadiumCreated).getTime() + 60 * 24 * 60 * 60 * 1000).toISOString();
         
+        // Clean and validate expiry date
+        let expiry = stadium.subscriptionExpiry;
+        if (!expiry || expiry === '—' || expiry === 'null' || isNaN(Date.parse(expiry))) {
+          expiry = defaultExpiry;
+        }
+
         stadiumInfo = {
           name: stadium.name,
           slug: stadium.slug,
           isActive: stadium.isActive,
           subscriptionStatus: stadium.subscriptionStatus || 'trial',
-          subscriptionExpiry: stadium.subscriptionExpiry || defaultExpiry,
+          subscriptionExpiry: expiry,
           subscriptionPlanId: stadium.subscriptionPlanId || 'plan-basic',
           pendingSubscription: stadium.pendingSubscription,
           approvalStatus: stadium.approvalStatus

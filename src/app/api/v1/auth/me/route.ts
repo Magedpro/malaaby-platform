@@ -16,7 +16,7 @@ export async function GET() {
     }
 
     let stadiumInfo = null;
-    if (user.role === 'owner' && user.stadiumSlug) {
+    if ((user.role === 'owner' || user.role === 'super_admin') && user.stadiumSlug) {
       const stadium = await Stadiums.findBySlug(user.stadiumSlug);
       if (stadium) {
         // Fallback for older stadiums that don't have subscription fields

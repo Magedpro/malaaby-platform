@@ -21,7 +21,7 @@ export const FloatingSubscription: React.FC<FloatingSubscriptionProps> = ({
   // Show it if:
   // 1. Not logged in (public landing page visitors)
   // 2. Logged in and the stadium status is 'trial', 'expired', 'suspended', or not set
-  const isTrial = !user || (user.role === 'owner' && (subStatus === 'trial' || subStatus === 'expired' || subStatus === 'suspended' || !subStatus));
+  const isTrial = !user || ((user.role === 'owner' || user.role === 'super_admin') && (subStatus === 'trial' || subStatus === 'expired' || subStatus === 'suspended' || !subStatus));
 
   if (!isTrial) return null;
 

@@ -10,8 +10,6 @@ import { generateId, timeToMinutes } from './utils';
 import { supabase } from './supabase';
 
 const DB_PATH = path.join(process.cwd(), 'data', 'db.json');
-const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL;
-const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
 
 let memoryDbCache: any = null;
 
@@ -149,39 +147,39 @@ function defaultDb() {
     subscriptionPlans: [
       {
         id: 'plan-basic',
-        name: 'أساسي',
-        nameEn: 'Basic',
-        description: 'مثالي لملعب واحد',
-        price: 99,
-        yearlyPrice: 999,
+        name: 'الخطة البرونزية',
+        nameEn: 'Bronze Plan',
+        description: 'مثالية للملاعب الفردية',
+        price: 500,
+        yearlyPrice: 5000,
         maxFields: 1,
-        features: ['ملعب واحد', 'لوحة تحكم أساسية', 'إدارة الحجوزات', 'دعم عادي'],
+        features: ['إدارة ملعب واحد فقط', 'لوحة تحكم كاملة', 'حجز الملاعب والدفع', 'دعم فني عبر واتساب'],
         isActive: true,
         isPopular: false,
         createdAt: now,
       },
       {
         id: 'plan-pro',
-        name: 'برو',
-        nameEn: 'Pro',
-        description: 'للملاعب المتوسطة',
-        price: 199,
-        yearlyPrice: 1999,
-        maxFields: 5,
-        features: ['حتى 5 ملاعب', 'تقارير متقدمة', 'تقويم تفاعلي', 'دعم ذو أولوية', 'إحصائيات الإيرادات'],
+        name: 'الخطة الفضية',
+        nameEn: 'Silver Plan',
+        description: 'للمجمعات الرياضية الصغيرة',
+        price: 1000,
+        yearlyPrice: 10000,
+        maxFields: 2,
+        features: ['إدارة ملعبين كحد أقصى', 'تقويم حجوزات تفاعلي', 'تقارير الإيرادات اليومية', 'دعم فني سريع'],
         isActive: true,
         isPopular: true,
         createdAt: now,
       },
       {
         id: 'plan-premium',
-        name: 'بريميوم',
-        nameEn: 'Premium',
-        description: 'للملاعب الكبرى',
-        price: 349,
-        yearlyPrice: 3499,
+        name: 'الخطة الذهبية',
+        nameEn: 'Gold Plan',
+        description: 'للمجمعات الكبرى والنوادي',
+        price: 5000,
+        yearlyPrice: 50000,
         maxFields: -1,
-        features: ['ملاعب غير محدودة', 'تقارير كاملة', 'تكاملات مستقبلية', 'دعم مخصص', 'API للتطبيقات'],
+        features: ['عدد غير محدود من الملاعب', 'تقارير مالية تفصيلية', 'دعم فني مخصص 24/7', 'تأكيد ودعم فوري'],
         isActive: true,
         isPopular: false,
         createdAt: now,
@@ -211,32 +209,8 @@ function defaultDb() {
 function readDb() {
   ensureDb();
   if (memoryDbCache) return memoryDbCache;
-
-  if (REDIS_URL && REDIS_TOKEN) {
-    try {
-      const code = `
-        fetch("${REDIS_URL}/get/malaaby_db", {
-          headers: { Authorization: "Bearer ${REDIS_TOKEN}" }
-        })
-        .then(r => r.json())
-        .then(data => {
-          if (data && data.result) console.log(data.result);
-          else console.log("null");
-        })
-        .catch(err => process.exit(1));
-      `;
-      const cp = require('child' + '_process');
-      const nodeArgs = ['-e', code];
-      const result = cp.spawnSync('node', nodeArgs, { encoding: 'utf-8' });
-      if (result.status === 0 && result.stdout.trim() && result.stdout.trim() !== 'null') {
-        memoryDbCache = JSON.parse(result.stdout.trim());
-        return memoryDbCache;
-      }
-    } catch (e) {
-      console.error('Remote DB read failed:', e);
-    }
-  }
-
+  // Note: On Vercel/production, Supabase handles all data (see exported CRUD objects below).
+  // This local file fallback is used only in local dev without Supabase configured.
   const raw = fs.readFileSync(DB_PATH, 'utf-8');
   memoryDbCache = JSON.parse(raw);
   return memoryDbCache;
@@ -245,33 +219,8 @@ function readDb() {
 function writeDb(db: any) {
   ensureDb();
   memoryDbCache = db;
-
-  if (REDIS_URL && REDIS_TOKEN) {
-    try {
-      const code = `
-        const fs = require('fs');
-        const dbString = fs.readFileSync(0, 'utf-8');
-        fetch("${REDIS_URL}/set/malaaby_db", {
-          method: "POST",
-          headers: { Authorization: "Bearer ${REDIS_TOKEN}" },
-          body: dbString
-        })
-        .then(r => r.json())
-        .then(data => process.exit(0))
-        .catch(err => process.exit(1));
-      `;
-      const cp = require('child' + '_process');
-      const nodeArgs = ['-e', code];
-      const result = cp.spawnSync('node', nodeArgs, {
-        input: JSON.stringify(db),
-        encoding: 'utf-8'
-      });
-      if (result.status === 0) return;
-    } catch (e) {
-      console.error('Remote DB write failed:', e);
-    }
-  }
-
+  // Note: On Vercel/production, Supabase handles all data writes (see exported CRUD objects below).
+  // This local file write is used only in local dev without Supabase configured.
   fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2), 'utf-8');
 }
 

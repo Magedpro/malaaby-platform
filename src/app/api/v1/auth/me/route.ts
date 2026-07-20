@@ -29,15 +29,16 @@ export async function GET() {
           expiry = defaultExpiry;
         }
 
+        const s = stadium as any;
         stadiumInfo = {
           name: stadium.name,
           slug: stadium.slug,
           isActive: stadium.isActive,
           subscriptionStatus: stadium.subscriptionStatus || 'trial',
           subscriptionExpiry: expiry,
-          subscriptionPlanId: stadium.subscriptionPlanId || 'plan-basic',
-          pendingSubscription: stadium.pendingSubscription,
-          approvalStatus: stadium.approvalStatus
+          subscriptionPlanId: s.subscriptionPlanId || 'plan-basic',
+          pendingSubscription: s.pendingSubscription ?? null,
+          approvalStatus: s.approvalStatus ?? 'approved'
         };
       }
     }

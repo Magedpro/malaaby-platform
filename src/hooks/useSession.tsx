@@ -22,7 +22,13 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const refresh = useCallback(async () => {
     try {
-      const res = await fetch('/api/v1/auth/me');
+      const res = await fetch('/api/v1/auth/me?t=' + Date.now(), {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
       const json = await res.json();
       if (json.success && json.data) {
         setUser(json.data.user);

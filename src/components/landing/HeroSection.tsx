@@ -7,6 +7,17 @@ import { Button } from '../ui/Button';
 export const HeroSection: React.FC = () => {
   return (
     <section id="hero" className="hero">
+      <video
+        className="hero-video"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        poster="/hero-bg.png"
+      >
+        <source src="/hero-bg.mp4" type="video/mp4" />
+      </video>
       <div className="hero-bg" />
       <div className="hero-overlay" />
       

@@ -33,15 +33,15 @@ export async function POST(req: Request) {
     // Hash new password
     const passwordHash = await hashPassword(newPassword);
 
-    // Update user: set new password and clear reset token info
-    const updatedUser = { ...user };
-    delete (updatedUser as any).resetToken;
-    delete (updatedUser as any).resetTokenExpiry;
-
+    // Update user: set new password and clear reset token info.
+    // Must explicitly null the token fields — Users.update merges with
+    // the current record, so deleted keys would survive the merge.
     await Users.update(user.id, {
-      ...updatedUser,
-      passwordHash
-    });
+      ...user,
+      passwordHash,
+      resetToken: null,
+      resetTokenExpiry: null,
+    } as any);
 
     console.log(`🔒 [Password Changed Successfully]: for user ${email}`);
 

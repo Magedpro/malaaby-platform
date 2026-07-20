@@ -4,7 +4,8 @@ import { sendEmail } from '@/lib/email';
 
 export async function POST(req: Request) {
   try {
-    const { email } = await req.json();
+    const { email: rawEmail } = await req.json();
+    const email = (rawEmail || '').toLowerCase().trim(); // Normalize to lowercase
     if (!email) {
       return NextResponse.json({ success: false, error: 'البريد الإلكتروني مطلوب' }, { status: 400 });
     }

@@ -33,23 +33,26 @@ self.addEventListener('push', function(event) {
 self.addEventListener('notificationclick', function(event) {
   event.notification.close();
 
-  const urlToOpen = event.notification.data?.url || '/dashboard/bookings';
+  let targetUrl = event.notification.data?.url || '/dashboard/bookings';
+  if (targetUrl.startsWith('/')) {
+    targetUrl = self.location.origin + targetUrl;
+  }
 
   event.waitUntil(
     clients.matchAll({
       type: 'window',
       includeUncontrolled: true
     }).then(function(windowClients) {
-      // Check if there is already a window open with this URL
+      // Check if there is already a window open with this URL or dashboard bookings
       for (var i = 0; i < windowClients.length; i++) {
         var client = windowClients[i];
-        if (client.url.includes(urlToOpen) && 'focus' in client) {
+        if ((client.url === targetUrl || client.url.includes('/dashboard/bookings')) && 'focus' in client) {
           return client.focus();
         }
       }
-      // If not, open a new window
+      // If not, open a new window with the full target URL
       if (clients.openWindow) {
-        return clients.openWindow(urlToOpen);
+        return clients.openWindow(targetUrl);
       }
     })
   );

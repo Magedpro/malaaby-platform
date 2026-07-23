@@ -245,7 +245,7 @@ export async function POST(request: NextRequest) {
       const payload = JSON.stringify({
         title: 'طلب حجز جديد ⚽',
         body: `قام ${booking.customerName} بحجز ${fieldObj.name} يوم ${booking.date} الساعة ${formatTime(booking.startTime)}`,
-        url: '/dashboard/bookings'
+        url: `${APP_URL}/dashboard/bookings`
       });
       
       const expiredSubscriptions: string[] = [];

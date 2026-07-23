@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { APP_URL } from '@/lib/constants';
 
 interface SendEmailParams {
   to: string;
@@ -158,7 +159,7 @@ export function getNewBookingTemplate(
         </div>
 
         <div style="text-align: center; margin-top: 2rem;">
-          <a href="https://malaaby.vercel.app/dashboard/bookings"
+          <a href="${APP_URL}/dashboard/bookings"
              style="background-color: #22c55e; color: white; padding: 0.75rem 2rem; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">
             انتقل لمراجعة الحجوزات
           </a>
@@ -209,7 +210,7 @@ export function getBookingStatusTemplate(
         }
 
         <div style="text-align: center; margin-top: 2rem;">
-          <a href="https://malaaby.vercel.app/"
+          <a href="${APP_URL}/"
              style="background-color: #0f172a; color: white; padding: 0.75rem 2rem; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">
             تصفح ملاعب أخرى
           </a>

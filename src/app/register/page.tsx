@@ -7,7 +7,7 @@ import { useSession } from '@/hooks/useSession';
 import { useToast } from '@/components/ui/Toast';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { CITIES_DEFAULT } from '@/lib/constants';
+import { CITIES_DEFAULT, APP_URL } from '@/lib/constants';
 import { slugify } from '@/lib/utils';
 
 function RegisterForm() {
@@ -303,7 +303,7 @@ function RegisterForm() {
                       alignItems: 'center',
                     }}
                   >
-                    malaaby.com/
+                    {APP_URL.replace(/^https?:\/\//, '').replace(/\/$/, '')}/
                   </div>
                   <input
                     type="text"
@@ -481,7 +481,7 @@ function RegisterForm() {
                 <div style={{ fontSize: '0.875rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   <div><strong>صاحب الحساب:</strong> {formData.name}</div>
                   <div><strong>اسم المجمع:</strong> {formData.stadiumName}</div>
-                  <div><strong>الرابط العام:</strong> malaaby.com/{formData.slug}</div>
+                  <div><strong>الرابط العام:</strong> {APP_URL.replace(/^https?:\/\//, '').replace(/\/$/, '')}/{formData.slug}</div>
                   <div><strong>المدينة والعنوان:</strong> {formData.city}، {formData.address}</div>
                   <div><strong>رقم المحفظة:</strong> {formData.vodafoneCash || 'غير مدخل'}</div>
                   <div><strong>إنستا باي:</strong> {formData.instaPay || 'غير مدخل'}</div>

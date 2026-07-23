@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { ToastProvider } from '@/components/ui/Toast';
 import { SessionProvider } from '@/hooks/useSession';
+import { APP_URL } from '@/lib/constants';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
     template: '%s | ملعبي'
   },
   description: 'المنصة الاحترافية الأولى لحجز ملاعب كرة القدم وإدارتها. أنشئ موقعك الإلكتروني الخاص بملعبك خلال دقيقة واحدة بدون كود.',
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
+  metadataBase: new URL(APP_URL),
   openGraph: {
     title: 'منصة ملعبي | حجز ملاعب كرة القدم',
     description: 'المنصة الاحترافية الأولى لحجز ملاعب كرة القدم وإدارتها. أنشئ موقعك الإلكتروني الخاص بملعبك خلال دقيقة واحدة بدون كود.',

@@ -1,6 +1,14 @@
 export const APP_NAME = 'ملعبي';
 export const APP_NAME_EN = 'Malaaby';
-export const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+export const APP_URL = (
+  process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes('malaaby.vercel.app')
+    ? process.env.NEXT_PUBLIC_APP_URL
+    : typeof window !== 'undefined' && window.location.origin
+      ? window.location.origin
+      : process.env.NODE_ENV === 'production'
+        ? 'https://www.malaaby.online'
+        : 'http://localhost:3000'
+);
 export const APP_DESCRIPTION = 'منصة احتجاز ملاعب كرة القدم الاحترافية - أنشئ موقعك الخاص لحجز الملاعب بدون كود';
 
 export const BOOKING_STATUSES = {

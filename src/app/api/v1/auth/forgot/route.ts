@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { randomBytes } from 'crypto';
 import { Users } from '@/lib/db';
 import { sendEmail, getPasswordResetTemplate } from '@/lib/email';
+import { APP_URL } from '@/lib/constants';
 
 export async function POST(req: Request) {
   try {
@@ -28,9 +29,7 @@ export async function POST(req: Request) {
 
     await Users.update(user.id, { ...user, resetToken: token, resetTokenExpiry: expiry } as any);
 
-    // Prefer the configured production URL so links work behind proxies
-    const origin = process.env.NEXT_PUBLIC_APP_URL || new URL(req.url).origin;
-    const resetLink = `${origin}/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
+    const resetLink = `${APP_URL}/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
 
     console.log('🔑 [Reset link]:', resetLink);
 

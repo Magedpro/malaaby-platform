@@ -5,6 +5,7 @@ import { validateBooking } from '@/lib/validations';
 import { formatTime } from '@/lib/utils';
 import { sendEmail } from '@/lib/email';
 import { sendPushNotification } from '@/lib/push';
+import { APP_URL } from '@/lib/constants';
 
 export async function GET(request: NextRequest) {
   try {
@@ -173,9 +174,7 @@ export async function POST(request: NextRequest) {
     // 5.6 Send Email notification (if enabled)
     const recipientEmail = stadium.notificationEmail || stadium.email;
     if (prefs.email && recipientEmail) {
-      // Get the main app URL (configured as NEXT_PUBLIC_APP_URL on Vercel: https://malaaby.vercel.app)
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-      const dashboardUrl = `${appUrl}/dashboard/bookings`;
+      const dashboardUrl = `${APP_URL}/dashboard/bookings`;
 
       // Build payment screenshot section (only if a screenshot was uploaded)
       const screenshotHtml = booking.paymentScreenshot

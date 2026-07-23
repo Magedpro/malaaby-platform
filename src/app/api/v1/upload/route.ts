@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { ALLOWED_IMAGE_TYPES, MAX_FILE_SIZE } from '@/lib/constants';
-
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,6 +26,45 @@ export async function POST(request: NextRequest) {
     const originalName = file.name || 'image.png';
     const extension = path.extname(originalName).toLowerCase() || '.png';
     const cleanName = `${Date.now()}-${Math.random().toString(36).substring(2, 10)}${extension}`;
+
+    // 2. Cloudflare R2 Upload (Priority 1)
+    const r2AccountId = process.env.CLOUDFLARE_R2_ACCOUNT_ID;
+    const r2AccessKeyId = process.env.CLOUDFLARE_R2_ACCESS_KEY_ID;
+    const r2SecretAccessKey = process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY;
+    const r2BucketName = process.env.CLOUDFLARE_R2_BUCKET_NAME || 'malaaby-uploads';
+    const r2PublicUrl = process.env.CLOUDFLARE_R2_PUBLIC_URL; // e.g. https://cdn.malaaby.online or https://pub-xxx.r2.dev
+
+    if (r2AccountId && r2AccessKeyId && r2SecretAccessKey) {
+      try {
+        const fileBuffer = Buffer.from(await file.arrayBuffer());
+        const s3Client = new S3Client({
+          region: 'auto',
+          endpoint: `https://${r2AccountId}.r2.cloudflarestorage.com`,
+          credentials: {
+            accessKeyId: r2AccessKeyId,
+            secretAccessKey: r2SecretAccessKey,
+          },
+        });
+
+        await s3Client.send(
+          new PutObjectCommand({
+            Bucket: r2BucketName,
+            Key: cleanName,
+            Body: fileBuffer,
+            ContentType: file.type,
+          })
+        );
+
+        const finalUrl = r2PublicUrl
+          ? `${r2PublicUrl.replace(/\/$/, '')}/${cleanName}`
+          : `https://${r2BucketName}.${r2AccountId}.r2.cloudflarestorage.com/${cleanName}`;
+
+        console.log(`☁️ [Cloudflare R2]: Successfully uploaded ${cleanName}`);
+        return NextResponse.json({ success: true, url: finalUrl });
+      } catch (r2Err) {
+        console.error('☁️ [Cloudflare R2 Upload Error]:', r2Err);
+      }
+    }
 
     // 2. Production Upload: ImgBB or Supabase Storage Integration
     const imgbbApiKey = process.env.IMGBB_API_KEY;

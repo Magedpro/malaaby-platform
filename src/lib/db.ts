@@ -1,6 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import { spawnSync } from 'child_process';
 import {
   User, Stadium, Field, Booking,
   SubscriptionPlan, Notification, SupportTicket,
@@ -50,7 +49,7 @@ function defaultDb() {
         id: 'user-maged-admin',
         name: 'Mohamed Maged',
         email: 'magedprooo8@gmail.com',
-        passwordHash: '4edd6cd33eb666dbd5b2ddb08e0367b26c8075225ddcccccad90e5c2c6ac1a8d', // Hash of 1231362002Mm
+        passwordHash: '4edd6cd33eb666dbd5b2ddb08e0367b26c8075225ddcccccad90e5c2c6ac1a8d',
         role: 'super_admin',
         phone: '01126947405',
         stadiumSlug: 'abomaged',
@@ -383,7 +382,7 @@ export const Stadiums = {
       const db = readDb();
       const idx = db.stadiums.findIndex((s: any) => s.slug === slug);
       if (idx === -1) return false;
-      db.stadiums.splice(slug, 1);
+      db.stadiums.splice(idx, 1);
       writeDb(db);
       return true;
     }
@@ -738,7 +737,7 @@ export const Notifications = {
 
   markAllRead: async (stadiumSlug: string): Promise<void> => {
     if (supabase) {
-      const sb = supabase; // non-null reference for use inside async callbacks
+      const sb = supabase;
       const { data: unread, error: readErr } = await sb.from('notifications').select('id, data').eq('stadium_slug', stadiumSlug).eq('is_read', false);
       if (readErr) throw readErr;
       await Promise.all((unread ?? []).map((r) =>

@@ -53,124 +53,120 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
   ];
 
   return (
-    <>
-      {/* ── Dark Overlay – tap to close sidebar on mobile ── */}
-      {isOpen && (
-        <div
-          onClick={onClose}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.55)',
-            zIndex: 99,
-            backdropFilter: 'blur(2px)',
+    <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
+      {/* ── Sidebar Header with Close Button ── */}
+      <div className="sidebar-logo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Link href="/" className="navbar-logo" onClick={onClose}>
+          <div className="logo-icon">🏟️</div>
+          <span>لوحة التحكم</span>
+        </Link>
+
+        {/* ✕ Close button for mobile */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
           }}
-        />
-      )}
+          aria-label="إغلاق القائمة"
+          style={{
+            background: 'rgba(239, 68, 68, 0.15)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            cursor: 'pointer',
+            fontSize: '1.2rem',
+            color: '#ef4444',
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            lineHeight: 1,
+            fontWeight: 'bold',
+            touchAction: 'manipulation',
+          }}
+          className="sidebar-close-btn"
+        >
+          ✕
+        </button>
+      </div>
 
-      <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
-        {/* ── Sidebar Header with Close Button ── */}
-        <div className="sidebar-logo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Link href="/" className="navbar-logo" onClick={onClose}>
-            <div className="logo-icon">🏟️</div>
-            <span>لوحة التحكم</span>
-          </Link>
-
-          {/* ✕ Close button – only shown on mobile/tablet */}
-          <button
-            onClick={onClose}
-            aria-label="إغلاق القائمة"
-            style={{
-              background: 'rgba(255,255,255,0.08)',
-              border: '1px solid rgba(255,255,255,0.12)',
-              cursor: 'pointer',
-              fontSize: '1.1rem',
-              color: 'var(--text-muted)',
-              padding: '0.3rem 0.6rem',
-              borderRadius: 'var(--radius-sm)',
-              lineHeight: 1,
-              display: 'none',
-            }}
-            className="sidebar-close-btn"
-          >
-            ✕
-          </button>
-        </div>
-
-        {/* Nav Menu */}
-        <nav className="sidebar-nav">
-          {menuItems.map((item) => {
-            const isActive = pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                href={item.path}
-                className={`nav-item ${isActive ? 'active' : ''}`}
-                onClick={onClose}
-                style={(item as any).subWarning && !isActive ? { color: 'var(--warning)' } : undefined}
-              >
-                <span style={{ fontSize: '1.25rem' }}>{item.icon}</span>
-                <span>{item.label}</span>
-                {item.badge !== undefined && item.badge > 0 && (
-                  <span className="nav-badge">{item.badge}</span>
-                )}
-                {(item as any).subBadge && (
-                  <span className="nav-badge" style={{ 
-                    background: (item as any).subBadge === 'منتهي' ? 'var(--danger)' : 'var(--warning)', 
-                    color: '#fff',
-                    borderRadius: 'var(--radius-md)', 
-                    padding: '2px 8px', 
-                    fontSize: '0.75rem',
-                    whiteSpace: 'nowrap',
-                    height: 'auto',
-                    lineHeight: '1.2'
-                  }}>{(item as any).subBadge}</span>
-                )}
-              </Link>
-            );
-          })}
-
-          <div className="divider" />
-
-          {/* Public Booking Link */}
-          {user?.stadiumSlug && (
-            <a
-              href={`/${user.stadiumSlug}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="nav-item"
-              style={{ color: 'var(--primary-light)' }}
+      {/* Nav Menu */}
+      <nav className="sidebar-nav">
+        {menuItems.map((item) => {
+          const isActive = pathname === item.path;
+          return (
+            <Link
+              key={item.path}
+              href={item.path}
+              className={`nav-item ${isActive ? 'active' : ''}`}
+              onClick={onClose}
+              style={(item as any).subWarning && !isActive ? { color: 'var(--warning)' } : undefined}
             >
-              <span style={{ fontSize: '1.25rem' }}>🌐</span>
-              <span>موقع حجز الملاعب ↗</span>
-            </a>
-          )}
+              <span style={{ fontSize: '1.25rem' }}>{item.icon}</span>
+              <span>{item.label}</span>
+              {item.badge !== undefined && item.badge > 0 && (
+                <span className="nav-badge">{item.badge}</span>
+              )}
+              {(item as any).subBadge && (
+                <span className="nav-badge" style={{ 
+                  background: (item as any).subBadge === 'منتهي' ? 'var(--danger)' : 'var(--warning)', 
+                  color: '#fff',
+                  borderRadius: 'var(--radius-md)', 
+                  padding: '2px 8px', 
+                  fontSize: '0.75rem',
+                  whiteSpace: 'nowrap',
+                  height: 'auto',
+                  lineHeight: '1.2'
+                }}>{(item as any).subBadge}</span>
+              )}
+            </Link>
+          );
+        })}
 
-          {/* Logout Button */}
-          <button
-            onClick={logout}
+        <div className="divider" />
+
+        {/* Public Booking Link */}
+        {user?.stadiumSlug && (
+          <a
+            href={`/${user.stadiumSlug}`}
+            target="_blank"
+            rel="noopener noreferrer"
             className="nav-item"
-            style={{ width: '100%', textAlign: 'right', marginTop: 'auto', color: 'var(--danger)' }}
+            style={{ color: 'var(--primary-light)' }}
+            onClick={onClose}
           >
-            <span style={{ fontSize: '1.25rem' }}>🚪</span>
-            <span>تسجيل الخروج</span>
-          </button>
-        </nav>
-      </aside>
+            <span style={{ fontSize: '1.25rem' }}>🌐</span>
+            <span>موقع حجز الملاعب ↗</span>
+          </a>
+        )}
+
+        {/* Logout Button */}
+        <button
+          type="button"
+          onClick={() => {
+            onClose();
+            logout();
+          }}
+          className="nav-item"
+          style={{ width: '100%', textAlign: 'right', marginTop: 'auto', color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer' }}
+        >
+          <span style={{ fontSize: '1.25rem' }}>🚪</span>
+          <span>تسجيل الخروج</span>
+        </button>
+      </nav>
 
       <style jsx global>{`
         @media (max-width: 1024px) {
           .sidebar-close-btn {
             display: flex !important;
-            align-items: center;
-            justify-content: center;
           }
           .sidebar.open {
-            z-index: 100;
+            z-index: 1000 !important;
           }
         }
       `}</style>
-    </>
+    </aside>
   );
 };
 export default DashboardSidebar;

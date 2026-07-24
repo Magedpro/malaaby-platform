@@ -1706,7 +1706,10 @@ input, textarea, select {
   .hero-stat-value { font-size: var(--font-size-xl); }
   .hero-stat-label { font-size: var(--font-size-xs); }
 
-  .stats-grid { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+  .stat-card { padding: 0.65rem 0.75rem; }
+  .stat-value { font-size: 1.15rem; }
+  .stat-label { font-size: 0.7rem; }
   .slots-grid { grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)); gap: 0.5rem; }
   .footer-grid { grid-template-columns: 1fr; }
 

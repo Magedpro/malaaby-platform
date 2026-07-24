@@ -5,7 +5,6 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useSession } from '@/hooks/useSession';
 import { DashboardSidebar } from '@/components/layout/DashboardSidebar';
 import { DashboardTopbar } from '@/components/layout/DashboardTopbar';
-import { Skeleton } from '@/components/ui/Skeleton';
 import { FloatingWhatsApp } from '@/components/ui/FloatingWhatsApp';
 import { FloatingSubscription } from '@/components/ui/FloatingSubscription';
 import Link from 'next/link';
@@ -29,12 +28,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   
   let remaining = daysLeft(subExpiry);
   if (remaining === null && subStatus === 'trial') {
-    remaining = 60; // Fallback to 60 days
+    remaining = 60;
   }
 
   const isExpired = subStatus === 'expired' || (remaining !== null && remaining <= 0 && subStatus !== 'trial');
   const isTrial = subStatus === 'trial';
   const isOnSubscriptionPage = pathname === '/dashboard/subscription';
+
+  // Automatically close sidebar whenever route/pathname changes
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [pathname]);
 
   // Fetch notification count
   const fetchNotifCount = useCallback(async () => {
@@ -54,7 +58,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       router.push('/login');
     } else if (user) {
       fetchNotifCount();
-      // Poll notifications every 30 seconds for live updates
       const timer = setInterval(fetchNotifCount, 30000);
       return () => clearInterval(timer);
     }
@@ -127,7 +130,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Expired Subscription Overlay */}
       {isExpired && !isOnSubscriptionPage && (
         <div style={{
-          position: 'fixed', inset: 0, zIndex: 999,
+          position: 'fixed', inset: 0, zIndex: 9999,
           background: 'rgba(0,0,0,0.85)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           backdropFilter: 'blur(6px)',
@@ -163,15 +166,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       )}
 
-      {/* Overlay for mobile sidebar */}
+      {/* Dark overlay backdrop for mobile sidebar */}
       {sidebarOpen && (
         <div
           onClick={() => setSidebarOpen(false)}
+          onTouchEnd={() => setSidebarOpen(false)}
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            zIndex: 99,
+            backgroundColor: 'rgba(0, 0, 0, 0.65)',
+            zIndex: 999,
+            backdropFilter: 'blur(3px)',
+            touchAction: 'manipulation',
           }}
         />
       )}
@@ -182,10 +188,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         message="مرحباً، أحتاج إلى دعم فني بخصوص لوحة تحكم ملعبي 🏟️"
         tooltip="الدعم الفني للمنصة"
         position="bottom-left"
-        pulseColor="#3b82f6" /* Blue pulse for dashboard support */
+        pulseColor="#3b82f6"
       />
 
-      {/* Floating subscription button (only shows during trial/expired status) */}
+      {/* Floating subscription button */}
       <FloatingSubscription position="bottom-right" />
     </div>
   );

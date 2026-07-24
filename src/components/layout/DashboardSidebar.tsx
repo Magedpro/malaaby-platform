@@ -61,10 +61,15 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
           <span>لوحة التحكم</span>
         </Link>
 
-        {/* ✕ Close button for mobile */}
+        {/* ✕ Close button for mobile - handles click & touch */}
         <button
           type="button"
           onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onClose();
+          }}
+          onTouchEnd={(e) => {
             e.preventDefault();
             e.stopPropagation();
             onClose();
@@ -144,11 +149,11 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
       <style jsx global>{`
         .sidebar-close-btn {
           display: none;
-          background: rgba(239, 68, 68, 0.2);
-          border: 1px solid rgba(239, 68, 68, 0.4);
+          background: rgba(239, 68, 68, 0.25);
+          border: 1px solid rgba(239, 68, 68, 0.5);
           color: #ef4444;
-          width: 34px;
-          height: 34px;
+          width: 36px;
+          height: 36px;
           border-radius: 50%;
           align-items: center;
           justify-content: center;
@@ -156,6 +161,8 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
           font-weight: bold;
           cursor: pointer;
           line-height: 1;
+          touch-action: manipulation;
+          -webkit-tap-highlight-color: transparent;
         }
         @media (max-width: 1024px) {
           .sidebar-close-btn {

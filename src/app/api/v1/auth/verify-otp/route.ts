@@ -3,11 +3,18 @@ import { Users, Stadiums, ActivityLogs } from '@/lib/db';
 import { createSession, verifyPassword } from '@/lib/auth';
 import { verifyOtp, resetFailedAttempts, isLockedOut } from '@/lib/otp';
 import { sendEmail, getLoginAlertEmailTemplate } from '@/lib/email';
+import { createHmac } from 'crypto';
+
+/** Generate a trusted-device token: HMAC(userId + email, SECRET) */
+function generateTrustedDeviceToken(userId: string, email: string): string {
+  const secret = process.env.NEXTAUTH_SECRET || 'malaaby-trusted-device-secret';
+  return createHmac('sha256', secret).update(`${userId}:${email}`).digest('hex');
+}
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, otpCode, password } = body;
+    const { email, otpCode, password, trustDevice } = body;
 
     if (!email || !otpCode || !password) {
       return NextResponse.json({ success: false, error: 'جميع البيانات مطلوبة' }, { status: 400 });
@@ -66,7 +73,7 @@ export async function POST(request: NextRequest) {
       performedByName: user.name,
       targetId: user.id,
       targetType: 'user',
-      details: { role: user.role, twoFactorVerified: true },
+      details: { role: user.role, twoFactorVerified: true, trustedDeviceSet: !!trustDevice },
     });
 
     // 8. Send Security Alert Email
@@ -77,7 +84,8 @@ export async function POST(request: NextRequest) {
       html: getLoginAlertEmailTemplate(user.name, user.email, clientIp),
     }).catch(err => console.error('Failed to send login alert email:', err));
 
-    return NextResponse.json({
+    // 9. Build response
+    const responseData = NextResponse.json({
       success: true,
       data: {
         id: user.id,
@@ -87,6 +95,21 @@ export async function POST(request: NextRequest) {
         stadiumSlug,
       },
     });
+
+    // 10. If user opted to trust this device → set a 30-day cookie
+    if (trustDevice) {
+      const token = generateTrustedDeviceToken(user.id, cleanEmail);
+      const thirtyDays = 30 * 24 * 60 * 60; // seconds
+      responseData.cookies.set('trusted_device', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: thirtyDays,
+        path: '/',
+      });
+    }
+
+    return responseData;
 
   } catch (error) {
     console.error('Verify OTP API error:', error);

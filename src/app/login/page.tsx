@@ -16,6 +16,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [otpCode, setOtpCode] = useState('');
+  const [trustDevice, setTrustDevice] = useState(true); // Default to checked for convenience
   const [step, setStep] = useState<'login' | 'otp'>('login');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; otp?: string }>({});
@@ -98,7 +99,7 @@ export default function LoginPage() {
       const res = await fetch('/api/v1/auth/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, otpCode: otpCode.trim() }),
+        body: JSON.stringify({ email, password, otpCode: otpCode.trim(), trustDevice }),
       });
       const json = await res.json();
 
@@ -196,12 +197,7 @@ export default function LoginPage() {
               required
             />
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.875rem' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', cursor: 'pointer', color: 'var(--text-secondary)' }}>
-                <input type="checkbox" style={{ accentColor: 'var(--primary)' }} />
-                <span>تذكرني على هذا الجهاز</span>
-              </label>
-              
+            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', fontSize: '0.875rem' }}>
               <Link href="/forgot" style={{ color: 'var(--primary-light)', fontWeight: 600 }}>
                 نسيت كلمة المرور؟
               </Link>
@@ -243,6 +239,16 @@ export default function LoginPage() {
                 <span style={{ fontSize: '0.75rem', color: 'var(--danger)' }}>{errors.otp}</span>
               )}
             </div>
+
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+              <input
+                type="checkbox"
+                checked={trustDevice}
+                onChange={(e) => setTrustDevice(e.target.checked)}
+                style={{ accentColor: 'var(--primary)', width: '16px', height: '16px' }}
+              />
+              <span>🛡️ الثقة بهذا الجهاز لمدة 30 يومًا (عُدم المطالبة بكود مجدداً)</span>
+            </label>
 
             <Button type="submit" variant="primary" isLoading={loading} fullWidth>
               تأكيد كود الأمان 🛡️

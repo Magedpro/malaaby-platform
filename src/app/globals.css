@@ -98,6 +98,7 @@ html {
   direction: rtl;
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
+  overflow-x: hidden;
 }
 
 body {
@@ -503,6 +504,8 @@ input, textarea, select {
 .dashboard-layout {
   display: flex;
   min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 .sidebar {
@@ -517,7 +520,7 @@ input, textarea, select {
   z-index: 100;
   display: flex;
   flex-direction: column;
-  transition: transform var(--transition-base);
+  transition: transform var(--transition-base), visibility var(--transition-base);
 }
 
 .sidebar-logo {
@@ -586,6 +589,9 @@ input, textarea, select {
   margin-right: var(--sidebar-width);
   min-height: 100vh;
   background: var(--bg-base);
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .dashboard-topbar {
@@ -1600,16 +1606,23 @@ input, textarea, select {
 /* Tablets & small laptops */
 @media (max-width: 1024px) {
   .sidebar {
-    right: -320px !important;
-    left: auto !important;
-    transform: none !important;
-    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    width: 280px;
+    max-width: 85vw;
+    right: 0;
+    left: auto;
+    transform: translateX(100%);
+    visibility: hidden;
+    pointer-events: none;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
   }
   .sidebar.open {
-    right: 0 !important;
-    box-shadow: -8px 0 32px rgba(0,0,0,0.5) !important;
+    transform: translateX(0);
+    visibility: visible;
+    pointer-events: auto;
+    box-shadow: -8px 0 32px rgba(0, 0, 0, 0.5);
   }
-  .dashboard-main { margin-right: 0; }
+  .dashboard-main { margin-right: 0 !important; width: 100% !important; }
   .dashboard-topbar { position: sticky; padding: 0 1rem; }
   .section { padding: 4.5rem 0; }
   .hero-stats { gap: 2rem; }

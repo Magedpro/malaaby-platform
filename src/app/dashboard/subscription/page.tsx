@@ -260,7 +260,7 @@ export default function SubscriptionPage() {
         <>
           <div>
             <h2 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '1rem' }}>🗂️ اختر الخطة المناسبة</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
+          <div className="plans-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
               {PLANS.map((plan) => {
                 const isSelected = selectedPlan === plan.id;
                 const isCurrent = currentPlanId === plan.id;

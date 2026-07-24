@@ -1,209 +1,211 @@
 'use client';
+
 import React, { useState, useEffect } from 'react';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { Skeleton } from '@/components/ui/Skeleton';
-import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
-import { formatDate } from '@/lib/utils';
+import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
+import { Badge } from '@/components/ui/Badge';
 
-const PLAN_NAMES: Record<string, string> = {
-  'plan-basic': '🥉 البرونزية (500 ج.م.)',
-  'plan-pro': '🥈 الفضية (1000 ج.م.)',
-  'plan-premium': '🥇 الذهبية (5000 ج.م.)',
-};
+interface StadiumReport {
+  slug: string;
+  name: string;
+  phone: string;
+  ownerId: string;
+  createdAt: string;
+  isFreeMonth: boolean;
+  freeUntilDate: string | null;
+  totalCompletedBookings: number;
+  commissionRate: number;
+  totalCalculatedCommission: number;
+  unpaidCommission: number;
+  commissionStatus: 'active' | 'blocked';
+  lastSettledDate: string | null;
+  pendingCommissionPayment: {
+    amount: number;
+    senderName: string;
+    senderPhone: string;
+    paymentScreenshot: string;
+    createdAt: string;
+  } | null;
+}
 
-export default function AdminSubscriptionsPage() {
+export default function AdminCommissionsPage() {
   const { showToast } = useToast();
-  const [owners, setOwners] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('all');
-  const [selected, setSelected] = useState<any | null>(null);
-  const [reviewOpen, setReviewOpen] = useState(false);
-  const [actionLoading, setActionLoading] = useState(false);
+  const [reports, setReports] = useState<StadiumReport[]>([]);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  // Subscription update form state
-  const [newStatus, setNewStatus] = useState('active');
-  const [newPlanId, setNewPlanId] = useState('plan-basic');
-  const [expiryDays, setExpiryDays] = useState('30');
+  // Screenshot Preview Modal
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-  const loadOwners = () => {
+  const fetchReports = async () => {
     setLoading(true);
-    fetch('/api/v1/admin/owners').then(r => r.json()).then(j => {
-      if (j.success) setOwners(j.data);
-    }).finally(() => setLoading(false));
-  };
-
-  useEffect(() => { loadOwners(); }, []);
-
-  const statusColor = (s: string) =>
-    ({ active: 'success', trial: 'info', expired: 'danger', suspended: 'warning' }[s] || 'primary') as any;
-  const statusLabel = (s: string) =>
-    ({ active: 'نشط', trial: 'تجريبي', expired: 'منتهي', suspended: 'موقوف' }[s] || s);
-
-  // Filtered: pending requests first, then all
-  const pendingOwners = owners.filter(o => o.pendingSubscription);
-  const filtered = filter === 'pending'
-    ? pendingOwners
-    : filter === 'all' ? owners : owners.filter(o => o.subscriptionStatus === filter);
-
-  const openReview = (owner: any) => {
-    setSelected(owner);
-    setNewStatus('active');
-    setNewPlanId(owner.pendingSubscription?.planId || owner.subscriptionPlanId || 'plan-basic');
-    setExpiryDays('30');
-    setReviewOpen(true);
-  };
-
-  const handleApprove = async () => {
-    if (!selected) return;
-    setActionLoading(true);
-    const expiryDate = new Date(Date.now() + Number(expiryDays) * 86400000).toISOString();
     try {
-      const res = await fetch(`/api/v1/admin/owners/${selected.id}`, {
-        method: 'PUT',
+      const res = await fetch('/api/v1/admin/commissions');
+      const json = await res.json();
+      if (json.success && json.data) {
+        setReports(json.data);
+      } else {
+        showToast(json.error || 'فشل جلب كشوف العمولات', 'error');
+      }
+    } catch {
+      showToast('خطأ في الاتصال بالخادم', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReports();
+  }, []);
+
+  const handleAction = async (stadiumSlug: string, action: 'approve_payment' | 'block' | 'unblock') => {
+    setActionLoading(`${stadiumSlug}-${action}`);
+    try {
+      const res = await fetch('/api/v1/admin/commissions', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'update_subscription',
-          subscriptionStatus: newStatus,
-          subscriptionPlanId: newPlanId,
-          subscriptionExpiry: expiryDate,
-        }),
+        body: JSON.stringify({ stadiumSlug, action }),
       });
       const json = await res.json();
-      if (json.success) {
-        showToast('تم تفعيل الاشتراك بنجاح ✅', 'success');
-        setReviewOpen(false);
-        loadOwners();
-      } else {
-        showToast(json.error || 'فشل تفعيل الاشتراك', 'error');
-      }
-    } catch { showToast('حدث خطأ في الاتصال', 'error'); }
-    finally { setActionLoading(false); }
-  };
 
-  const handleReject = async () => {
-    if (!selected) return;
-    setActionLoading(true);
-    try {
-      const res = await fetch(`/api/v1/admin/owners/${selected.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'reject_subscription' }),
-      });
-      const json = await res.json();
       if (json.success) {
-        showToast('تم رفض الطلب وإلغاؤه', 'success');
-        setReviewOpen(false);
-        loadOwners();
+        showToast(json.message || 'تم الإجراء بنجاح', 'success');
+        fetchReports();
       } else {
-        showToast(json.error || 'فشل رفض الطلب', 'error');
+        showToast(json.error || 'فشل تنفيذ الإجراء', 'error');
       }
-    } catch { showToast('حدث خطأ في الاتصال', 'error'); }
-    finally { setActionLoading(false); }
+    } catch {
+      showToast('حدث خطأ غير متوقع', 'error');
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }} className="animate-fadeIn">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       <div>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 800 }}>💳 إدارة الاشتراكات</h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-          مراجعة طلبات الاشتراك والدفع وتفعيل أو رفض الاشتراكات
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 800 }}>💰 تحصيل وتأكيد عمولات الملاعب (5 ج.م / حجز)</h1>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.25rem' }}>
+          متابعة مستحقات العمولات الشهرية على كل ملعب والموافقة على التحويلات وفك/فرض الحجب.
         </p>
       </div>
 
-      {/* Pending Requests Alert */}
-      {pendingOwners.length > 0 && (
-        <div style={{
-          background: 'rgba(245,158,11,0.08)',
-          border: '1px solid rgba(245,158,11,0.3)',
-          borderRadius: 'var(--radius-lg)',
-          padding: '1rem 1.5rem',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '1rem',
-        }}>
-          <span style={{ fontSize: '1.5rem' }}>⚠️</span>
-          <p style={{ fontWeight: 600, color: 'var(--warning)' }}>
-            يوجد <strong>{pendingOwners.length}</strong> {pendingOwners.length === 1 ? 'طلب اشتراك' : 'طلبات اشتراك'} في انتظار مراجعتك.
-          </p>
-          <button
-            onClick={() => setFilter('pending')}
-            style={{
-              marginRight: 'auto', background: 'var(--warning)', color: '#fff',
-              border: 'none', borderRadius: 'var(--radius-full)',
-              padding: '0.375rem 1rem', fontSize: '0.8125rem', fontWeight: 700,
-              cursor: 'pointer', fontFamily: 'var(--font-arabic)',
-            }}
-          >مراجعة الطلبات</button>
-        </div>
-      )}
-
-      {/* Filter tabs */}
-      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-        {[['all', 'الكل'], ['pending', `⏳ طلبات معلقة (${pendingOwners.length})`], ['active', 'نشط'], ['trial', 'تجريبي'], ['expired', 'منتهي'], ['suspended', 'موقوف']].map(([v, l]) => (
-          <button key={v} onClick={() => setFilter(v)}
-            style={{
-              padding: '0.375rem 1rem', borderRadius: 'var(--radius-full)', fontSize: '0.875rem', fontWeight: 600,
-              cursor: 'pointer', fontFamily: 'var(--font-arabic)', border: 'none',
-              background: filter === v ? 'var(--primary)' : 'var(--bg-elevated)',
-              color: filter === v ? '#fff' : 'var(--text-secondary)',
-            }}>{l}</button>
-        ))}
-      </div>
-
       {loading ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {[...Array(6)].map((_, i) => <Skeleton key={i} height={60} />)}
+        <div style={{ padding: '2rem', textAlign: 'center' }}>
+          <div className="btn-spinner" style={{ width: '36px', height: '36px', margin: '0 auto 1rem' }} />
+          <p>جاري تحميل كشوف العمولات لكل الملاعب...</p>
+        </div>
+      ) : reports.length === 0 ? (
+        <div className="empty-state">
+          <span className="empty-icon">🏟️</span>
+          <div className="empty-title">لا توجد ملاعب مسجلة حالياً</div>
         </div>
       ) : (
         <div className="data-table-wrapper">
           <table className="data-table">
             <thead>
               <tr>
-                <th>المالك</th>
                 <th>الملعب</th>
-                <th>الخطة</th>
-                <th>الحالة</th>
-                <th>تاريخ الانتهاء</th>
-                <th>متبقي</th>
-                <th>طلب معلق</th>
-                <th>إجراء</th>
+                <th>حالة الاشتراك</th>
+                <th>الحجوزات المكتملة</th>
+                <th>المستحقات المطلوب سدادها</th>
+                <th>إثبات التحويل المرفوع</th>
+                <th>حالة اللوحة</th>
+                <th>الإجراءات والتسوية</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map(o => {
-                const expiry = o.subscriptionExpiry ? new Date(o.subscriptionExpiry) : null;
-                const daysLeft = expiry ? Math.ceil((expiry.getTime() - Date.now()) / 86400000) : null;
-                const hasPending = !!o.pendingSubscription;
+              {reports.map(stadium => {
+                const isBlocked = stadium.commissionStatus === 'blocked';
+                const hasPending = !!stadium.pendingCommissionPayment;
+
                 return (
-                  <tr key={o.id} style={{ background: hasPending ? 'rgba(245,158,11,0.04)' : undefined }}>
+                  <tr key={stadium.slug}>
                     <td>
-                      <div style={{ fontWeight: 600 }}>{o.name}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{o.email}</div>
+                      <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{stadium.name}</div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{stadium.phone}</div>
                     </td>
-                    <td style={{ fontSize: '0.875rem' }}>{o.stadiumName}</td>
-                    <td style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-                      {PLAN_NAMES[o.subscriptionPlanId] || o.subscriptionPlanId || '—'}
-                    </td>
-                    <td><Badge variant={statusColor(o.subscriptionStatus)}>{statusLabel(o.subscriptionStatus)}</Badge></td>
-                    <td style={{ fontSize: '0.875rem' }}>{expiry ? formatDate(expiry.toISOString()) : '—'}</td>
+
                     <td>
-                      {daysLeft !== null ? (
-                        <span style={{ color: daysLeft < 7 ? 'var(--danger)' : daysLeft < 30 ? 'var(--warning)' : 'var(--success)', fontWeight: 700, fontSize: '0.875rem' }}>
-                          {daysLeft > 0 ? `${daysLeft} يوم` : 'منتهي'}
-                        </span>
-                      ) : '—'}
+                      {stadium.isFreeMonth ? (
+                        <Badge variant="success">🎁 شهر مجاني 100%</Badge>
+                      ) : (
+                        <Badge variant="info">5 ج.م / حجز</Badge>
+                      )}
                     </td>
+
+                    <td style={{ fontWeight: 700 }}>
+                      {stadium.totalCompletedBookings} حجز
+                    </td>
+
+                    <td style={{ fontWeight: 800, color: stadium.unpaidCommission > 0 ? 'var(--danger)' : '#10b981' }}>
+                      {stadium.unpaidCommission} ج.م
+                    </td>
+
                     <td>
                       {hasPending ? (
-                        <Badge variant="warning">⏳ طلب دفع</Badge>
-                      ) : <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>—</span>}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                          <span style={{ fontSize: '0.8rem', color: 'var(--warning)', fontWeight: 700 }}>
+                            📥 {stadium.pendingCommissionPayment?.amount} ج.م ({stadium.pendingCommissionPayment?.senderName})
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setPreviewImage(stadium.pendingCommissionPayment?.paymentScreenshot || null)}
+                            style={{
+                              background: 'none', border: 'none', color: 'var(--primary-light)', cursor: 'pointer',
+                              fontSize: '0.8rem', textDecoration: 'underline', textAlign: 'right'
+                            }}
+                          >
+                            👁️ معاينة إيصال التحويل
+                          </button>
+                        </div>
+                      ) : (
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>لا يوجد تحويل معلق</span>
+                      )}
                     </td>
+
                     <td>
-                      <Button variant="primary" size="sm" onClick={() => openReview(o)}>
-                        {hasPending ? '🔍 مراجعة' : '✏️ تعديل'}
-                      </Button>
+                      {isBlocked ? (
+                        <Badge variant="danger">⛔ محجوب مؤقتاً</Badge>
+                      ) : (
+                        <Badge variant="success">✅ نشط</Badge>
+                      )}
+                    </td>
+
+                    <td>
+                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        {hasPending && (
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => handleAction(stadium.slug, 'approve_payment')}
+                            isLoading={actionLoading === `${stadium.slug}-approve_payment`}
+                          >
+                            ✅ تأكيد التحصيل وفك الحجب
+                          </Button>
+                        )}
+
+                        {isBlocked ? (
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => handleAction(stadium.slug, 'unblock')}
+                            isLoading={actionLoading === `${stadium.slug}-unblock`}
+                          >
+                            🔓 فك الحجب
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            onClick={() => handleAction(stadium.slug, 'block')}
+                            isLoading={actionLoading === `${stadium.slug}-block`}
+                          >
+                            ⛔ حجب اللوحة
+                          </Button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -213,94 +215,14 @@ export default function AdminSubscriptionsPage() {
         </div>
       )}
 
-      {/* Review Modal */}
-      <Modal
-        isOpen={reviewOpen}
-        onClose={() => setReviewOpen(false)}
-        title={`${selected?.pendingSubscription ? '🔍 مراجعة طلب دفع' : '✏️ تعديل اشتراك'} — ${selected?.stadiumName}`}
-        footer={
-          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-            {selected?.pendingSubscription && (
-              <Button variant="danger" onClick={handleReject} isLoading={actionLoading}>❌ رفض الطلب</Button>
-            )}
-            <Button variant="primary" onClick={handleApprove} isLoading={actionLoading}>✅ تفعيل الاشتراك</Button>
+      {/* Screenshot Preview Modal */}
+      {previewImage && (
+        <Modal isOpen={true} onClose={() => setPreviewImage(null)} title="🖼️ معاينة إيصال تحويل العمولات">
+          <div style={{ textAlign: 'center' }}>
+            <img src={previewImage} alt="إيصال التحويل" style={{ maxWidth: '100%', maxHeight: '70vh', borderRadius: 'var(--radius-md)' }} />
           </div>
-        }
-      >
-        {selected && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-
-            {/* Pending Payment Details */}
-            {selected.pendingSubscription && (
-              <div style={{
-                background: 'rgba(245,158,11,0.06)',
-                border: '1px solid rgba(245,158,11,0.25)',
-                borderRadius: 'var(--radius-md)',
-                padding: '1.25rem',
-              }}>
-                <p style={{ fontWeight: 700, color: 'var(--warning)', marginBottom: '0.75rem' }}>⏳ تفاصيل طلب الدفع</p>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', fontSize: '0.875rem', marginBottom: '1rem' }}>
-                  <div><strong>الخطة المطلوبة:</strong><br />{PLAN_NAMES[selected.pendingSubscription.planId] || selected.pendingSubscription.planId}</div>
-                  <div><strong>المبلغ المحوّل:</strong><br /><span style={{ fontWeight: 700, color: 'var(--primary-light)' }}>{selected.pendingSubscription.amount} ج.م.</span></div>
-                  <div><strong>اسم المرسل:</strong><br />{selected.pendingSubscription.senderName}</div>
-                  <div><strong>رقم المرسل:</strong><br /><span dir="ltr">{selected.pendingSubscription.senderPhone}</span></div>
-                </div>
-                {selected.pendingSubscription.paymentScreenshot && (
-                  <div>
-                    <p style={{ fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.5rem' }}>📸 صورة الإيصال:</p>
-                    <a href={selected.pendingSubscription.paymentScreenshot} target="_blank" rel="noopener noreferrer">
-                      <img
-                        src={selected.pendingSubscription.paymentScreenshot}
-                        alt="إيصال الدفع"
-                        style={{ maxWidth: '100%', maxHeight: '280px', objectFit: 'contain', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-default)', cursor: 'zoom-in' }}
-                      />
-                    </a>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.375rem' }}>انقر على الصورة لعرضها بالحجم الكامل</p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Subscription Update Form */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
-              <p style={{ fontWeight: 600, fontSize: '0.9375rem' }}>⚙️ إعدادات الاشتراك الجديدة</p>
-              <div className="form-group">
-                <label className="form-label">الخطة</label>
-                <select className="form-input form-select" value={newPlanId} onChange={e => setNewPlanId(e.target.value)}>
-                  <option value="plan-basic">🥉 البرونزية — 500 ج.م.</option>
-                  <option value="plan-pro">🥈 الفضية — 1000 ج.م.</option>
-                  <option value="plan-premium">🥇 الذهبية — 5000 ج.م.</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label className="form-label">الحالة</label>
-                <select className="form-input form-select" value={newStatus} onChange={e => setNewStatus(e.target.value)}>
-                  <option value="active">نشط ✅</option>
-                  <option value="trial">تجريبي 🎯</option>
-                  <option value="expired">منتهي ❌</option>
-                  <option value="suspended">موقوف ⚠️</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label className="form-label">مدة الاشتراك (بالأيام)</label>
-                <input
-                  className="form-input"
-                  type="number"
-                  value={expiryDays}
-                  onChange={e => setExpiryDays(e.target.value)}
-                  min="1"
-                  dir="ltr"
-                  placeholder="30"
-                />
-                <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'block' }}>
-                  تاريخ الانتهاء: {new Date(Date.now() + Number(expiryDays) * 86400000).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-      </Modal>
+        </Modal>
+      )}
     </div>
   );
 }
-export const dynamic = 'force-dynamic';

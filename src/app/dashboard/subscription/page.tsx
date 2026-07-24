@@ -1,455 +1,293 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useSession } from '@/hooks/useSession';
 import { useToast } from '@/components/ui/Toast';
 import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
+import { Input } from '@/components/ui/Input';
 
-const PLANS = [
-  {
-    id: 'plan-basic',
-    name: 'الخطة البرونزية',
-    icon: '🥉',
-    price: 500,
-    maxFields: 1,
-    color: '#cd7f32',
-    colorBg: 'rgba(205,127,50,0.08)',
-    colorBorder: 'rgba(205,127,50,0.3)',
-    features: ['إدارة ملعب واحد فقط', 'لوحة تحكم كاملة', 'إدارة الحجوزات والمدفوعات', 'إشعارات واتساب وبريد إلكتروني', 'دعم فني عبر واتساب'],
-    isPopular: false,
-  },
-  {
-    id: 'plan-pro',
-    name: 'الخطة الفضية',
-    icon: '🥈',
-    price: 1000,
-    maxFields: 2,
-    color: '#a8a9ad',
-    colorBg: 'rgba(168,169,173,0.08)',
-    colorBorder: 'rgba(168,169,173,0.3)',
-    features: ['إدارة ملعبين (2 ملعب)', 'تقويم حجوزات تفاعلي', 'تقارير الإيرادات اليومية', 'دعم فني سريع الاستجابة', 'إحصائيات مالية شهرية'],
-    isPopular: true,
-  },
-  {
-    id: 'plan-premium',
-    name: 'الخطة الذهبية',
-    icon: '🥇',
-    price: 5000,
-    maxFields: -1,
-    color: '#ffd700',
-    colorBg: 'rgba(255,215,0,0.08)',
-    colorBorder: 'rgba(255,215,0,0.3)',
-    features: ['ملاعب غير محدودة', 'جميع مميزات الخطة الفضية', 'تقارير مالية تفصيلية', 'أولوية قصوى في الدعم الفني 24/7', 'تأكيد ودعم فوري'],
-    isPopular: false,
-  },
-];
-
-const PAYMENT_NUMBER = '01126947405';
-
-function daysLeft(expiryStr?: string): number | null {
-  if (!expiryStr) return null;
-  const parsed = Date.parse(expiryStr);
-  if (isNaN(parsed)) return null;
-  return Math.ceil((parsed - Date.now()) / 86400000);
+interface CommissionData {
+  stadiumSlug: string;
+  stadiumName: string;
+  commissionRate: number;
+  isFreeMonth: boolean;
+  freeUntilDate: string;
+  totalCompletedBookings: number;
+  totalCalculatedCommission: number;
+  unpaidCommission: number;
+  commissionStatus: 'active' | 'blocked';
+  lastSettledDate: string | null;
+  pendingCommissionPayment: {
+    amount: number;
+    senderName: string;
+    senderPhone: string;
+    paymentScreenshot: string;
+    createdAt: string;
+  } | null;
 }
 
-export default function SubscriptionPage() {
-  const { stadium } = useSession();
+export default function StadiumCommissionPage() {
   const { showToast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<CommissionData | null>(null);
 
-  useEffect(() => {
-    console.log('🏟️ [SubscriptionPage] Loaded Stadium Info:', stadium);
-  }, [stadium]);
-
-  const [selectedPlan, setSelectedPlan] = useState<string>('');
+  // Payment upload state
   const [senderName, setSenderName] = useState('');
   const [senderPhone, setSenderPhone] = useState('');
-  const [receiptPreview, setReceiptPreview] = useState<string>('');
-  const [receiptUrl, setReceiptUrl] = useState<string>('');
-  const [amount, setAmount] = useState<string>('');
+  const [amount, setAmount] = useState('');
+  const [screenshotUrl, setScreenshotUrl] = useState('');
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
 
-  const currentPlanId = (stadium as any)?.subscriptionPlanId || 'plan-basic';
-  const subscriptionStatus = (stadium as any)?.subscriptionStatus || 'trial';
-  const subscriptionExpiry = (stadium as any)?.subscriptionExpiry;
-  const pendingSubscription = (stadium as any)?.pendingSubscription;
-  
-  // Calculate remaining days with a dynamic fallback if not found in db
-  let remaining = daysLeft(subscriptionExpiry);
-  if (remaining === null && subscriptionStatus === 'trial') {
-    // If trial but no expiry date, default to 60 days from now (safe fallback)
-    remaining = 60;
-  }
-
-  const statusLabel: Record<string, string> = {
-    trial: 'تجربة مجانية',
-    active: 'نشط',
-    expired: 'منتهي',
-    suspended: 'موقوف',
-  };
-  const statusVariant: Record<string, string> = {
-    trial: 'info',
-    active: 'success',
-    expired: 'danger',
-    suspended: 'warning',
-  };
-
-  const currentPlan = PLANS.find(p => p.id === currentPlanId);
-
-  // Auto-fill amount when plan is selected
-  useEffect(() => {
-    if (selectedPlan) {
-      const plan = PLANS.find(p => p.id === selectedPlan);
-      if (plan) setAmount(String(plan.price));
-    }
-  }, [selectedPlan]);
-
-  const handleReceiptUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
+  const fetchCommission = async () => {
+    setLoading(true);
     try {
-      // Preview
-      const reader = new FileReader();
-      reader.onload = (ev) => setReceiptPreview(ev.target?.result as string);
-      reader.readAsDataURL(file);
-      // Upload
-      const fd = new FormData();
-      fd.append('file', file);
-      const res = await fetch('/api/v1/upload', { method: 'POST', body: fd });
+      const res = await fetch('/api/v1/stadium/commission');
       const json = await res.json();
-      if (json.success) {
-        setReceiptUrl(json.url);
-        showToast('تم رفع الإيصال بنجاح ✅', 'success');
-      } else {
-        showToast(json.error || 'فشل رفع الإيصال', 'error');
+      if (json.success && json.data) {
+        setData(json.data);
+        setAmount(String(json.data.unpaidCommission || ''));
       }
     } catch {
-      showToast('حدث خطأ أثناء رفع الإيصال', 'error');
+      showToast('خطأ في تحميل بيانات العمولات والمستحقات', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCommission();
+  }, []);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/v1/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const json = await res.json();
+
+      if (json.success && json.url) {
+        setScreenshotUrl(json.url);
+        showToast('تم رفع صورة الإيصال بنجاح 📸', 'success');
+      } else {
+        showToast(json.error || 'فشل رفع الصورة', 'error');
+      }
+    } catch {
+      showToast('خطأ أثناء رفع الصورة', 'error');
     } finally {
       setUploading(false);
     }
   };
 
-  const handleSubmit = async () => {
-    if (!selectedPlan) { showToast('يرجى اختيار خطة الاشتراك', 'error'); return; }
-    if (!senderName.trim()) { showToast('يرجى إدخال اسم المرسل', 'error'); return; }
-    if (!senderPhone.trim()) { showToast('يرجى إدخال رقم هاتف المرسل', 'error'); return; }
-    if (!receiptUrl) { showToast('يرجى رفع صورة إيصال التحويل', 'error'); return; }
-    if (!amount || isNaN(Number(amount))) { showToast('يرجى إدخال المبلغ المحوّل', 'error'); return; }
+  const handleSubmitPayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!senderName || !senderPhone || !amount || !screenshotUrl) {
+      showToast('يرجى ملء جميع البيانات ورفع صورة إثبات التحويل', 'error');
+      return;
+    }
 
     setSubmitting(true);
     try {
-      const res = await fetch('/api/v1/stadium/subscription', {
+      const res = await fetch('/api/v1/stadium/commission', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          planId: selectedPlan,
-          senderName: senderName.trim(),
-          senderPhone: senderPhone.trim(),
-          paymentScreenshot: receiptUrl,
           amount: Number(amount),
+          senderName,
+          senderPhone,
+          paymentScreenshot: screenshotUrl,
         }),
       });
       const json = await res.json();
+
       if (json.success) {
-        showToast('تم إرسال طلب الاشتراك بنجاح ⏳', 'success');
-        setSubmitted(true);
+        showToast('تم إرسال إثبات السداد! بانتظار تأكيد صاحب الموقع وفك الحجب 🎉', 'success');
+        fetchCommission();
       } else {
-        showToast(json.error || 'فشل إرسال الطلب', 'error');
+        showToast(json.error || 'فشل إرسال الإثبات', 'error');
       }
     } catch {
-      showToast('حدث خطأ في الاتصال', 'error');
+      showToast('حدث خطأ في الاتصال بالسيرفر', 'error');
     } finally {
       setSubmitting(false);
     }
   };
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }} className="animate-fadeIn">
+  if (loading) {
+    return (
+      <div style={{ padding: '2rem', textAlign: 'center' }}>
+        <div className="btn-spinner" style={{ width: '36px', height: '36px', margin: '0 auto 1rem' }} />
+        <p>جاري تحميل حساب عمولات ومستحقات المنصة...</p>
+      </div>
+    );
+  }
 
-      {/* Header */}
+  if (!data) return null;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '900px', margin: '0 auto' }}>
+      
+      {/* Page Header */}
       <div>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 800 }}>💳 باقة الاشتراك</h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-          إدارة خطة اشتراكك وتجديده لمتابعة الاستمتاع بجميع الخدمات
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 800 }}>💵 حساب عمولات ومستحقات المنصة</h1>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.25rem' }}>
+          نظام العمولة: <strong>5 جنيه مصري</strong> عن كل حجز مكتمل بعد انتهاء الشهر الأول المجاني.
         </p>
       </div>
 
-      {/* Current Status Card */}
-      <div style={{
-        background: 'var(--bg-card)',
-        border: '1px solid var(--border-default)',
-        borderRadius: 'var(--radius-lg)',
-        padding: '1.5rem',
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: '1.5rem',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-      }}>
-        <div>
-          <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>الخطة الحالية</p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <span style={{ fontSize: '1.75rem' }}>{currentPlan?.icon || '📋'}</span>
-            <span style={{ fontSize: '1.125rem', fontWeight: 800 }}>{currentPlan?.name || 'غير محددة'}</span>
-            <Badge variant={statusVariant[subscriptionStatus] as any}>{statusLabel[subscriptionStatus] || subscriptionStatus}</Badge>
-          </div>
-        </div>
-        <div style={{ textAlign: 'center' }}>
-          <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>الأيام المتبقية</p>
-          <p style={{
-            fontSize: '2rem', fontWeight: 900,
-            color: remaining !== null && remaining < 10 ? 'var(--danger)' : remaining !== null && remaining < 30 ? 'var(--warning)' : 'var(--success)'
-          }}>
-            {remaining !== null ? (remaining > 0 ? `${remaining} يوم` : 'منتهي') : '—'}
-          </p>
-        </div>
-        <div>
-          {subscriptionExpiry && (
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-              📅 تنتهي في: <strong>{new Date(subscriptionExpiry).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })}</strong>
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Pending Approval Alert */}
-      {pendingSubscription && !submitted && (
+      {/* Free Month Banner */}
+      {data.isFreeMonth ? (
         <div style={{
-          background: 'rgba(245,158,11,0.08)',
-          border: '1px solid rgba(245,158,11,0.3)',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          border: '1px solid rgba(16, 185, 129, 0.3)',
           borderRadius: 'var(--radius-lg)',
-          padding: '1.25rem 1.5rem',
+          padding: '1.25rem',
           display: 'flex',
+          alignItems: 'center',
           gap: '1rem',
-          alignItems: 'flex-start',
         }}>
-          <span style={{ fontSize: '1.5rem' }}>⏳</span>
+          <div style={{ fontSize: '2.5rem' }}>🎁</div>
           <div>
-            <p style={{ fontWeight: 700, color: 'var(--warning)' }}>طلب اشتراك قيد المراجعة</p>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#10b981' }}>أنت الآن في الشهر الأول المجاني بالكامل!</h3>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-              لقد قمت بإرسال طلب الاشتراك في <strong>{PLANS.find(p => p.id === pendingSubscription.planId)?.name || pendingSubscription.planId}</strong> بمبلغ <strong>{pendingSubscription.amount} ج.م.</strong>. سيتم مراجعة طلبك من قِبَل الإدارة وتفعيله خلال وقت قصير.
+              جميع الحجوزات مجانية 100% وبدون أي عمولات حتى تاريخ: <strong>{new Date(data.freeUntilDate).toLocaleDateString('ar-EG')}</strong>
+            </p>
+          </div>
+        </div>
+      ) : (
+        /* Status Card */
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: '1rem',
+        }}>
+          <div className="stat-card" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '1.25rem', borderRadius: 'var(--radius-lg)' }}>
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>إجمالي الحجوزات المكتملة</div>
+            <div style={{ fontSize: '1.75rem', fontWeight: 900, marginTop: '0.5rem' }}>{data.totalCompletedBookings} حجز</div>
+          </div>
+
+          <div className="stat-card" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '1.25rem', borderRadius: 'var(--radius-lg)' }}>
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>تعريفة العمولة</div>
+            <div style={{ fontSize: '1.75rem', fontWeight: 900, color: 'var(--primary-light)', marginTop: '0.5rem' }}>{data.commissionRate} ج.م / حجز</div>
+          </div>
+
+          <div className="stat-card" style={{
+            background: data.unpaidCommission > 0 ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)',
+            border: data.unpaidCommission > 0 ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
+            padding: '1.25rem',
+            borderRadius: 'var(--radius-lg)',
+          }}>
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>المستحقات المطلوبة للسداد</div>
+            <div style={{ fontSize: '1.75rem', fontWeight: 900, color: data.unpaidCommission > 0 ? 'var(--danger)' : '#10b981', marginTop: '0.5rem' }}>
+              {data.unpaidCommission} ج.م
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pending Approval Notice */}
+      {data.pendingCommissionPayment && (
+        <div style={{
+          backgroundColor: 'rgba(245, 158, 11, 0.1)',
+          border: '1px solid rgba(245, 158, 11, 0.3)',
+          borderRadius: 'var(--radius-lg)',
+          padding: '1.25rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1rem',
+        }}>
+          <div style={{ fontSize: '2rem' }}>⏳</div>
+          <div>
+            <h4 style={{ fontWeight: 700, color: 'var(--warning)' }}>تم إرسال إثبات السداد وبانتظار موافقة الأدمن</h4>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+              المبلغ المرسل: <strong>{data.pendingCommissionPayment.amount} ج.م</strong> بتاريخ {new Date(data.pendingCommissionPayment.createdAt).toLocaleDateString('ar-EG')}
             </p>
           </div>
         </div>
       )}
 
-      {/* Success Message After Submit */}
-      {submitted && (
-        <div style={{
-          background: 'rgba(34,197,94,0.08)',
-          border: '1px solid rgba(34,197,94,0.3)',
-          borderRadius: 'var(--radius-lg)',
-          padding: '2rem',
-          textAlign: 'center',
-        }}>
-          <div style={{ fontSize: '3.5rem', marginBottom: '1rem' }}>✅</div>
-          <h2 style={{ fontWeight: 800, fontSize: '1.25rem', color: 'var(--success)', marginBottom: '0.5rem' }}>تم إرسال طلبك بنجاح!</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9375rem' }}>
-            سيتم مراجعة إيصال التحويل الخاص بك وتفعيل الاشتراك خلال ساعات قليلة.
-          </p>
-        </div>
-      )}
-
-      {/* Plans Grid */}
-      {!submitted && (
-        <>
-          <div>
-            <h2 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '1rem' }}>🗂️ اختر الخطة المناسبة</h2>
-          <div className="plans-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
-              {PLANS.map((plan) => {
-                const isSelected = selectedPlan === plan.id;
-                const isCurrent = currentPlanId === plan.id;
-                return (
-                  <div
-                    key={plan.id}
-                    onClick={() => setSelectedPlan(plan.id)}
-                    style={{
-                      position: 'relative',
-                      background: isSelected ? plan.colorBg : 'var(--bg-card)',
-                      border: `2px solid ${isSelected ? plan.color : isCurrent ? 'var(--primary)' : 'var(--border-default)'}`,
-                      borderRadius: 'var(--radius-lg)',
-                      padding: '1.5rem',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      boxShadow: isSelected ? `0 0 0 3px ${plan.color}33` : 'none',
-                    }}
-                  >
-                    {plan.isPopular && (
-                      <div style={{
-                        position: 'absolute', top: '-12px', right: '1rem',
-                        background: 'var(--primary)', color: '#fff',
-                        fontSize: '0.75rem', fontWeight: 700,
-                        padding: '2px 12px', borderRadius: 'var(--radius-full)',
-                      }}>⭐ الأكثر اختياراً</div>
-                    )}
-                    {isCurrent && (
-                      <div style={{
-                        position: 'absolute', top: '-12px', left: '1rem',
-                        background: 'var(--success)', color: '#fff',
-                        fontSize: '0.75rem', fontWeight: 700,
-                        padding: '2px 12px', borderRadius: 'var(--radius-full)',
-                      }}>✅ خطتك الحالية</div>
-                    )}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                      <span style={{ fontSize: '2rem' }}>{plan.icon}</span>
-                      <span style={{ fontWeight: 800, fontSize: '1.0625rem', color: plan.color }}>{plan.name}</span>
-                    </div>
-                    <div style={{ marginBottom: '1rem' }}>
-                      <span style={{ fontSize: '1.75rem', fontWeight: 900 }}>{plan.price.toLocaleString('ar-EG')}</span>
-                      <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginRight: '0.25rem' }}> ج.م. / شهر</span>
-                    </div>
-                    <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-                      {plan.maxFields === -1 ? 'ملاعب غير محدودة' : `حتى ${plan.maxFields} ${plan.maxFields === 1 ? 'ملعب' : 'ملاعب'}`}
-                    </p>
-                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
-                      {plan.features.map((f) => (
-                        <li key={f} style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-                          <span style={{ color: 'var(--success)', flexShrink: 0 }}>✓</span> {f}
-                        </li>
-                      ))}
-                    </ul>
-                    {isSelected && (
-                      <div style={{
-                        marginTop: '1rem', padding: '0.5rem', borderRadius: 'var(--radius-md)',
-                        background: plan.color, color: '#fff', textAlign: 'center', fontSize: '0.875rem', fontWeight: 700,
-                      }}>تم الاختيار ✓</div>
-                    )}
-                  </div>
-                );
-              })}
+      {/* How & Where to Pay Instructions */}
+      {!data.isFreeMonth && data.unpaidCommission > 0 && (
+        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-xl)', padding: '1.5rem' }}>
+          <h2 style={{ fontSize: '1.15rem', fontWeight: 800, marginBottom: '1rem' }}>📱 طرق سداد العمولات الشهرية</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+            <div style={{ background: 'var(--bg-base)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
+              <div style={{ fontSize: '1.25rem', marginBottom: '0.25rem' }}>🔴 فودافون كاش</div>
+              <div style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--primary-light)', direction: 'ltr', textAlign: 'right' }}>01008432559</div>
+            </div>
+            <div style={{ background: 'var(--bg-base)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
+              <div style={{ fontSize: '1.25rem', marginBottom: '0.25rem' }}>⚡ انستا باي (InstaPay)</div>
+              <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#10b981', direction: 'ltr', textAlign: 'right' }}>01008432559</div>
             </div>
           </div>
 
-          {/* Payment Instructions */}
-          {selectedPlan && (
-            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-lg)', padding: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '1.25rem' }}>💸 تعليمات الدفع</h2>
-              <div style={{
-                background: 'linear-gradient(135deg, rgba(43,130,89,0.12), rgba(43,130,89,0.04))',
-                border: '1px solid var(--border-primary)',
-                borderRadius: 'var(--radius-md)',
-                padding: '1.25rem',
-                marginBottom: '1.5rem',
-              }}>
-                <p style={{ fontSize: '0.9375rem', lineHeight: 1.8, color: 'var(--text-secondary)' }}>
-                  يرجى تحويل مبلغ{' '}
-                  <strong style={{ color: 'var(--primary-light)', fontSize: '1.1rem' }}>
-                    {PLANS.find(p => p.id === selectedPlan)?.price.toLocaleString('ar-EG')} ج.م.
-                  </strong>{' '}
-                  إلى الرقم التالي عبر:
-                </p>
-                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
-                  <div style={{
-                    display: 'flex', alignItems: 'center', gap: '0.5rem',
-                    background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.25)',
-                    borderRadius: 'var(--radius-md)', padding: '0.625rem 1rem',
-                  }}>
-                    <span style={{ fontSize: '1.25rem' }}>📲</span>
-                    <div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>فودافون كاش</div>
-                      <div style={{ fontWeight: 800, fontSize: '1rem', direction: 'ltr' }}>{PAYMENT_NUMBER}</div>
-                    </div>
-                  </div>
-                  <div style={{
-                    display: 'flex', alignItems: 'center', gap: '0.5rem',
-                    background: 'rgba(88,28,135,0.08)', border: '1px solid rgba(88,28,135,0.25)',
-                    borderRadius: 'var(--radius-md)', padding: '0.625rem 1rem',
-                  }}>
-                    <span style={{ fontSize: '1.25rem' }}>💜</span>
-                    <div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>انستا باي</div>
-                      <div style={{ fontWeight: 800, fontSize: '1rem', direction: 'ltr' }}>{PAYMENT_NUMBER}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+          <hr style={{ borderColor: 'var(--border-subtle)', margin: '1.5rem 0' }} />
 
-              {/* Payment Form */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  <div className="form-group">
-                    <label className="form-label">👤 اسم المرسل (كما في المحفظة) *</label>
-                    <input
-                      className="form-input"
-                      placeholder="الاسم الذي أُرسل منه التحويل..."
-                      value={senderName}
-                      onChange={e => setSenderName(e.target.value)}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">📞 رقم الهاتف المرسل منه *</label>
-                    <input
-                      className="form-input"
-                      placeholder="01xxxxxxxxx"
-                      value={senderPhone}
-                      onChange={e => setSenderPhone(e.target.value)}
-                      dir="ltr"
-                    />
-                  </div>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">💰 المبلغ المحوّل (ج.م.) *</label>
-                  <input
-                    className="form-input"
-                    type="number"
-                    placeholder="أدخل المبلغ الذي قمت بتحويله..."
-                    value={amount}
-                    onChange={e => setAmount(e.target.value)}
-                    dir="ltr"
-                  />
-                </div>
-
-                {/* Receipt Upload */}
-                <div className="form-group">
-                  <label className="form-label">📸 صورة إيصال التحويل (إجباري) *</label>
-                  <div
-                    className={`upload-zone ${receiptPreview ? 'dragover' : ''}`}
-                    onClick={() => document.getElementById('sub-receipt-upload')?.click()}
-                    style={{ border: '2px dashed var(--primary-light)', minHeight: '140px', cursor: 'pointer' }}
-                  >
-                    {uploading ? (
-                      <div style={{ textAlign: 'center' }}>
-                        <div className="btn-spinner" style={{ width: '32px', height: '32px', margin: '0 auto 0.5rem' }} />
-                        <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>جاري الرفع...</p>
-                      </div>
-                    ) : receiptPreview ? (
-                      <img src={receiptPreview} alt="إيصال الدفع" style={{ maxHeight: '220px', maxWidth: '100%', borderRadius: 'var(--radius-md)', objectFit: 'contain' }} />
-                    ) : (
-                      <div style={{ textAlign: 'center' }}>
-                        <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>📤</div>
-                        <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
-                          انقر هنا لرفع صورة الإيصال (إجباري)
-                        </p>
-                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>JPG, PNG, WEBP — حتى 10MB</p>
-                      </div>
-                    )}
-                  </div>
-                  <input id="sub-receipt-upload" type="file" accept="image/*" style={{ display: 'none' }} onChange={handleReceiptUpload} />
-                </div>
-
-                <Button
-                  variant="primary"
-                  onClick={handleSubmit}
-                  isLoading={submitting}
-                  style={{ marginTop: '0.5rem', fontSize: '1rem', padding: '0.875rem' }}
-                >
-                  🚀 إرسال طلب الاشتراك للمراجعة
-                </Button>
-                <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', textAlign: 'center' }}>
-                  سيتم مراجعة طلبك وتفعيل اشتراكك خلال ساعات قليلة من استلام الدفع.
-                </p>
-              </div>
+          {/* Upload Receipt Form */}
+          <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1rem' }}>📤 رفع صورة إثبات تحويل المبلغ</h3>
+          <form onSubmit={handleSubmitPayment} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+              <Input
+                label="اسم المحول (مالك الملعب)"
+                placeholder="أحمد محمد"
+                value={senderName}
+                onChange={e => setSenderName(e.target.value)}
+                required
+              />
+              <Input
+                label="رقم هاتف المحوّل منه"
+                placeholder="01012345678"
+                value={senderPhone}
+                onChange={e => setSenderPhone(e.target.value)}
+                required
+              />
+              <Input
+                label="المبلغ المحول (ج.م)"
+                type="number"
+                value={amount}
+                onChange={e => setAmount(e.target.value)}
+                required
+              />
             </div>
-          )}
-        </>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+                صورة الإيصال / السكرين شوت
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                disabled={uploading}
+                style={{
+                  padding: '0.5rem',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px dashed var(--border-color)',
+                  width: '100%',
+                  cursor: 'pointer',
+                }}
+              />
+              {uploading && <p style={{ fontSize: '0.8rem', color: 'var(--primary-light)', marginTop: '0.25rem' }}>جاري رفع الصورة...</p>}
+              {screenshotUrl && (
+                <div style={{ marginTop: '0.5rem' }}>
+                  <img src={screenshotUrl} alt="إيصال السداد" style={{ maxHeight: '120px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }} />
+                </div>
+              )}
+            </div>
+
+            <Button type="submit" variant="primary" isLoading={submitting} disabled={!screenshotUrl || uploading}>
+              تأكيد وإرسال إثبات السداد للأدمن 🚀
+            </Button>
+          </form>
+        </div>
       )}
     </div>
   );
 }
-
-export const dynamic = 'force-dynamic';

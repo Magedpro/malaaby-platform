@@ -6,14 +6,13 @@ import { useSession } from '@/hooks/useSession';
 import { DashboardSidebar } from '@/components/layout/DashboardSidebar';
 import { DashboardTopbar } from '@/components/layout/DashboardTopbar';
 import { FloatingWhatsApp } from '@/components/ui/FloatingWhatsApp';
-import { FloatingSubscription } from '@/components/ui/FloatingSubscription';
 import Link from 'next/link';
 
-function daysLeft(expiryStr?: string): number | null {
-  if (!expiryStr) return null;
-  const parsed = Date.parse(expiryStr);
-  if (isNaN(parsed)) return null;
-  return Math.ceil((parsed - Date.now()) / 86400000);
+function daysSince(createdAtStr?: string): number {
+  if (!createdAtStr) return 999;
+  const createdTime = Date.parse(createdAtStr);
+  if (isNaN(createdTime)) return 999;
+  return Math.floor((Date.now() - createdTime) / 86400000);
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -23,16 +22,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  const subStatus = (stadium as any)?.subscriptionStatus || 'trial';
-  const subExpiry = (stadium as any)?.subscriptionExpiry;
-  
-  let remaining = daysLeft(subExpiry);
-  if (remaining === null && subStatus === 'trial') {
-    remaining = 60;
-  }
+  const daysOld = daysSince((stadium as any)?.createdAt);
+  const isFreeMonth = daysOld < 30;
+  const remainingFreeDays = Math.max(0, 30 - daysOld);
 
-  const isExpired = subStatus === 'expired' || (remaining !== null && remaining <= 0 && subStatus !== 'trial');
-  const isTrial = subStatus === 'trial';
+  const isCommissionBlocked = (stadium as any)?.commissionStatus === 'blocked';
   const isOnSubscriptionPage = pathname === '/dashboard/subscription';
 
   // Automatically close sidebar whenever route/pathname changes
@@ -92,11 +86,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           unreadNotifications={unreadCount}
         />
 
-        {/* Trial Warning Banner */}
-        {isTrial && !isOnSubscriptionPage && remaining !== null && remaining > 0 && (
+        {/* Free Month Banner */}
+        {isFreeMonth && (
           <div style={{
-            background: 'linear-gradient(135deg, rgba(245,158,11,0.15), rgba(245,158,11,0.05))',
-            borderBottom: '1px solid rgba(245,158,11,0.3)',
+            background: 'linear-gradient(135deg, rgba(16,185,129,0.15), rgba(16,185,129,0.05))',
+            borderBottom: '1px solid rgba(16,185,129,0.3)',
             padding: '0.75rem 1.5rem',
             display: 'flex',
             alignItems: 'center',
@@ -104,64 +98,78 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             flexWrap: 'wrap',
             gap: '0.5rem',
           }}>
-            <p style={{ fontSize: '0.875rem', color: 'var(--warning)', fontWeight: 600 }}>
-              ⏳ أنت الآن في الفترة التجريبية المجانية (60 يوماً) — متبقي لك <strong>{remaining} يوم</strong> للاستخدام المجاني.
-              يمكنك الاشتراك في أي وقت لتفعيل الخطة المدفوعة.
+            <p style={{ fontSize: '0.875rem', color: '#10b981', fontWeight: 700 }}>
+              🎁 هدية التسجيل: أنت الآن في **الشهر الأول المجاني بالكامل** (متبقي <strong>{remainingFreeDays} يوم</strong>) — بدون أي عمولات!
             </p>
-            <Link
-              href="/dashboard/subscription"
-              style={{
-                background: 'var(--warning)',
-                color: '#fff',
-                padding: '0.375rem 1rem',
-                borderRadius: 'var(--radius-full)',
-                fontSize: '0.8125rem',
-                fontWeight: 700,
-                textDecoration: 'none',
-                whiteSpace: 'nowrap',
-              }}
-            >💳 اشترك الآن</Link>
+            <span style={{ fontSize: '0.75rem', backgroundColor: 'rgba(16,185,129,0.2)', padding: '0.25rem 0.75rem', borderRadius: '1rem', color: '#059669', fontWeight: 600 }}>
+              عمولة 0% حالياً
+            </span>
           </div>
         )}
 
         <main className="dashboard-content">{children}</main>
       </div>
 
-      {/* Expired Subscription Overlay */}
-      {isExpired && !isOnSubscriptionPage && (
+      {/* Overdue / Blocked Account Lockout Overlay */}
+      {isCommissionBlocked && !isOnSubscriptionPage && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 9999,
-          background: 'rgba(0,0,0,0.85)',
+          background: 'rgba(0,0,0,0.88)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          backdropFilter: 'blur(6px)',
+          backdropFilter: 'blur(8px)',
         }}>
           <div style={{
             background: 'var(--bg-card)',
             borderRadius: 'var(--radius-xl)',
             padding: '2.5rem',
-            maxWidth: '460px',
+            maxWidth: '480px',
             width: '90%',
             textAlign: 'center',
-            border: '1px solid var(--border-default)',
+            border: '2px solid var(--danger)',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
           }}>
-            <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🔒</div>
-            <h2 style={{ fontSize: '1.375rem', fontWeight: 900, marginBottom: '0.75rem' }}>انتهى اشتراكك</h2>
+            <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>⛔</div>
+            <h2 style={{ fontSize: '1.375rem', fontWeight: 900, marginBottom: '0.75rem', color: 'var(--danger)' }}>
+              تم حجب لوحة التحكم مؤقتاً
+            </h2>
             <p style={{ color: 'var(--text-secondary)', lineHeight: 1.8, marginBottom: '1.75rem', fontSize: '0.9375rem' }}>
-              لقد انتهت فترة اشتراكك. يرجى تجديد الاشتراك لمتابعة استخدام لوحة التحكم وإدارة الحجوزات.
+              تأخر سداد مستحقات عمولات الحجوزات الشهرية للمنصة (5 ج.م/حجز). <br />
+              يرجى سداد المستحقات المتبقية ورفع صورة التحويل ليتم فك الحجب والموافقة فوراً من صاحب الموقع.
             </p>
-            <Link
-              href="/dashboard/subscription"
-              style={{
-                display: 'inline-block',
-                background: 'var(--primary)',
-                color: '#fff',
-                padding: '0.875rem 2rem',
-                borderRadius: 'var(--radius-lg)',
-                fontWeight: 700,
-                fontSize: '1rem',
-                textDecoration: 'none',
-              }}
-            >💳 تجديد الاشتراك الآن</Link>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Link
+                href="/dashboard/subscription"
+                style={{
+                  display: 'inline-block',
+                  background: 'var(--primary)',
+                  color: '#fff',
+                  padding: '0.875rem 1.75rem',
+                  borderRadius: 'var(--radius-lg)',
+                  fontWeight: 700,
+                  fontSize: '0.95rem',
+                  textDecoration: 'none',
+                }}
+              >
+                💳 سداد المستحقات الآن
+              </Link>
+              <a
+                href="https://wa.me/201126947405?text=مرحباً،%20قمت%20بسداد%20عمولة%20الملعب%20وأريد%20فك%20الحجب"
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  display: 'inline-block',
+                  background: '#25D366',
+                  color: '#fff',
+                  padding: '0.875rem 1.5rem',
+                  borderRadius: 'var(--radius-lg)',
+                  fontWeight: 700,
+                  fontSize: '0.95rem',
+                  textDecoration: 'none',
+                }}
+              >
+                💬 تواصل مع الأدمن
+              </a>
+            </div>
           </div>
         </div>
       )}
@@ -190,9 +198,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         position="bottom-left"
         pulseColor="#3b82f6"
       />
-
-      {/* Floating subscription button */}
-      <FloatingSubscription position="bottom-right" />
     </div>
   );
 }

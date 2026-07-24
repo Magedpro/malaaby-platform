@@ -47,7 +47,7 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
     { label: 'مراجعة الحجوزات', path: '/dashboard/bookings', icon: '🧾' },
     { label: 'تقويم الحجوزات', path: '/dashboard/calendar', icon: '📅' },
     { label: 'إشعارات الملعب', path: '/dashboard/notifications', icon: '🔔', badge: unreadNotifications },
-    { label: 'باقة الاشتراك', path: '/dashboard/subscription', icon: '💳', subBadge, subWarning: showSubWarning },
+    { label: 'عمولات المنصة', path: '/dashboard/subscription', icon: '💵' },
     { label: 'الدعم الفني', path: '/dashboard/support', icon: '🎫' },
     { label: 'إعدادات الملعب', path: '/dashboard/settings', icon: '⚙️' },
   ];

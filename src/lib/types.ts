@@ -60,6 +60,17 @@ export interface Stadium {
   subscriptionPlanId?: string;
   subscriptionStatus: SubscriptionStatus;
   subscriptionExpiry?: string;
+  commissionRate?: number; // Default 5 EGP per completed booking
+  unpaidCommission?: number; // Total unpaid commission in EGP
+  commissionStatus?: 'active' | 'blocked'; // Blocked if overdue at end of month or manual
+  lastSettledDate?: string;
+  pendingCommissionPayment?: {
+    amount: number;
+    senderName: string;
+    senderPhone: string;
+    paymentScreenshot: string;
+    createdAt: string;
+  } | null;
   isActive: boolean;
   approvalStatus: 'pending' | 'approved' | 'rejected';
   createdAt: string;
@@ -115,6 +126,7 @@ export interface Booking {
   startTime: string;
   endTime: string;
   amount: number;
+  commissionAmount?: number; // E.g., 5 EGP
   paymentScreenshot?: string;
   status: BookingStatus;
   rejectionReason?: string;

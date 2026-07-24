@@ -61,7 +61,7 @@ function defaultDb() {
         id: 'user-maged-50',
         name: 'الكابتن ماجد',
         email: 'magedprooo50@gmail.com',
-        passwordHash: '4edd6cd33eb666dbd5b2ddb08e0367b26c8075225ddcccccad90e5c2c6ac1a8d', // 123456
+        passwordHash: 'e075c51450e28253c4a5db6f6d60557e1468002d43d312da13dfaf06b67c5b47', // 1234567890
         role: 'owner',
         stadiumSlug: 'stadium-maged-50',
         phone: '01126947405',

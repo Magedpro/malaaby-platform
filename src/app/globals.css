@@ -1599,8 +1599,16 @@ input, textarea, select {
 
 /* Tablets & small laptops */
 @media (max-width: 1024px) {
-  .sidebar { transform: translateX(100%); }
-  .sidebar.open { transform: translateX(0); box-shadow: -8px 0 32px rgba(0,0,0,0.5); }
+  .sidebar {
+    right: -320px !important;
+    left: auto !important;
+    transform: none !important;
+    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+  .sidebar.open {
+    right: 0 !important;
+    box-shadow: -8px 0 32px rgba(0,0,0,0.5) !important;
+  }
   .dashboard-main { margin-right: 0; }
   .dashboard-topbar { position: sticky; padding: 0 1rem; }
   .section { padding: 4.5rem 0; }

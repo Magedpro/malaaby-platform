@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { useSession } from '@/hooks/useSession';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, loading, logout } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
 
   useEffect(() => {
     if (!loading && (!user || user.role !== 'super_admin')) {
@@ -39,30 +39,57 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="dashboard-layout animate-fadeIn">
-      {/* Admin sidebar - uses same CSS classes */}
+      {/* Admin sidebar */}
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`} style={{ background: '#0a1628', borderLeftColor: 'rgba(22,163,74,0.2)' }}>
-        <div className="sidebar-logo">
+        <div className="sidebar-logo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', fontWeight: 800, fontSize: '1.125rem' }}>
             <div style={{ width: '36px', height: '36px', background: 'linear-gradient(135deg,#16A34A,#15803D)', borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🛡️</div>
             <span>إشراف المنصة</span>
           </div>
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setSidebarOpen(false);
+            }}
+            className="sidebar-close-btn"
+            aria-label="إغلاق القائمة"
+          >
+            ✕
+          </button>
         </div>
+
         <nav className="sidebar-nav">
           {navItems.map(item => {
-            const isActive = (typeof window !== 'undefined' ? window.location.pathname : '') === item.path;
+            const isActive = pathname === item.path;
             return (
-              <a key={item.path} href={item.path} className={`nav-item ${isActive ? 'active' : ''}`} onClick={() => setSidebarOpen(false)}>
+              <a
+                key={item.path}
+                href={item.path}
+                className={`nav-item ${isActive ? 'active' : ''}`}
+                onClick={() => setSidebarOpen(false)}
+              >
                 <span style={{ fontSize: '1.25rem' }}>{item.icon}</span>
                 <span>{item.label}</span>
               </a>
             );
           })}
           <div className="divider" />
-          <a href="/" className="nav-item" style={{ color: 'var(--primary-light)' }}>
+          <a href="/" className="nav-item" style={{ color: 'var(--primary-light)' }} onClick={() => setSidebarOpen(false)}>
             <span style={{ fontSize: '1.25rem' }}>🌐</span>
             <span>الموقع العام ↗</span>
           </a>
-          <button onClick={logout} className="nav-item" style={{ width: '100%', textAlign: 'right', color: 'var(--danger)' }}>
+          <button
+            type="button"
+            onClick={() => {
+              setSidebarOpen(false);
+              logout();
+            }}
+            className="nav-item"
+            style={{ width: '100%', textAlign: 'right', color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer' }}
+          >
             <span style={{ fontSize: '1.25rem' }}>🚪</span>
             <span>تسجيل الخروج</span>
           </button>
@@ -71,7 +98,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       <div className="dashboard-main">
         <header className="dashboard-topbar" style={{ background: '#0a1628', borderBottomColor: 'rgba(22,163,74,0.2)' }}>
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ display: 'none', fontSize: '1.25rem', background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer' }} id="admin-menu-toggle">☰</button>
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            style={{ display: 'none', fontSize: '1.25rem', background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer' }}
+            id="admin-menu-toggle"
+          >
+            ☰
+          </button>
           <h2 style={{ fontSize: '1.125rem', fontWeight: 700 }}>
             🛡️ لوحة إشراف منصة <span className="gradient-text">ملعبي</span>
           </h2>
@@ -88,12 +122,32 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </div>
 
       {sidebarOpen && (
-        <div onClick={() => setSidebarOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 99 }} />
+        <div
+          onClick={() => setSidebarOpen(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 99, backdropFilter: 'blur(3px)' }}
+        />
       )}
 
       <style jsx global>{`
+        .sidebar-close-btn {
+          display: none;
+          background: rgba(239, 68, 68, 0.2);
+          border: 1px solid rgba(239, 68, 68, 0.4);
+          color: #ef4444;
+          width: 34px;
+          height: 34px;
+          border-radius: 50%;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.25rem;
+          font-weight: bold;
+          cursor: pointer;
+          line-height: 1;
+        }
         @media (max-width: 1024px) {
           #admin-menu-toggle { display: flex !important; }
+          .sidebar-close-btn { display: flex !important; }
+          .sidebar.open { z-index: 1000 !important; }
         }
       `}</style>
     </div>

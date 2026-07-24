@@ -65,26 +65,11 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
         <button
           type="button"
           onClick={(e) => {
+            e.preventDefault();
             e.stopPropagation();
             onClose();
           }}
           aria-label="إغلاق القائمة"
-          style={{
-            background: 'rgba(239, 68, 68, 0.15)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            cursor: 'pointer',
-            fontSize: '1.2rem',
-            color: '#ef4444',
-            width: '32px',
-            height: '32px',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            lineHeight: 1,
-            fontWeight: 'bold',
-            touchAction: 'manipulation',
-          }}
           className="sidebar-close-btn"
         >
           ✕
@@ -157,6 +142,21 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
       </nav>
 
       <style jsx global>{`
+        .sidebar-close-btn {
+          display: none;
+          background: rgba(239, 68, 68, 0.2);
+          border: 1px solid rgba(239, 68, 68, 0.4);
+          color: #ef4444;
+          width: 34px;
+          height: 34px;
+          border-radius: 50%;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.25rem;
+          font-weight: bold;
+          cursor: pointer;
+          line-height: 1;
+        }
         @media (max-width: 1024px) {
           .sidebar-close-btn {
             display: flex !important;

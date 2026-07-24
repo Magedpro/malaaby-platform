@@ -23,9 +23,22 @@ export async function GET(request: NextRequest) {
       const isFreeMonth = !isNaN(createdTime) && (now - createdTime < thirtyDaysMs);
       const freeUntilDate = !isNaN(createdTime) ? new Date(createdTime + thirtyDaysMs).toISOString() : null;
 
-      const stadiumBookings = allBookings.filter(b => b.stadiumSlug === stadium.slug && (b.status === 'completed' || b.status === 'confirmed'));
+      // Commission-eligible: completed OR confirmed + time has passed
+      const stadiumBookings = allBookings.filter(b => {
+        if (b.stadiumSlug !== stadium.slug) return false;
+        if (b.status === 'completed') return true;
+        if (b.status === 'confirmed') {
+          const bookingEnd = new Date(`${b.date}T${b.endTime}`);
+          return bookingEnd.getTime() < now;
+        }
+        return false;
+      });
+
       const rate = stadium.commissionRate ?? settings.defaultCommissionRate ?? 5;
       const totalCommission = isFreeMonth ? 0 : stadiumBookings.length * rate;
+
+      const storedUnpaid = stadium.unpaidCommission ?? 0;
+      const unpaidCommission = isFreeMonth ? 0 : Math.max(storedUnpaid, totalCommission);
 
       return {
         slug: stadium.slug,
@@ -38,7 +51,7 @@ export async function GET(request: NextRequest) {
         totalCompletedBookings: stadiumBookings.length,
         commissionRate: rate,
         totalCalculatedCommission: totalCommission,
-        unpaidCommission: isFreeMonth ? 0 : (stadium.unpaidCommission ?? totalCommission),
+        unpaidCommission,
         commissionStatus: stadium.commissionStatus === 'blocked' ? 'blocked' : 'active',
         lastSettledDate: stadium.lastSettledDate || null,
         pendingCommissionPayment: stadium.pendingCommissionPayment || null,

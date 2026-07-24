@@ -7,6 +7,7 @@ import { DashboardSidebar } from '@/components/layout/DashboardSidebar';
 import { DashboardTopbar } from '@/components/layout/DashboardTopbar';
 import { FloatingWhatsApp } from '@/components/ui/FloatingWhatsApp';
 import Link from 'next/link';
+import { PLATFORM_PAYMENT_PHONE_INTL } from '@/lib/constants';
 
 function daysSince(createdAtStr?: string): number {
   if (!createdAtStr) return 999;
@@ -15,12 +16,21 @@ function daysSince(createdAtStr?: string): number {
   return Math.floor((Date.now() - createdTime) / 86400000);
 }
 
+interface CommissionStatusData {
+  commissionStatus: 'active' | 'blocked';
+  billingMode: 'commission' | 'subscription';
+  commissionRate: number;
+  unpaidCommission: number;
+  isFreeMonth: boolean;
+}
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, stadium, loading } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [commissionData, setCommissionData] = useState<CommissionStatusData | null>(null);
 
   const daysOld = daysSince((stadium as any)?.createdAt);
   const isFreeMonth = daysOld < 30;
@@ -28,7 +38,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   // 5 days or less warning calculation
   const show5DayWarning = isFreeMonth && remainingFreeDays <= 5;
-  const isCommissionBlocked = (stadium as any)?.commissionStatus === 'blocked';
+  // Pull live commissionStatus from commission API (not session) to capture manual admin blocks
+  const isCommissionBlocked = commissionData?.commissionStatus === 'blocked';
   const isOnSubscriptionPage = pathname === '/dashboard/subscription';
 
   // Automatically close sidebar whenever route/pathname changes
@@ -49,15 +60,40 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }, []);
 
+  // Poll commission/block status every 30 seconds to pick up admin lockout changes
+  const fetchCommissionStatus = useCallback(async () => {
+    if (!user?.stadiumSlug) return;
+    try {
+      const res = await fetch('/api/v1/stadium/commission');
+      const json = await res.json();
+      if (json.success && json.data) {
+        setCommissionData({
+          commissionStatus: json.data.commissionStatus,
+          billingMode: json.data.billingMode,
+          commissionRate: json.data.commissionRate,
+          unpaidCommission: json.data.unpaidCommission,
+          isFreeMonth: json.data.isFreeMonth,
+        });
+      }
+    } catch (e) {
+      console.error('Failed to load commission status:', e);
+    }
+  }, [user?.stadiumSlug]);
+
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
     } else if (user) {
       fetchNotifCount();
-      const timer = setInterval(fetchNotifCount, 30000);
-      return () => clearInterval(timer);
+      fetchCommissionStatus();
+      const notifTimer = setInterval(fetchNotifCount, 30000);
+      const commissionTimer = setInterval(fetchCommissionStatus, 30000);
+      return () => {
+        clearInterval(notifTimer);
+        clearInterval(commissionTimer);
+      };
     }
-  }, [user, loading, router, fetchNotifCount]);
+  }, [user, loading, router, fetchNotifCount, fetchCommissionStatus]);
 
   if (loading) {
     return (
@@ -88,7 +124,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           unreadNotifications={unreadCount}
         />
 
-        {/* 5-Day Reminder Banner (Warning before trial ends or overdue) */}
+        {/* 5-Day Reminder Banner (Warning before trial ends) */}
         {show5DayWarning && !isOnSubscriptionPage && (
           <div style={{
             background: 'linear-gradient(135deg, rgba(245,158,11,0.2), rgba(239,68,68,0.15))',
@@ -101,7 +137,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             gap: '0.5rem',
           }}>
             <p style={{ fontSize: '0.875rem', color: '#f59e0b', fontWeight: 700 }}>
-              ⚠️ تذكير هام: متبقي <strong>{remainingFreeDays} {remainingFreeDays === 1 ? 'يوم واحد' : 'أيام'}</strong> على انتهاء الشهر التجريبي المجاني للملعب وبدء المحاسبة الشهرية.
+              ⚠️ تذكير هام: متبقي <strong>{remainingFreeDays} {remainingFreeDays === 1 ? 'يوم واحد' : 'أيام'}</strong> على انتهاء الشهر التجريبي المجاني وبدء احتساب العمولات.
             </p>
             <Link
               href="/dashboard/subscription"
@@ -115,7 +151,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 textDecoration: 'none',
               }}
             >
-              💳 عرض المستحقات والسداد
+              💳 عرض كشف حساب العمولات
             </Link>
           </div>
         )}
@@ -133,7 +169,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             gap: '0.5rem',
           }}>
             <p style={{ fontSize: '0.875rem', color: '#10b981', fontWeight: 700 }}>
-              🎁 هدية التسجيل: أنت الآن في **الشهر الأول المجاني بالكامل** (متبقي <strong>{remainingFreeDays} يوم</strong>) — بدون أي عمولات!
+              🎁 أنت في الشهر الأول المجاني — بدون أي عمولات! متبقي <strong>{remainingFreeDays} يوم</strong>
             </p>
             <span style={{ fontSize: '0.75rem', backgroundColor: 'rgba(16,185,129,0.2)', padding: '0.25rem 0.75rem', borderRadius: '1rem', color: '#059669', fontWeight: 600 }}>
               عمولة 0% حالياً
@@ -144,7 +180,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <main className="dashboard-content">{children}</main>
       </div>
 
-      {/* Overdue / Blocked Account Lockout Overlay */}
+      {/* Overdue / Blocked Account Lockout Overlay — only if explicitly blocked by admin */}
       {isCommissionBlocked && !isOnSubscriptionPage && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 9999,
@@ -167,8 +203,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               تم حجب لوحة التحكم مؤقتاً
             </h2>
             <p style={{ color: 'var(--text-secondary)', lineHeight: 1.8, marginBottom: '1.75rem', fontSize: '0.9375rem' }}>
-              تأخر سداد مستحقات عمولات الحجوزات الشهرية للمنصة (5 ج.م/حجز). <br />
-              يرجى سداد المستحقات المتبقية ورفع صورة التحويل ليتم فك الحجب والموافقة فوراً من صاحب الموقع.
+              قام صاحب المنصة بإيقاف حسابك مؤقتاً بسبب تأخر سداد مستحقات العمولات الشهرية. <br />
+              يرجى سداد المبلغ المستحق ورفع صورة إيصال التحويل، وسيتم فك الحجب فور المراجعة والموافقة.
             </p>
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
               <Link
@@ -187,7 +223,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 💳 سداد المستحقات الآن
               </Link>
               <a
-                href="https://wa.me/201126947405?text=مرحباً،%20قمت%20بسداد%20عمولة%20الملعب%20وأريد%20فك%20الحجب"
+                href={`https://wa.me/${PLATFORM_PAYMENT_PHONE_INTL}?text=مرحباً،%20قمت%20بسداد%20عمولة%20الملعب%20وأريد%20فك%20الحجب`}
                 target="_blank"
                 rel="noreferrer"
                 style={{
@@ -226,7 +262,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Floating support button for stadium owner */}
       <FloatingWhatsApp
-        phone="201126947405"
+        phone={PLATFORM_PAYMENT_PHONE_INTL}
         message="مرحباً، أحتاج إلى دعم فني بخصوص لوحة تحكم ملعبي 🏟️"
         tooltip="الدعم الفني للمنصة"
         position="bottom-left"

@@ -11,6 +11,22 @@ export function isStadiumInFreeFirstMonth(createdAtStr?: string): boolean {
   return (Date.now() - createdTime) < thirtyDaysMs;
 }
 
+/**
+ * A booking is commission-eligible when:
+ * 1. Status is 'completed', OR
+ * 2. Status is 'confirmed' AND the booking date+endTime has already passed (booking happened in the past)
+ * This prevents manipulation: owners can't cancel past bookings to avoid commission.
+ */
+export function isCommissionEligible(booking: { status: string; date: string; endTime: string }): boolean {
+  if (booking.status === 'completed') return true;
+  if (booking.status === 'confirmed') {
+    // Check if booking time has already passed
+    const bookingEndDateTime = new Date(`${booking.date}T${booking.endTime}`);
+    return bookingEndDateTime.getTime() < Date.now();
+  }
+  return false;
+}
+
 // GET commission/billing status for current owner's stadium
 export async function GET(request: NextRequest) {
   try {
@@ -31,13 +47,18 @@ export async function GET(request: NextRequest) {
     const isFreeMonth = isStadiumInFreeFirstMonth(stadium.createdAt);
     const bookings = await Bookings.findByStadium(session.stadiumSlug);
 
-    const completedBookings = bookings.filter(b => b.status === 'completed' || b.status === 'confirmed');
+    // Commission-eligible: completed OR confirmed + time has passed
+    const chargeableBookings = bookings.filter(b => isCommissionEligible(b));
 
     const rate = stadium.commissionRate ?? settings.defaultCommissionRate ?? 5;
-    const totalCalculatedCommission = isFreeMonth ? 0 : (completedBookings.length * rate);
+    const totalCalculatedCommission = isFreeMonth ? 0 : (chargeableBookings.length * rate);
 
     const createdDate = new Date(stadium.createdAt);
     const freeUntilDate = new Date(createdDate.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    // Unpaid = max of stored unpaid vs freshly calculated (so it never decreases without admin approval)
+    const storedUnpaid = stadium.unpaidCommission ?? 0;
+    const unpaidCommission = isFreeMonth ? 0 : Math.max(storedUnpaid, totalCalculatedCommission);
 
     return NextResponse.json({
       success: true,
@@ -49,9 +70,9 @@ export async function GET(request: NextRequest) {
         commissionRate: rate,
         isFreeMonth,
         freeUntilDate,
-        totalCompletedBookings: completedBookings.length,
+        totalCompletedBookings: chargeableBookings.length,
         totalCalculatedCommission,
-        unpaidCommission: isFreeMonth ? 0 : (stadium.unpaidCommission ?? totalCalculatedCommission),
+        unpaidCommission,
         commissionStatus: stadium.commissionStatus === 'blocked' ? 'blocked' : 'active',
         lastSettledDate: stadium.lastSettledDate || null,
         pendingCommissionPayment: stadium.pendingCommissionPayment || null,

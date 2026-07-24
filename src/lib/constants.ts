@@ -74,3 +74,11 @@ export const CITIES_DEFAULT = [
   'السويس', 'المنيا', 'أسيوط', 'سوهاج', 'قنا',
   'شرم الشيخ', 'الغردقة', 'دمياط', 'الفيوم', 'بني سويف',
 ];
+
+// ── Platform Owner Payment Contact ──────────────────────────────────────────
+// All commission & subscription payments are sent to these numbers ONLY.
+// Change once here → automatically applies everywhere.
+export const PLATFORM_PAYMENT_PHONE     = '01126947405';        // Local EG format
+export const PLATFORM_PAYMENT_PHONE_INTL = '201126947405';      // Without + (for wa.me links)
+export const PLATFORM_WHATSAPP_LINK      = 'https://wa.me/201126947405';
+

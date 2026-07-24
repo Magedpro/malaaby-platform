@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
-import { Stadiums, Bookings, ActivityLogs } from '@/lib/db';
+import { Stadiums, Bookings, ActivityLogs, PlatformSettingsDB } from '@/lib/db';
 
 /** Check if a stadium is in its free first month (30 days from creation) */
 export function isStadiumInFreeFirstMonth(createdAtStr?: string): boolean {
@@ -11,7 +11,7 @@ export function isStadiumInFreeFirstMonth(createdAtStr?: string): boolean {
   return (Date.now() - createdTime) < thirtyDaysMs;
 }
 
-// GET commission status and history for current owner's stadium
+// GET commission/billing status for current owner's stadium
 export async function GET(request: NextRequest) {
   try {
     const session = await getSession();
@@ -19,7 +19,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'غير مصرح بالدخول' }, { status: 401 });
     }
 
-    const stadium = await Stadiums.findBySlug(session.stadiumSlug);
+    const [stadium, settings] = await Promise.all([
+      Stadiums.findBySlug(session.stadiumSlug),
+      PlatformSettingsDB.get(),
+    ]);
+
     if (!stadium) {
       return NextResponse.json({ success: false, error: 'الملعب غير موجود' }, { status: 404 });
     }
@@ -27,11 +31,9 @@ export async function GET(request: NextRequest) {
     const isFreeMonth = isStadiumInFreeFirstMonth(stadium.createdAt);
     const bookings = await Bookings.findByStadium(session.stadiumSlug);
 
-    // Bookings created after the free month if applicable
     const completedBookings = bookings.filter(b => b.status === 'completed' || b.status === 'confirmed');
 
-    // Default rate is 5 EGP per completed booking (0 during free month)
-    const rate = stadium.commissionRate ?? 5;
+    const rate = stadium.commissionRate ?? settings.defaultCommissionRate ?? 5;
     const totalCalculatedCommission = isFreeMonth ? 0 : (completedBookings.length * rate);
 
     const createdDate = new Date(stadium.createdAt);
@@ -40,6 +42,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
+        billingMode: settings.billingMode || 'commission',
+        monthlySubscriptionPrice: settings.monthlySubscriptionPrice ?? 200,
         stadiumSlug: stadium.slug,
         stadiumName: stadium.name,
         commissionRate: rate,

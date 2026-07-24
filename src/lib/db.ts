@@ -200,6 +200,9 @@ function defaultDb() {
       supportWhatsApp: '+201126947405',
       ownerApprovalRequired: false,
       maintenanceMode: false,
+      billingMode: 'commission', // Default active mode
+      defaultCommissionRate: 5,   // 5 EGP
+      monthlySubscriptionPrice: 200, // E.g., 200 EGP / month
       updatedAt: now,
     },
   };

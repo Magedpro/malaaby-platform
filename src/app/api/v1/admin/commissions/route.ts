@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
-import { Stadiums, Bookings, ActivityLogs } from '@/lib/db';
+import { Stadiums, Bookings, ActivityLogs, PlatformSettingsDB } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,8 +9,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'غير مصرح بالدخول (سوبر أدمن فقط)' }, { status: 403 });
     }
 
-    const stadiums = await Stadiums.findAll();
-    const allBookings = await Bookings.findAll();
+    const [stadiums, allBookings, settings] = await Promise.all([
+      Stadiums.findAll(),
+      Bookings.findAll(),
+      PlatformSettingsDB.get(),
+    ]);
 
     const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
     const now = Date.now();
@@ -21,7 +24,7 @@ export async function GET(request: NextRequest) {
       const freeUntilDate = !isNaN(createdTime) ? new Date(createdTime + thirtyDaysMs).toISOString() : null;
 
       const stadiumBookings = allBookings.filter(b => b.stadiumSlug === stadium.slug && (b.status === 'completed' || b.status === 'confirmed'));
-      const rate = stadium.commissionRate ?? 5;
+      const rate = stadium.commissionRate ?? settings.defaultCommissionRate ?? 5;
       const totalCommission = isFreeMonth ? 0 : stadiumBookings.length * rate;
 
       return {
@@ -42,7 +45,17 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return NextResponse.json({ success: true, data: report });
+    return NextResponse.json({
+      success: true,
+      data: {
+        settings: {
+          billingMode: settings.billingMode || 'commission',
+          defaultCommissionRate: settings.defaultCommissionRate ?? 5,
+          monthlySubscriptionPrice: settings.monthlySubscriptionPrice ?? 200,
+        },
+        stadiums: report,
+      },
+    });
   } catch (error) {
     console.error('GET admin commissions error:', error);
     return NextResponse.json({ success: false, error: 'حدث خطأ أثناء جلب تقارير العمولات' }, { status: 500 });
@@ -57,7 +70,52 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { stadiumSlug, action } = body;
+    const { action, stadiumSlug, commissionRate, billingMode, defaultCommissionRate, monthlySubscriptionPrice } = body;
+
+    // Global Settings Update
+    if (action === 'update_global_billing') {
+      const updatedSettings = await PlatformSettingsDB.update({
+        ...(billingMode ? { billingMode } : {}),
+        ...(defaultCommissionRate !== undefined ? { defaultCommissionRate: Number(defaultCommissionRate) } : {}),
+        ...(monthlySubscriptionPrice !== undefined ? { monthlySubscriptionPrice: Number(monthlySubscriptionPrice) } : {}),
+      });
+
+      ActivityLogs.log({
+        action: 'update_global_billing_settings',
+        performedBy: session.userId,
+        performedByName: session.name,
+        targetType: 'settings',
+        details: { billingMode, defaultCommissionRate, monthlySubscriptionPrice },
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: 'تم تحديث إعدادات النظام وتفعيل النموذج المطلوب بنجاح! ⚙️',
+        data: updatedSettings,
+      });
+    }
+
+    // Per Stadium Commission Customization
+    if (action === 'update_stadium_rate' && stadiumSlug) {
+      const updated = await Stadiums.update(stadiumSlug, {
+        commissionRate: Number(commissionRate),
+      });
+
+      ActivityLogs.log({
+        action: 'update_stadium_commission_rate',
+        performedBy: session.userId,
+        performedByName: session.name,
+        targetId: stadiumSlug,
+        targetType: 'stadium',
+        details: { commissionRate: Number(commissionRate) },
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: `تم تحديث عمولة ملعب ${stadiumSlug} إلى ${commissionRate} ج.م/حجز بنجاح ✅`,
+        data: updated,
+      });
+    }
 
     if (!stadiumSlug || !action) {
       return NextResponse.json({ success: false, error: 'بيانات غير مكتملة' }, { status: 400 });
@@ -69,7 +127,6 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'approve_payment') {
-      // Owner of platform approves payment receipt -> clear debt and unblock
       await Stadiums.update(stadiumSlug, {
         unpaidCommission: 0,
         commissionStatus: 'active',

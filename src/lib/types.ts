@@ -232,6 +232,9 @@ export interface PlatformSettings {
   termsContent?: string;
   privacyContent?: string;
   socialLinks?: SocialLinks;
+  billingMode?: 'commission' | 'subscription'; // Active billing model
+  defaultCommissionRate?: number; // Default 5 EGP
+  monthlySubscriptionPrice?: number; // E.g., 200 EGP / month
   updatedAt: string;
 }
 

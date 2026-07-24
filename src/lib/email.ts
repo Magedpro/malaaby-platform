@@ -219,3 +219,63 @@ export function getBookingStatusTemplate(
     </div>
   `;
 }
+
+export function getOtpEmailTemplate(otpCode: string, userName: string): string {
+  return `
+    <div style="font-family: 'Cairo', Arial, sans-serif; direction: rtl; text-align: right; background-color: #0f172a; padding: 2rem; color: #f8fafc;">
+      <div style="max-width: 500px; margin: 0 auto; background: #1e293b; border-radius: 16px; border: 1px solid #334155; padding: 2rem; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+        <div style="text-align: center; border-bottom: 1px solid #334155; padding-bottom: 1.5rem; margin-bottom: 1.5rem;">
+          <span style="font-size: 3rem;">🔐</span>
+          <h2 style="color: #ffffff; margin: 0.5rem 0 0; font-size: 1.5rem;">رمز التوثيق (2FA) - منصة ملعبي</h2>
+          <p style="color: #94a3b8; font-size: 0.875rem; margin: 0.25rem 0 0;">حماية إضافية لحساب المدير / المالك</p>
+        </div>
+
+        <p style="font-size: 1rem; color: #cbd5e1; line-height: 1.6;">
+          مرحباً <strong>${userName}</strong>،
+          لقد تلقينا طلباً لتسجيل الدخول إلى حسابك. أدخل كود الأمان التالي لإكمال تسجيل الدخول:
+        </p>
+
+        <div style="text-align: center; margin: 2rem 0;">
+          <div style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; font-size: 2.25rem; font-weight: 800; letter-spacing: 8px; padding: 1rem 2.5rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);">
+            ${otpCode}
+          </div>
+          <p style="color: #f59e0b; font-size: 0.85rem; margin-top: 0.75rem; font-weight: 600;">
+            ⏳ هذا الكود صالحة لمدة 10 دقائق فقط للاستخدام مرة واحدة.
+          </p>
+        </div>
+
+        <div style="background-color: #0f172a; border-radius: 8px; padding: 1rem; border-right: 4px solid #ef4444; font-size: 0.85rem; color: #94a3b8;">
+          ⚠️ <strong>تنبيه أمان:</strong> إذا لم تكن أنت من طلب تسجيل الدخول، يرجى تغيير كلمة المرور فوراً والتواصل مع الدعم.
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+export function getLoginAlertEmailTemplate(userName: string, userEmail: string, ip: string): string {
+  const now = new Date().toLocaleString('ar-EG', { timeZone: 'Africa/Cairo' });
+  return `
+    <div style="font-family: 'Cairo', Arial, sans-serif; direction: rtl; text-align: right; background-color: #f8fafc; padding: 2rem;">
+      <div style="max-width: 550px; margin: 0 auto; background: white; border-radius: 12px; border: 1px solid #e2e8f0; padding: 2rem;">
+        <div style="text-align: center; border-bottom: 2px solid #3b82f6; padding-bottom: 1.5rem; margin-bottom: 1.5rem;">
+          <span style="font-size: 2.5rem;">🛡️</span>
+          <h2 style="color: #0f172a; margin: 0.5rem 0 0;">إشعار أمان: تسجيل دخول جديد</h2>
+          <p style="color: #64748b; font-size: 0.875rem; margin: 0.25rem 0 0;">حساب المدير / المالك في منصة ملعبي</p>
+        </div>
+
+        <p style="font-size: 1rem; color: #334155; line-height: 1.6;">
+          مرحباً <strong>${userName}</strong>،
+          تم تسجيل دخول جديد بنجاح إلى حسابك (<strong>${userEmail}</strong>).
+        </p>
+
+        <div style="background-color: #f1f5f9; border-radius: 8px; padding: 1.25rem; margin: 1.5rem 0; font-size: 0.9rem;">
+          <p style="margin: 0.25rem 0; color: #475569;">⏰ <strong>التوقيت:</strong> ${now}</p>
+          <p style="margin: 0.25rem 0; color: #475569;">🌐 <strong>عنوان الـ IP:</strong> ${ip}</p>
+        </div>
+
+        <p style="font-size: 0.85rem; color: #64748b;">إذا كنت أنت من قام بتسجيل الدخول، يمكنك إهمال هذه الرسالة.</p>
+      </div>
+    </div>
+  `;
+}
+

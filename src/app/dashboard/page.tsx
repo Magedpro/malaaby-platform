@@ -92,7 +92,7 @@ export default function DashboardOverview() {
       </div>
 
       {/* Charts Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(270px, 1fr))', gap: '1.5rem' }}>
         
         {/* Revenue CSS Chart */}
         <Card style={{ padding: '1.5rem' }}>

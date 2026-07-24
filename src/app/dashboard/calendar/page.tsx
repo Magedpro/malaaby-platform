@@ -82,7 +82,7 @@ export default function CalendarPage() {
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>عرض وتتبع جميع مواعيد الحجوزات على تقويم شهري تفاعلي</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '1.5rem', alignItems: 'start' }}>
+      <div className="calendar-layout-grid">
         {/* Calendar */}
         <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)', padding: '1.5rem' }}>
           {/* Field Selector + Nav */}

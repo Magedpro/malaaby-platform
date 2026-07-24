@@ -61,16 +61,10 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
           <span>لوحة التحكم</span>
         </Link>
 
-        {/* ✕ Close button for mobile - handles click & touch */}
+        {/* ✕ Close button for mobile */}
         <button
           type="button"
           onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onClose();
-          }}
-          onTouchEnd={(e) => {
-            e.preventDefault();
             e.stopPropagation();
             onClose();
           }}

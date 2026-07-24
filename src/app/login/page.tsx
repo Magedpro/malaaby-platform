@@ -240,7 +240,7 @@ export default function LoginPage() {
             </div>
 
             <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', backgroundColor: 'rgba(255,255,255,0.03)', padding: '0.65rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
-              ℹ️ عند التأكيد، سيتم اعتماد هذا الجهاز فلن تحتاج لإدخال الكود مرة أخرى منه.
+              ℹ️ عند تأكيد الكود، سيتم الاعتماد الدائم لهذا الجهاز ولن تحتاج لإدخال الكود منه مجدداً.
             </div>
 
             <Button type="submit" variant="primary" isLoading={loading} fullWidth>

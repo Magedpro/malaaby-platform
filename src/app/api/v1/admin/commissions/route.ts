@@ -38,8 +38,8 @@ export async function GET(request: NextRequest) {
         totalCompletedBookings: stadiumBookings.length,
         commissionRate: rate,
         totalCalculatedCommission: totalCommission,
-        unpaidCommission: isFreeMonth ? 0 : (stadium.unpaidCommission ?? totalCommission),
-        commissionStatus: isFreeMonth ? 'active' : (stadium.commissionStatus || 'active'),
+        unpaidCommission: stadium.unpaidCommission !== undefined ? stadium.unpaidCommission : (isFreeMonth ? 0 : totalCommission),
+        commissionStatus: stadium.commissionStatus === 'blocked' ? 'blocked' : (isFreeMonth ? 'active' : (stadium.commissionStatus || 'active')),
         lastSettledDate: stadium.lastSettledDate || null,
         pendingCommissionPayment: stadium.pendingCommissionPayment || null,
       };

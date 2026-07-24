@@ -34,10 +34,14 @@ export async function GET() {
           name: stadium.name,
           slug: stadium.slug,
           isActive: stadium.isActive,
+          createdAt: stadiumCreated,
           subscriptionStatus: stadium.subscriptionStatus || 'trial',
           subscriptionExpiry: expiry,
           subscriptionPlanId: s.subscriptionPlanId || 'plan-basic',
-          pendingSubscription: s.pendingSubscription ?? null,
+          commissionStatus: stadium.commissionStatus || 'active', // Added for lockout screen
+          commissionRate: stadium.commissionRate ?? 5,
+          unpaidCommission: stadium.unpaidCommission ?? 0,
+          pendingCommissionPayment: s.pendingCommissionPayment ?? null,
           approvalStatus: s.approvalStatus ?? 'approved'
         };
       }

@@ -200,6 +200,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, message: 'تم فك الحجب عن الملعب بنجاح 🔓' });
     }
 
+    if (action === 'end_free_trial') {
+      const pastFortyDays = new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString();
+      await Stadiums.update(stadiumSlug, { createdAt: pastFortyDays });
+
+      ActivityLogs.log({
+        action: 'end_free_trial_stadium',
+        performedBy: session.userId,
+        performedByName: session.name,
+        targetId: stadiumSlug,
+        targetType: 'stadium',
+      });
+
+      return NextResponse.json({ success: true, message: 'تم إنهاء الشهر التجريبي للملعب وبدء احتساب العمولات بنجاح! ⏳' });
+    }
+
     return NextResponse.json({ success: false, error: 'الإجراء غير مدعوم' }, { status: 400 });
 
   } catch (error) {

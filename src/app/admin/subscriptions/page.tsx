@@ -136,7 +136,7 @@ export default function AdminCommissionsPage() {
     }
   };
 
-  const handleAction = async (stadiumSlug: string, action: 'approve_payment' | 'block' | 'unblock') => {
+  const handleAction = async (stadiumSlug: string, action: 'approve_payment' | 'block' | 'unblock' | 'end_free_trial') => {
     setActionLoading(`${stadiumSlug}-${action}`);
     try {
       const res = await fetch('/api/v1/admin/commissions', {
@@ -455,6 +455,18 @@ export default function AdminCommissionsPage() {
 
                       <td>
                         <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                          {stadium.isFreeMonth && (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => handleAction(stadium.slug, 'end_free_trial')}
+                              isLoading={actionLoading === `${stadium.slug}-end_free_trial`}
+                              title="إنهاء الشهر المجاني للملعب وبدء حساب العمولات فوراً"
+                            >
+                              ⏳ إنهاء المجاني
+                            </Button>
+                          )}
+
                           {hasPending && (
                             <Button
                               variant="primary"

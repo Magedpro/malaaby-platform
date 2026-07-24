@@ -74,23 +74,33 @@ export async function POST(request: NextRequest) {
 
     // Global Settings Update
     if (action === 'update_global_billing') {
+      const newRate = defaultCommissionRate !== undefined ? Number(defaultCommissionRate) : undefined;
+
       const updatedSettings = await PlatformSettingsDB.update({
         ...(billingMode ? { billingMode } : {}),
-        ...(defaultCommissionRate !== undefined ? { defaultCommissionRate: Number(defaultCommissionRate) } : {}),
+        ...(newRate !== undefined ? { defaultCommissionRate: newRate } : {}),
         ...(monthlySubscriptionPrice !== undefined ? { monthlySubscriptionPrice: Number(monthlySubscriptionPrice) } : {}),
       });
+
+      // If commission rate changed, bulk update all stadiums to reflect the new rate for everyone
+      if (newRate !== undefined) {
+        const allStadiums = await Stadiums.findAll();
+        await Promise.all(
+          allStadiums.map(st => Stadiums.update(st.slug, { commissionRate: newRate }))
+        );
+      }
 
       ActivityLogs.log({
         action: 'update_global_billing_settings',
         performedBy: session.userId,
         performedByName: session.name,
         targetType: 'settings',
-        details: { billingMode, defaultCommissionRate, monthlySubscriptionPrice },
+        details: { billingMode, defaultCommissionRate: newRate, monthlySubscriptionPrice },
       });
 
       return NextResponse.json({
         success: true,
-        message: 'تم تحديث إعدادات النظام وتفعيل النموذج المطلوب بنجاح! ⚙️',
+        message: 'تم تحديث إعدادات النظام وتطبيق الأسعار الجديدة على كافة الملاعب بنجاح! ⚙️',
         data: updatedSettings,
       });
     }

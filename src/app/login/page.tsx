@@ -16,7 +16,6 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [otpCode, setOtpCode] = useState('');
-  const [trustDevice, setTrustDevice] = useState(true); // Default to checked for convenience
   const [step, setStep] = useState<'login' | 'otp'>('login');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; otp?: string }>({});
@@ -99,12 +98,12 @@ export default function LoginPage() {
       const res = await fetch('/api/v1/auth/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, otpCode: otpCode.trim(), trustDevice }),
+        body: JSON.stringify({ email, password, otpCode: otpCode.trim() }),
       });
       const json = await res.json();
 
       if (json.success) {
-        showToast('تم التحقق بنجاح! مرحباً بك 🛡️', 'success');
+        showToast('تم التوثيق بنجاح! تم اعتماد هذا الجهاز تلقائياً 🛡️', 'success');
         await refresh();
       } else {
         showToast(json.error || 'رمز الأمان غير صحيح', 'error');
@@ -160,12 +159,12 @@ export default function LoginPage() {
             </>
           ) : (
             <>
-              <div style={{ fontSize: '2.5rem', marginTop: '1rem' }}>🔐</div>
+              <div style={{ fontSize: '2.5rem', marginTop: '1rem' }}>📱🔐</div>
               <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginTop: '0.5rem', color: 'var(--text-primary)' }}>
-                التوثيق بخطوتين (2FA)
+                جهاز جديد يتم الدخول منه
               </h2>
               <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-                تم إرسال كود مكون من 6 أرقام إلى إيميلك: <br />
+                لأول مرة من هذا الجهاز، تم إرسال كود التأكيد إلى إيميلك: <br />
                 <strong style={{ color: 'var(--primary-light)', direction: 'ltr', display: 'inline-block' }}>{email}</strong>
               </p>
             </>
@@ -240,15 +239,9 @@ export default function LoginPage() {
               )}
             </div>
 
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-              <input
-                type="checkbox"
-                checked={trustDevice}
-                onChange={(e) => setTrustDevice(e.target.checked)}
-                style={{ accentColor: 'var(--primary)', width: '16px', height: '16px' }}
-              />
-              <span>🛡️ الثقة بهذا الجهاز لمدة 30 يومًا (عُدم المطالبة بكود مجدداً)</span>
-            </label>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', backgroundColor: 'rgba(255,255,255,0.03)', padding: '0.65rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+              ℹ️ عند التأكيد، سيتم اعتماد هذا الجهاز فلن تحتاج لإدخال الكود مرة أخرى منه.
+            </div>
 
             <Button type="submit" variant="primary" isLoading={loading} fullWidth>
               تأكيد كود الأمان 🛡️

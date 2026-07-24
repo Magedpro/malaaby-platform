@@ -14,7 +14,7 @@ function generateTrustedDeviceToken(userId: string, email: string): string {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, otpCode, password, trustDevice } = body;
+    const { email, otpCode, password } = body;
 
     if (!email || !otpCode || !password) {
       return NextResponse.json({ success: false, error: 'جميع البيانات مطلوبة' }, { status: 400 });
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
       performedByName: user.name,
       targetId: user.id,
       targetType: 'user',
-      details: { role: user.role, twoFactorVerified: true, trustedDeviceSet: !!trustDevice },
+      details: { role: user.role, twoFactorVerified: true, trustedDeviceSet: true },
     });
 
     // 8. Send Security Alert Email
@@ -96,18 +96,16 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // 10. If user opted to trust this device → set a 30-day cookie
-    if (trustDevice) {
-      const token = generateTrustedDeviceToken(user.id, cleanEmail);
-      const thirtyDays = 30 * 24 * 60 * 60; // seconds
-      responseData.cookies.set('trusted_device', token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: thirtyDays,
-        path: '/',
-      });
-    }
+    // 10. Automatically trust this device permanently (1 year cookie)
+    const token = generateTrustedDeviceToken(user.id, cleanEmail);
+    const oneYear = 365 * 24 * 60 * 60; // 1 year maxAge
+    responseData.cookies.set('trusted_device', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: oneYear,
+      path: '/',
+    });
 
     return responseData;
 

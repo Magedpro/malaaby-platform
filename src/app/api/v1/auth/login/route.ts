@@ -74,13 +74,13 @@ export async function POST(request: NextRequest) {
     // 7. Check if 2FA (OTP) is required (for Super Admin & Stadium Owners)
     if (user.role === 'super_admin' || user.role === 'owner') {
       const otpCode = generateOtp(cleanEmail);
-      
-      // Send OTP via Email asynchronously
-      sendEmail({
+
+      // Await email sending BEFORE responding so email is dispatched before the OTP screen appears
+      await sendEmail({
         to: user.email,
         subject: '🔐 رمز التوثيق (2FA) - منصة ملعبي',
         html: getOtpEmailTemplate(otpCode, user.name),
-      }).catch(err => console.error('Failed to send OTP email:', err));
+      });
 
       return NextResponse.json({
         success: true,

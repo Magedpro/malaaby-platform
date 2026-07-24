@@ -26,6 +26,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const isFreeMonth = daysOld < 30;
   const remainingFreeDays = Math.max(0, 30 - daysOld);
 
+  // 5 days or less warning calculation
+  const show5DayWarning = isFreeMonth && remainingFreeDays <= 5;
   const isCommissionBlocked = (stadium as any)?.commissionStatus === 'blocked';
   const isOnSubscriptionPage = pathname === '/dashboard/subscription';
 
@@ -86,8 +88,40 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           unreadNotifications={unreadCount}
         />
 
-        {/* Free Month Banner */}
-        {isFreeMonth && (
+        {/* 5-Day Reminder Banner (Warning before trial ends or overdue) */}
+        {show5DayWarning && !isOnSubscriptionPage && (
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(245,158,11,0.2), rgba(239,68,68,0.15))',
+            borderBottom: '1px solid rgba(245,158,11,0.4)',
+            padding: '0.75rem 1.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '0.5rem',
+          }}>
+            <p style={{ fontSize: '0.875rem', color: '#f59e0b', fontWeight: 700 }}>
+              ⚠️ تذكير هام: متبقي <strong>{remainingFreeDays} {remainingFreeDays === 1 ? 'يوم واحد' : 'أيام'}</strong> على انتهاء الشهر التجريبي المجاني للملعب وبدء المحاسبة الشهرية.
+            </p>
+            <Link
+              href="/dashboard/subscription"
+              style={{
+                background: '#f59e0b',
+                color: '#fff',
+                padding: '0.35rem 1rem',
+                borderRadius: 'var(--radius-full)',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                textDecoration: 'none',
+              }}
+            >
+              💳 عرض المستحقات والسداد
+            </Link>
+          </div>
+        )}
+
+        {/* Regular Free Month Banner */}
+        {isFreeMonth && !show5DayWarning && (
           <div style={{
             background: 'linear-gradient(135deg, rgba(16,185,129,0.15), rgba(16,185,129,0.05))',
             borderBottom: '1px solid rgba(16,185,129,0.3)',

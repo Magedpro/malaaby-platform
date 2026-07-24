@@ -213,10 +213,14 @@ export default function StadiumCommissionPage() {
         </div>
       )}
 
-      {/* How & Where to Pay Instructions */}
-      {!data.isFreeMonth && data.unpaidCommission > 0 && (
-        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-xl)', padding: '1.5rem' }}>
-          <h2 style={{ fontSize: '1.15rem', fontWeight: 800, marginBottom: '1rem' }}>📱 طرق سداد العمولات الشهرية</h2>
+      {/* How & Where to Pay Instructions (Always Available Any Time) */}
+      <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-xl)', padding: '1.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <h2 style={{ fontSize: '1.15rem', fontWeight: 800 }}>📱 طرق سداد وسحب العمولات (متاح في أي وقت)</h2>
+          <span style={{ fontSize: '0.78rem', color: '#10b981', background: 'rgba(16,185,129,0.1)', padding: '0.3rem 0.75rem', borderRadius: '1rem', fontWeight: 600 }}>
+            ⚡ يمكنك التسوية والسداد في أي وقت من الشهر
+          </span>
+        </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
             <div style={{ background: 'var(--bg-base)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
               <div style={{ fontSize: '1.25rem', marginBottom: '0.25rem' }}>🔴 فودافون كاش</div>
@@ -287,7 +291,6 @@ export default function StadiumCommissionPage() {
             </Button>
           </form>
         </div>
-      )}
     </div>
   );
 }

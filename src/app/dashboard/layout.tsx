@@ -22,6 +22,7 @@ interface CommissionStatusData {
   commissionRate: number;
   unpaidCommission: number;
   isFreeMonth: boolean;
+  freeUntilDate?: string | null;
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -32,9 +33,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [unreadCount, setUnreadCount] = useState(0);
   const [commissionData, setCommissionData] = useState<CommissionStatusData | null>(null);
 
-  const daysOld = daysSince((stadium as any)?.createdAt);
-  const isFreeMonth = daysOld < 30;
-  const remainingFreeDays = Math.max(0, 30 - daysOld);
+  const isFreeMonth = commissionData ? commissionData.isFreeMonth : (daysSince((stadium as any)?.createdAt) < 30);
+
+  let remainingFreeDays = 0;
+  if (isFreeMonth) {
+    if (commissionData?.freeUntilDate) {
+      const freeUntilMs = Date.parse(commissionData.freeUntilDate);
+      if (!isNaN(freeUntilMs)) {
+        remainingFreeDays = Math.max(0, Math.ceil((freeUntilMs - Date.now()) / (1000 * 60 * 60 * 24)));
+      }
+    } else {
+      remainingFreeDays = Math.max(0, 30 - daysSince((stadium as any)?.createdAt));
+    }
+  }
 
   // 5 days or less warning calculation
   const show5DayWarning = isFreeMonth && remainingFreeDays <= 5;
@@ -73,6 +84,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           commissionRate: json.data.commissionRate,
           unpaidCommission: json.data.unpaidCommission,
           isFreeMonth: json.data.isFreeMonth,
+          freeUntilDate: json.data.freeUntilDate,
         });
       }
     } catch (e) {

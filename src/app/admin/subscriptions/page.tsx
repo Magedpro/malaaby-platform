@@ -51,6 +51,10 @@ export default function AdminCommissionsPage() {
   const [editingStadium, setEditingStadium] = useState<StadiumReport | null>(null);
   const [customRate, setCustomRate] = useState<string>('');
 
+  // Custom Free Trial Months Modal State
+  const [grantTrialStadium, setGrantTrialStadium] = useState<StadiumReport | null>(null);
+  const [selectedMonths, setSelectedMonths] = useState<number>(1);
+
   // Screenshot Preview Modal State
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
@@ -136,13 +140,13 @@ export default function AdminCommissionsPage() {
     }
   };
 
-  const handleAction = async (stadiumSlug: string, action: 'approve_payment' | 'block' | 'unblock' | 'end_free_trial') => {
+  const handleAction = async (stadiumSlug: string, action: string, payload?: Record<string, unknown>) => {
     setActionLoading(`${stadiumSlug}-${action}`);
     try {
       const res = await fetch('/api/v1/admin/commissions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stadiumSlug, action }),
+        body: JSON.stringify({ stadiumSlug, action, ...payload }),
       });
       const json = await res.json();
 
@@ -455,20 +459,48 @@ export default function AdminCommissionsPage() {
 
                       <td>
                         <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
-                          {stadium.isFreeMonth && (
+                          {stadium.isFreeMonth ? (
+                            <>
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => {
+                                  if (confirm(`هل أنت تأكد من إلغاء/حذف الشهر المجاني لـ (${stadium.name}) وبدء احتساب العمولات والاشتراكات فوراً؟`)) {
+                                    handleAction(stadium.slug, 'end_free_trial');
+                                  }
+                                }}
+                                isLoading={actionLoading === `${stadium.slug}-end_free_trial`}
+                                title="إلغاء/حذف الفترة المجانية للملعب وبدء حساب العمولات فوراً"
+                                style={{ color: 'var(--danger)', borderColor: 'rgba(239,68,68,0.3)' }}
+                              >
+                                🗑️ إلغاء/حذف الشهر المجاني
+                              </Button>
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => {
+                                  setGrantTrialStadium(stadium);
+                                  setSelectedMonths(1);
+                                }}
+                                title="تعديل أو تمديد الفترة المجانية للملعب بعدد شهور محدد"
+                                style={{ color: '#10b981', borderColor: 'rgba(16,185,129,0.3)' }}
+                              >
+                                🎁 تمديد الفترة المجانية
+                              </Button>
+                            </>
+                          ) : (
                             <Button
                               variant="secondary"
                               size="sm"
                               onClick={() => {
-                                if (confirm(`هل أنت تأكد من إلغاء الشهر المجاني لـ (${stadium.name}) وبدء احتساب العمولات والاشتراكات فوراً؟`)) {
-                                  handleAction(stadium.slug, 'end_free_trial');
-                                }
+                                setGrantTrialStadium(stadium);
+                                setSelectedMonths(1);
                               }}
-                              isLoading={actionLoading === `${stadium.slug}-end_free_trial`}
-                              title="إلغاء الشهر المجاني للملعب وبدء حساب العمولات فوراً"
-                              style={{ color: 'var(--warning)', borderColor: 'rgba(245,158,11,0.3)' }}
+                              isLoading={actionLoading === `${stadium.slug}-grant_free_trial`}
+                              title="تفعيل فترة مجانية للملعب دون احتساب عمولات وتحديد عدد الشهور"
+                              style={{ color: '#10b981', borderColor: 'rgba(16,185,129,0.3)' }}
                             >
-                              ⏳ إلغاء الشهر المجاني
+                              🎁 تفعيل فترة مجانية
                             </Button>
                           )}
 
@@ -511,6 +543,62 @@ export default function AdminCommissionsPage() {
             </table>
           </div>
         </div>
+      )}
+
+      {/* Grant/Extend Free Trial Months Modal */}
+      {grantTrialStadium && (
+        <Modal isOpen={true} onClose={() => setGrantTrialStadium(null)} title={`🎁 تفعيل/تحديد فترة مجانية لـ: ${grantTrialStadium.name}`}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+              اختر أو أدخل عدد الشهور المجانية المراد تفعيلها للملعب بدون أي عمولات أو اشتراكات مالية:
+            </p>
+
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              {[1, 2, 3, 6, 12].map(m => (
+                <Button
+                  key={m}
+                  type="button"
+                  variant={selectedMonths === m ? 'primary' : 'secondary'}
+                  size="sm"
+                  onClick={() => setSelectedMonths(m)}
+                >
+                  {m} {m === 1 ? 'شهر' : 'أشهر'}
+                </Button>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label style={{ fontSize: '0.85rem', fontWeight: 700 }}>أو أدخل عدد شهور مخصص:</label>
+              <input
+                type="number"
+                min="1"
+                max="36"
+                className="form-input"
+                value={selectedMonths}
+                onChange={e => setSelectedMonths(Math.max(1, Number(e.target.value)))}
+              />
+            </div>
+
+            <div style={{ background: 'var(--bg-base)', padding: '0.85rem', borderRadius: 'var(--radius-md)', fontSize: '0.85rem', border: '1px solid var(--border-subtle)' }}>
+              🗓️ ستكون الحجوزات مجانية حتى تاريخ: <strong>{new Date(Date.now() + selectedMonths * 30 * 24 * 60 * 60 * 1000).toLocaleDateString('ar-EG')}</strong>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+              <Button type="button" variant="secondary" onClick={() => setGrantTrialStadium(null)}>إلغاء</Button>
+              <Button
+                type="button"
+                variant="primary"
+                isLoading={actionLoading === `${grantTrialStadium.slug}-grant_free_trial`}
+                onClick={async () => {
+                  await handleAction(grantTrialStadium.slug, 'grant_free_trial', { months: selectedMonths });
+                  setGrantTrialStadium(null);
+                }}
+              >
+                تفعيل {selectedMonths} {selectedMonths === 1 ? 'شهر مجاني' : 'أشهر مجانية'} ✅
+              </Button>
+            </div>
+          </div>
+        </Modal>
       )}
 
       {/* Edit Custom Commission Rate Modal */}

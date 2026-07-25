@@ -201,20 +201,22 @@ export default function AdminOwnersPage() {
               </div>
             </div>
 
-            {/* Update subscription */}
+            {/* Update subscription & Free trial */}
             <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '1.25rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
                 <h4 style={{ fontWeight: 700, fontSize: '0.9375rem', margin: 0 }}>💎 تحديث الاشتراك والشهر المجاني</h4>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => handleAction('end_free_trial')}
-                  isLoading={actionLoading}
-                  title="إنهاء/إلغاء الشهر التجريبي المجاني لهذا المالك وحسابه كاشتراك نشط"
-                  style={{ color: 'var(--warning)', borderColor: 'rgba(245,158,11,0.3)' }}
-                >
-                  ⏳ إلغاء الشهر المجاني
-                </Button>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleAction('end_free_trial')}
+                    isLoading={actionLoading}
+                    title="إلغاء أو حذف الفترة التجريبية المجانية فوراً وبدء احتساب المستحقات"
+                    style={{ color: 'var(--danger)', borderColor: 'rgba(239,68,68,0.3)' }}
+                  >
+                    🗑️ إلغاء/حذف الشهر المجاني
+                  </Button>
+                </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem', alignItems: 'end' }}>
@@ -238,9 +240,23 @@ export default function AdminOwnersPage() {
                 <Input label="تاريخ الانتهاء" type="date" value={subExpiry} onChange={e => setSubExpiry(e.target.value)} />
               </div>
               
-              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
                 <Button variant="primary" size="sm" onClick={() => handleAction('update_subscription', { subscriptionStatus: subStatus, subscriptionExpiry: subExpiry, subscriptionPlanId: subPlan })} isLoading={actionLoading}>
                   تحديث بيانات الاشتراك ✅
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    const m = prompt('أدخل عدد الأشهر المجانية المراد منحها لهذا المالك:', '1');
+                    if (m && !isNaN(Number(m))) {
+                      handleAction('grant_free_trial', { months: Number(m) });
+                    }
+                  }}
+                  isLoading={actionLoading}
+                  style={{ color: '#10b981', borderColor: 'rgba(16,185,129,0.3)' }}
+                >
+                  🎁 تفعيل فترة مجانية (أشهر مخصصة)
                 </Button>
               </div>
             </div>

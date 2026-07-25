@@ -2,13 +2,40 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { Stadiums, Bookings, ActivityLogs, PlatformSettingsDB } from '@/lib/db';
 
-/** Check if a stadium is in its free first month (30 days from creation) */
-export function isStadiumInFreeFirstMonth(createdAtStr?: string): boolean {
-  if (!createdAtStr) return false;
-  const createdTime = Date.parse(createdAtStr);
+/** Check if a stadium is currently in a free trial / free month period */
+export function isStadiumInFreeTrial(stadium?: { createdAt?: string; freeTrialUntil?: string | null; subscriptionStatus?: string } | null): boolean {
+  if (!stadium) return false;
+
+  if (stadium.freeTrialUntil !== undefined) {
+    if (!stadium.freeTrialUntil) return false; // Explicitly null or empty = free trial deleted/cancelled
+    const trialEndTime = Date.parse(stadium.freeTrialUntil);
+    if (isNaN(trialEndTime)) return false;
+    return trialEndTime > Date.now();
+  }
+
+  if (stadium.subscriptionStatus === 'trial') return true;
+  if (!stadium.createdAt) return false;
+  const createdTime = Date.parse(stadium.createdAt);
   if (isNaN(createdTime)) return false;
   const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
   return (Date.now() - createdTime) < thirtyDaysMs;
+}
+
+/** Get the ISO timestamp string for free trial expiration date */
+export function getFreeTrialUntilDate(stadium?: { createdAt?: string; freeTrialUntil?: string | null } | null): string | null {
+  if (!stadium) return null;
+  if (stadium.freeTrialUntil !== undefined) {
+    return stadium.freeTrialUntil || null;
+  }
+  if (!stadium.createdAt) return null;
+  const createdTime = Date.parse(stadium.createdAt);
+  if (isNaN(createdTime)) return null;
+  return new Date(createdTime + 30 * 24 * 60 * 60 * 1000).toISOString();
+}
+
+/** Check if a stadium is in its free first month (30 days from creation) */
+export function isStadiumInFreeFirstMonth(createdAtStr?: string): boolean {
+  return isStadiumInFreeTrial({ createdAt: createdAtStr });
 }
 
 /**
@@ -44,7 +71,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'الملعب غير موجود' }, { status: 404 });
     }
 
-    const isFreeMonth = isStadiumInFreeFirstMonth(stadium.createdAt);
+    const isFreeMonth = isStadiumInFreeTrial(stadium);
+    const freeUntilDate = getFreeTrialUntilDate(stadium);
     const bookings = await Bookings.findByStadium(session.stadiumSlug);
 
     // Commission-eligible: completed OR confirmed + time has passed
@@ -52,9 +80,6 @@ export async function GET(request: NextRequest) {
 
     const rate = stadium.commissionRate ?? settings.defaultCommissionRate ?? 5;
     const totalCalculatedCommission = isFreeMonth ? 0 : (chargeableBookings.length * rate);
-
-    const createdDate = new Date(stadium.createdAt);
-    const freeUntilDate = new Date(createdDate.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
     // Unpaid = max of stored unpaid vs freshly calculated (so it never decreases without admin approval)
     const storedUnpaid = stadium.unpaidCommission ?? 0;

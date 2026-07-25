@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { Stadiums, Bookings, ActivityLogs, PlatformSettingsDB } from '@/lib/db';
+import { isStadiumInFreeTrial, getFreeTrialUntilDate } from '@/app/api/v1/stadium/commission/route';
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,13 +16,11 @@ export async function GET(request: NextRequest) {
       PlatformSettingsDB.get(),
     ]);
 
-    const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
     const now = Date.now();
 
     const report = stadiums.map(stadium => {
-      const createdTime = Date.parse(stadium.createdAt || '');
-      const isFreeMonth = !isNaN(createdTime) && (now - createdTime < thirtyDaysMs);
-      const freeUntilDate = !isNaN(createdTime) ? new Date(createdTime + thirtyDaysMs).toISOString() : null;
+      const isFreeMonth = isStadiumInFreeTrial(stadium);
+      const freeUntilDate = getFreeTrialUntilDate(stadium);
 
       // Commission-eligible: completed OR confirmed + time has passed
       const stadiumBookings = allBookings.filter(b => {
@@ -200,10 +199,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, message: 'تم فك الحجب عن الملعب بنجاح 🔓' });
     }
 
-    if (action === 'end_free_trial') {
-      const pastFortyDays = new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString();
+    if (action === 'end_free_trial' || action === 'delete_free_trial') {
       await Stadiums.update(stadiumSlug, {
-        createdAt: pastFortyDays,
+        freeTrialUntil: null,
         subscriptionStatus: 'active',
       });
 
@@ -215,7 +213,33 @@ export async function POST(request: NextRequest) {
         targetType: 'stadium',
       });
 
-      return NextResponse.json({ success: true, message: 'تم إلغاء الشهر المجاني للملعب وبدء احتساب العمولات والاشتراكات بنجاح! ⏳' });
+      return NextResponse.json({ success: true, message: 'تم إلغاء/حذف الفترة المجانية للملعب وبدء احتساب العمولات والاشتراكات فوراً! ⏳' });
+    }
+
+    if (action === 'grant_free_trial') {
+      const months = Math.max(1, Number(body.months) || 1);
+      const targetDate = new Date();
+      targetDate.setMonth(targetDate.getMonth() + months);
+      const freeTrialUntil = targetDate.toISOString();
+
+      await Stadiums.update(stadiumSlug, {
+        freeTrialUntil,
+        subscriptionStatus: 'trial',
+      });
+
+      ActivityLogs.log({
+        action: 'grant_free_trial_stadium',
+        performedBy: session.userId,
+        performedByName: session.name,
+        targetId: stadiumSlug,
+        targetType: 'stadium',
+        details: { months, freeTrialUntil },
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: `تم تفعيل فترة تجريبية مجانية للملعب لمدة ${months} ${months === 1 ? 'شهر' : 'أشهر'} (حتى ${targetDate.toLocaleDateString('ar-EG')}) بنجاح! 🎁`
+      });
     }
 
     return NextResponse.json({ success: false, error: 'الإجراء غير مدعوم' }, { status: 400 });

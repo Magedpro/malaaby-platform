@@ -38,16 +38,29 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ success: true, message: 'تم تغيير كلمة المرور' });
     }
 
-    if (action === 'end_free_trial') {
+    if (action === 'end_free_trial' || action === 'delete_free_trial') {
       if (user.stadiumSlug) {
-        const pastFortyDays = new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString();
         await Stadiums.update(user.stadiumSlug, {
-          createdAt: pastFortyDays,
+          freeTrialUntil: null,
           subscriptionStatus: 'active',
         });
       }
       ActivityLogs.log({ action: 'admin_end_free_trial', performedBy: session.userId, performedByName: session.name, targetId: id, targetType: 'stadium' });
-      return NextResponse.json({ success: true, message: 'تم إلغاء الشهر المجاني للمالك وبدء احتساب العمولات بنجاح ✅' });
+      return NextResponse.json({ success: true, message: 'تم إلغاء/حذف الشهر المجاني للمالك وبدء احتساب العمولات والاشتراكات بنجاح ✅' });
+    }
+
+    if (action === 'grant_free_trial') {
+      if (user.stadiumSlug) {
+        const months = Math.max(1, Number(body.months) || 1);
+        const targetDate = new Date();
+        targetDate.setMonth(targetDate.getMonth() + months);
+        await Stadiums.update(user.stadiumSlug, {
+          freeTrialUntil: targetDate.toISOString(),
+          subscriptionStatus: 'trial',
+        });
+      }
+      ActivityLogs.log({ action: 'admin_grant_free_trial', performedBy: session.userId, performedByName: session.name, targetId: id, targetType: 'stadium' });
+      return NextResponse.json({ success: true, message: 'تم تفعيل الفترة المجانية للمالك بنجاح 🎁' });
     }
 
     if (action === 'update_subscription') {
@@ -59,7 +72,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           pendingSubscription: null, // Clear pending request upon manual action/approval
         };
         if (body.endFreeTrial) {
-          subUpdates.createdAt = new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString();
+          subUpdates.freeTrialUntil = null;
+        }
+        if (body.freeTrialMonths) {
+          const months = Math.max(1, Number(body.freeTrialMonths) || 1);
+          const targetDate = new Date();
+          targetDate.setMonth(targetDate.getMonth() + months);
+          subUpdates.freeTrialUntil = targetDate.toISOString();
+          subUpdates.subscriptionStatus = 'trial';
         }
         await Stadiums.update(user.stadiumSlug, subUpdates);
       }

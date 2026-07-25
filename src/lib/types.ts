@@ -60,6 +60,7 @@ export interface Stadium {
   subscriptionPlanId?: string;
   subscriptionStatus: SubscriptionStatus;
   subscriptionExpiry?: string;
+  freeTrialUntil?: string | null;
   commissionRate?: number; // Default 5 EGP per completed booking
   unpaidCommission?: number; // Total unpaid commission in EGP
   commissionStatus?: 'active' | 'blocked'; // Blocked if overdue at end of month or manual

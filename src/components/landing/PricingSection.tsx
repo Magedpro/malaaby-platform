@@ -82,7 +82,7 @@ export const PricingSection: React.FC = () => {
             gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
             gap: '1.5rem',
             maxWidth: '1100px',
-            margin: '0 auto',
+            margin: '2.5rem auto 0',
           }}>
             {/* Card 1: Free Month */}
             <Card className="pricing-card animate-fadeInUp" style={{
@@ -94,6 +94,7 @@ export const PricingSection: React.FC = () => {
               flexDirection: 'column',
               justifyContent: 'space-between',
               position: 'relative',
+              overflow: 'visible',
             }}>
               <div>
                 <div style={{
@@ -136,27 +137,31 @@ export const PricingSection: React.FC = () => {
             {/* Card 2: 5 EGP Commission (Featured) */}
             <Card className="pricing-card featured animate-fadeInUp" style={{
               background: 'var(--bg-card)',
-              border: '2px solid var(--primary)',
+              border: '2px solid #10b981',
               borderRadius: 'var(--radius-xl)',
               padding: '2rem',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
               position: 'relative',
-              boxShadow: '0 10px 30px rgba(59, 130, 246, 0.15)',
+              overflow: 'visible',
+              boxShadow: '0 10px 30px rgba(16, 185, 129, 0.15)',
             }}>
               <div style={{
                 position: 'absolute',
-                top: '-14px',
-                right: '20px',
-                background: 'linear-gradient(135deg, var(--primary), var(--primary-light))',
-                color: '#fff',
-                fontSize: '0.75rem',
+                top: '-15px',
+                right: '24px',
+                background: 'linear-gradient(135deg, #10b981, #059669)',
+                color: '#ffffff',
+                fontSize: '0.78rem',
                 fontWeight: 800,
-                padding: '0.25rem 0.85rem',
+                padding: '0.35rem 0.9rem',
                 borderRadius: 'var(--radius-full)',
+                zIndex: 10,
+                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4)',
+                whiteSpace: 'nowrap',
               }}>
-                الأكثر عدلاً وشعبية 🔥
+                🔥 الأكثر عدلاً وشعبية
               </div>
               <div>
                 <div style={{

@@ -1953,12 +1953,30 @@ input, textarea, select {
   }
 }
 
-/* ── Subscription page plans grid ── */
-@media (max-width: 900px) {
-  .plans-grid,
-  [class*="plans"],
-  [style*="repeat(auto-fit, minmax(260"] {
-    grid-template-columns: 1fr !important;
+/* ── Additional Mobile & Responsive Enhancements ── */
+@media (max-width: 640px) {
+  .modal-panel {
+    max-width: 95vw !important;
+    margin: 0.5rem !important;
+    border-radius: var(--radius-lg) !important;
+  }
+  .modal-header, .modal-body, .modal-footer {
+    padding: 1rem !important;
+  }
+  .modal-footer {
+    flex-wrap: wrap !important;
+  }
+  .modal-footer button {
+    width: 100% !important;
+  }
+  .data-table-wrapper {
+    margin-left: -0.5rem;
+    margin-right: -0.5rem;
+    border-radius: var(--radius-sm);
+  }
+  .dashboard-topbar {
+    padding: 0 1rem !important;
   }
 }
+
 

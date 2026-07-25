@@ -32,6 +32,7 @@ const DAYS_AR_FULL = ['الأحد','الاثنين','الثلاثاء','الأر
 // We display: السبت الأحد الاثنين الثلاثاء الأربعاء الخميس الجمعة
 const CAL_DAYS_ORDER = [6, 0, 1, 2, 3, 4, 5]; // Saturday first
 const DAYS_HEADER = ['السبت','الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة'];
+const DAYS_HEADER_SHORT = ['سبت','أحد','اتنين','ثلاثاء','أربعاء','خميس','جمعة'];
 
 export default function PublicBookingPage() {
   const { tenant } = useParams() as { tenant: string };
@@ -162,9 +163,7 @@ export default function PublicBookingPage() {
   const today = new Date().toISOString().split('T')[0];
   const firstDay = new Date(calYear, calMonth, 1);
   const lastDay = new Date(calYear, calMonth + 1, 0);
-  // firstDay.getDay(): 0=Sun,1=Mon,...,6=Sat  → we need offset in our Saturday-first grid
-  const firstDayOfWeek = firstDay.getDay(); // 0-6
-  // position in Saturday-first grid: Sat=0,Sun=1,Mon=2,...,Fri=6
+  const firstDayOfWeek = firstDay.getDay();
   const satFirstPos = (firstDayOfWeek + 1) % 7;
   const calCells: (number | null)[] = [];
   for (let i = 0; i < satFirstPos; i++) calCells.push(null);
@@ -180,7 +179,6 @@ export default function PublicBookingPage() {
 
   const availableCount = slots.filter(s => s.status === 'available').length;
 
-  // --- Not found / loading ---
   if (pageLoading) return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ textAlign: 'center' }}>
@@ -205,41 +203,28 @@ export default function PublicBookingPage() {
     <div style={{ minHeight: '100vh', background: 'var(--bg-base)' }}>
 
       {/* ═══ HERO BANNER ═══ */}
-      <div style={{ position: 'relative', height: '320px', overflow: 'hidden' }}>
+      <div className="hero-banner-container">
         <img
           src={stadium?.coverImage || 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=1400&h=400&fit=crop'}
           alt={stadium?.name}
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          className="hero-banner-img"
         />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(160deg, rgba(8,14,20,0.35) 0%, rgba(8,14,20,0.92) 100%)' }} />
-        <div style={{
-          position: 'absolute', bottom: 0, right: 0, left: 0,
-          padding: '2rem', display: 'flex', alignItems: 'flex-end', gap: '1.25rem'
-        }}>
+        <div className="hero-banner-overlay" />
+        <div className="hero-banner-content">
           {stadium?.logo && (
-            <img src={stadium.logo} alt="Logo" style={{
-              width: '76px', height: '76px', borderRadius: '50%', objectFit: 'cover',
-              border: '3px solid var(--primary)', flexShrink: 0, boxShadow: '0 0 20px rgba(34,197,94,0.3)'
-            }} />
+            <img src={stadium.logo} alt="Logo" className="hero-banner-logo" />
           )}
-          <div style={{ flex: 1 }}>
-            <h1 style={{ fontSize: 'clamp(1.5rem, 4vw, 2.25rem)', fontWeight: 900, marginBottom: '0.375rem', textShadow: '0 2px 8px rgba(0,0,0,0.5)' }}>
+          <div className="hero-banner-text">
+            <h1 className="hero-banner-title">
               {stadium?.name}
             </h1>
-            <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.9375rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <p className="hero-banner-location">
               📍 {stadium?.city}{stadium?.address ? ` — ${stadium.address}` : ''}
             </p>
           </div>
           {/* Quick contact badge */}
           {stadium?.phone && (
-            <a href={`tel:${stadium.phone}`} style={{
-              display: 'flex', alignItems: 'center', gap: '0.5rem',
-              background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(255,255,255,0.2)', borderRadius: '2rem',
-              padding: '0.5rem 1.125rem', color: 'white', fontSize: '0.875rem',
-              fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap',
-              transition: 'background 0.2s',
-            }}>
+            <a href={`tel:${stadium.phone}`} className="hero-banner-phone">
               📞 {stadium.phone}
             </a>
           )}
@@ -318,10 +303,13 @@ export default function PublicBookingPage() {
                 >▶</button>
               </div>
 
-              {/* Day headers — full Arabic names */}
+              {/* Day headers — full Arabic names on desktop, short on mobile */}
               <div className="cal-headers">
-                {DAYS_HEADER.map(d => (
-                  <div key={d} className="cal-header-cell">{d}</div>
+                {DAYS_HEADER.map((d, idx) => (
+                  <div key={d} className="cal-header-cell">
+                    <span className="day-name-full">{d}</span>
+                    <span className="day-name-short">{DAYS_HEADER_SHORT[idx]}</span>
+                  </div>
                 ))}
               </div>
 
@@ -743,7 +731,94 @@ export default function PublicBookingPage() {
         />
       )}
 
+      {/* ═══ MOBILE FLOATING BOOKING BAR ═══ */}
+      {selectedSlot && selectedField && selectedDate && (
+        <div className="mobile-floating-booking-bar">
+          <div style={{ flex: 1, minWidth: 0, textAlign: 'right' }}>
+            <div style={{ fontWeight: 800, fontSize: '0.875rem', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              ⚽ {selectedField.name}
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--primary-light)', fontWeight: 700 }}>
+              {formatTime(selectedSlot.startTime)} - {formatTime(selectedSlot.endTime)} ({formatCurrency(selectedSlot.amount || 0)})
+            </div>
+          </div>
+          <Button variant="primary" size="sm" onClick={() => setBookingOpen(true)} style={{ flexShrink: 0, padding: '0.5rem 1rem' }}>
+            تأكيد الحجز ✨
+          </Button>
+        </div>
+      )}
+
       <style jsx global>{`
+        .hero-banner-container {
+          position: relative;
+          height: 300px;
+          overflow: hidden;
+        }
+        .hero-banner-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+        .hero-banner-overlay {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(160deg, rgba(8,14,20,0.3) 0%, rgba(8,14,20,0.92) 100%);
+        }
+        .hero-banner-content {
+          position: absolute;
+          bottom: 0;
+          right: 0;
+          left: 0;
+          padding: 2rem;
+          display: flex;
+          align-items: flex-end;
+          gap: 1.25rem;
+          flex-wrap: wrap;
+        }
+        .hero-banner-logo {
+          width: 76px;
+          height: 76px;
+          border-radius: 50%;
+          object-fit: cover;
+          border: 3px solid var(--primary);
+          flex-shrink: 0;
+          box-shadow: 0 0 20px rgba(34,197,94,0.3);
+        }
+        .hero-banner-text {
+          flex: 1;
+          min-width: 200px;
+        }
+        .hero-banner-title {
+          font-size: clamp(1.4rem, 4vw, 2.25rem);
+          font-weight: 900;
+          margin-bottom: 0.375rem;
+          text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+          line-height: 1.25;
+        }
+        .hero-banner-location {
+          color: rgba(255,255,255,0.85);
+          font-size: 0.9375rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+        .hero-banner-phone {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          background: rgba(255,255,255,0.12);
+          backdrop-filter: blur(8px);
+          border: 1px solid rgba(255,255,255,0.2);
+          border-radius: 2rem;
+          padding: 0.5rem 1.125rem;
+          color: white;
+          font-size: 0.875rem;
+          font-weight: 700;
+          text-decoration: none;
+          white-space: nowrap;
+          transition: background 0.2s;
+        }
+
         .booking-layout {
           display: grid;
           grid-template-columns: 1fr 340px;
@@ -814,6 +889,7 @@ export default function PublicBookingPage() {
         .field-badge-price { background: rgba(34,197,94,0.1); color: var(--success); border: 1px solid rgba(34,197,94,0.2); }
         .field-badge-time  { background: rgba(59,130,246,0.1); color: #60a5fa; border: 1px solid rgba(59,130,246,0.2); }
         .field-badge-hours { background: var(--bg-base); color: var(--text-muted); border: 1px solid var(--border-subtle); }
+        
         /* Calendar nav button */
         .cal-nav-btn {
           background: var(--bg-elevated);
@@ -827,16 +903,17 @@ export default function PublicBookingPage() {
           transition: all var(--transition-fast);
         }
         .cal-nav-btn:hover { background: var(--primary-subtle); border-color: var(--primary); }
+        
         /* Day headers */
         .cal-headers {
           display: grid;
           grid-template-columns: repeat(7, 1fr);
-          gap: 3px;
+          gap: 4px;
           margin-bottom: 6px;
         }
         .cal-header-cell {
           text-align: center;
-          font-size: 0.6875rem;
+          font-size: 0.75rem;
           font-weight: 700;
           color: var(--text-muted);
           padding: 0.375rem 0.125rem;
@@ -844,7 +921,10 @@ export default function PublicBookingPage() {
           overflow: hidden;
           text-overflow: ellipsis;
         }
-        /* Calendar day cells — override to add sub-label */
+        .day-name-full { display: inline; }
+        .day-name-short { display: none; }
+
+        /* Calendar day cells */
         .calendar-day {
           display: flex;
           flex-direction: column;
@@ -855,18 +935,68 @@ export default function PublicBookingPage() {
         }
         .cal-day-num { font-weight: 700; font-size: 0.9375rem; }
         .cal-day-label { font-size: 0.5625rem; opacity: 0.85; font-weight: 600; color: var(--primary-light); }
+        
         /* Slots grid */
         .slots-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+          grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
           gap: 0.625rem;
         }
+
+        .mobile-floating-booking-bar {
+          display: none;
+        }
+
         @media (max-width: 820px) {
           .booking-layout {
             grid-template-columns: 1fr !important;
           }
-          .cal-header-cell {
-            font-size: 0.5625rem;
+          .hero-banner-container {
+            height: auto;
+            min-height: 220px;
+          }
+          .hero-banner-content {
+            position: relative;
+            background: var(--bg-surface);
+            padding: 1.25rem 1rem;
+            gap: 0.875rem;
+          }
+          .hero-banner-logo {
+            width: 56px;
+            height: 56px;
+          }
+          .hero-banner-phone {
+            width: 100%;
+            justify-content: center;
+            margin-top: 0.25rem;
+          }
+          .mobile-floating-booking-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 25, 35, 0.96);
+            backdrop-filter: blur(12px);
+            border-top: 1.5px solid var(--primary);
+            padding: 0.75rem 1.25rem;
+            z-index: 95;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
+            gap: 1rem;
+          }
+        }
+
+        @media (max-width: 540px) {
+          .day-name-full { display: none; }
+          .day-name-short { display: inline; }
+          .cal-header-cell { font-size: 0.7rem; }
+          .booking-card { padding: 1rem; }
+          .field-card { padding: 0.75rem; gap: 0.75rem; }
+          .slots-grid {
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 0.5rem;
           }
         }
       `}</style>

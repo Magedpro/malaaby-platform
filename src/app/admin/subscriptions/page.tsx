@@ -459,11 +459,16 @@ export default function AdminCommissionsPage() {
                             <Button
                               variant="secondary"
                               size="sm"
-                              onClick={() => handleAction(stadium.slug, 'end_free_trial')}
+                              onClick={() => {
+                                if (confirm(`هل أنت تأكد من إلغاء الشهر المجاني لـ (${stadium.name}) وبدء احتساب العمولات والاشتراكات فوراً؟`)) {
+                                  handleAction(stadium.slug, 'end_free_trial');
+                                }
+                              }}
                               isLoading={actionLoading === `${stadium.slug}-end_free_trial`}
-                              title="إنهاء الشهر المجاني للملعب وبدء حساب العمولات فوراً"
+                              title="إلغاء الشهر المجاني للملعب وبدء حساب العمولات فوراً"
+                              style={{ color: 'var(--warning)', borderColor: 'rgba(245,158,11,0.3)' }}
                             >
-                              ⏳ إنهاء المجاني
+                              ⏳ إلغاء الشهر المجاني
                             </Button>
                           )}
 

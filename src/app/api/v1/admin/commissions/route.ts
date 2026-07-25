@@ -202,7 +202,10 @@ export async function POST(request: NextRequest) {
 
     if (action === 'end_free_trial') {
       const pastFortyDays = new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString();
-      await Stadiums.update(stadiumSlug, { createdAt: pastFortyDays });
+      await Stadiums.update(stadiumSlug, {
+        createdAt: pastFortyDays,
+        subscriptionStatus: 'active',
+      });
 
       ActivityLogs.log({
         action: 'end_free_trial_stadium',
@@ -212,7 +215,7 @@ export async function POST(request: NextRequest) {
         targetType: 'stadium',
       });
 
-      return NextResponse.json({ success: true, message: 'تم إنهاء الشهر التجريبي للملعب وبدء احتساب العمولات بنجاح! ⏳' });
+      return NextResponse.json({ success: true, message: 'تم إلغاء الشهر المجاني للملعب وبدء احتساب العمولات والاشتراكات بنجاح! ⏳' });
     }
 
     return NextResponse.json({ success: false, error: 'الإجراء غير مدعوم' }, { status: 400 });

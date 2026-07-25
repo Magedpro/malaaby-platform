@@ -203,8 +203,21 @@ export default function AdminOwnersPage() {
 
             {/* Update subscription */}
             <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '1.25rem' }}>
-              <h4 style={{ fontWeight: 700, marginBottom: '0.75rem', fontSize: '0.9375rem' }}>💎 تحديث الاشتراك</h4>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem', alignItems: 'end' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                <h4 style={{ fontWeight: 700, fontSize: '0.9375rem', margin: 0 }}>💎 تحديث الاشتراك والشهر المجاني</h4>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => handleAction('end_free_trial')}
+                  isLoading={actionLoading}
+                  title="إنهاء/إلغاء الشهر التجريبي المجاني لهذا المالك وحسابه كاشتراك نشط"
+                  style={{ color: 'var(--warning)', borderColor: 'rgba(245,158,11,0.3)' }}
+                >
+                  ⏳ إلغاء الشهر المجاني
+                </Button>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem', alignItems: 'end' }}>
                 <div className="form-group">
                   <label className="form-label">الخطة</label>
                   <select className="form-input form-select" value={subPlan} onChange={e => setSubPlan(e.target.value)}>
@@ -224,9 +237,12 @@ export default function AdminOwnersPage() {
                 </div>
                 <Input label="تاريخ الانتهاء" type="date" value={subExpiry} onChange={e => setSubExpiry(e.target.value)} />
               </div>
-              <Button variant="primary" size="sm" onClick={() => handleAction('update_subscription', { subscriptionStatus: subStatus, subscriptionExpiry: subExpiry, subscriptionPlanId: subPlan })} isLoading={actionLoading} style={{ marginTop: '0.75rem' }}>
-                تحديث الاشتراك
-              </Button>
+              
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
+                <Button variant="primary" size="sm" onClick={() => handleAction('update_subscription', { subscriptionStatus: subStatus, subscriptionExpiry: subExpiry, subscriptionPlanId: subPlan })} isLoading={actionLoading}>
+                  تحديث بيانات الاشتراك ✅
+                </Button>
+              </div>
             </div>
           </div>
         )}

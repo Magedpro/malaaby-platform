@@ -38,17 +38,33 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ success: true, message: 'تم تغيير كلمة المرور' });
     }
 
+    if (action === 'end_free_trial') {
+      if (user.stadiumSlug) {
+        const pastFortyDays = new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString();
+        await Stadiums.update(user.stadiumSlug, {
+          createdAt: pastFortyDays,
+          subscriptionStatus: 'active',
+        });
+      }
+      ActivityLogs.log({ action: 'admin_end_free_trial', performedBy: session.userId, performedByName: session.name, targetId: id, targetType: 'stadium' });
+      return NextResponse.json({ success: true, message: 'تم إلغاء الشهر المجاني للمالك وبدء احتساب العمولات بنجاح ✅' });
+    }
+
     if (action === 'update_subscription') {
       if (user.stadiumSlug) {
-        await Stadiums.update(user.stadiumSlug, {
+        const subUpdates: any = {
           subscriptionStatus: subscriptionStatus,
           subscriptionExpiry: subscriptionExpiry,
           subscriptionPlanId: subscriptionPlanId,
           pendingSubscription: null, // Clear pending request upon manual action/approval
-        });
+        };
+        if (body.endFreeTrial) {
+          subUpdates.createdAt = new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString();
+        }
+        await Stadiums.update(user.stadiumSlug, subUpdates);
       }
       ActivityLogs.log({ action: 'admin_update_subscription', performedBy: session.userId, performedByName: session.name, targetId: id, targetType: 'stadium' });
-      return NextResponse.json({ success: true, message: 'تم تحديث الاشتراك' });
+      return NextResponse.json({ success: true, message: 'تم تحديث الاشتراك بنجاح' });
     }
 
     if (action === 'reject_subscription') {

@@ -125,7 +125,7 @@ export default function MyBookingsPage() {
           }}>
             📱 رقم الهاتف
           </label>
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <div className="search-form-row" style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
             <input
               type="tel"
               placeholder="01012345678"
@@ -412,6 +412,16 @@ export default function MyBookingsPage() {
       <style jsx global>{`
         @keyframes spin {
           to { transform: rotate(360deg); }
+        }
+        @media (max-width: 480px) {
+          .search-form-row input {
+            width: 100% !important;
+            flex: none !important;
+          }
+          .search-form-row button {
+            width: 100% !important;
+            justify-content: center !important;
+          }
         }
       `}</style>
     </div>

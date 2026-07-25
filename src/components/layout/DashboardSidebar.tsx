@@ -111,9 +111,9 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
         <div className="divider" />
 
         {/* Public Booking Link */}
-        {user?.stadiumSlug && (
+        {(stadium?.slug || user?.stadiumSlug) && (
           <a
-            href={`/${user.stadiumSlug}`}
+            href={`/${stadium?.slug || user?.stadiumSlug}`}
             target="_blank"
             rel="noopener noreferrer"
             className="nav-item"

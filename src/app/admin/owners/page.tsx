@@ -112,11 +112,10 @@ export default function AdminOwnersPage() {
       const json = await res.json();
       if (json.success) {
         showToast(json.message, 'success');
-        // Redirect to dashboard after short delay
+        // Full page redirect to ensure session context & cookies reload clean
         setTimeout(() => {
-          router.push(json.redirectTo || '/dashboard');
-          router.refresh();
-        }, 800);
+          window.location.href = json.redirectTo || '/dashboard';
+        }, 500);
       } else {
         showToast(json.error || 'فشل الدخول للحساب', 'error');
       }

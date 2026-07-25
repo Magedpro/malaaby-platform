@@ -130,8 +130,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       });
       const json = await res.json();
       if (json.success) {
-        router.push(json.redirectTo || '/admin/owners');
-        router.refresh();
+        window.location.href = json.redirectTo || '/admin/owners';
       }
     } catch (e) {
       console.error('Exit impersonation failed', e);

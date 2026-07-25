@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession, createSession } from '@/lib/auth';
-import { Users, ActivityLogs } from '@/lib/db';
+import { Users, Stadiums, ActivityLogs } from '@/lib/db';
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Get stadium slug if owner
-    const stadiumSlug = targetUser.stadiumSlug;
+    const stadiumSlug = targetUser.stadiumSlug || (await Stadiums.findByOwner(targetUser.id))?.slug;
 
     // Create session for target user
     await createSession({

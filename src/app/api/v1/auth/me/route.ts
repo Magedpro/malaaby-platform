@@ -16,8 +16,9 @@ export async function GET() {
     }
 
     let stadiumInfo = null;
-    if ((user.role === 'owner' || user.role === 'super_admin') && user.stadiumSlug) {
-      const stadium = await Stadiums.findBySlug(user.stadiumSlug);
+    const userStadiumSlug = user.stadiumSlug || (await Stadiums.findByOwner(user.id))?.slug;
+    if ((user.role === 'owner' || user.role === 'super_admin') && userStadiumSlug) {
+      const stadium = await Stadiums.findBySlug(userStadiumSlug);
       if (stadium) {
         // Fallback for older stadiums that don't have subscription fields
         const stadiumCreated = stadium.createdAt || user.createdAt || new Date().toISOString();
@@ -55,7 +56,7 @@ export async function GET() {
           name: user.name,
           email: user.email,
           role: user.role,
-          stadiumSlug: user.stadiumSlug,
+          stadiumSlug: userStadiumSlug,
           phone: user.phone
         },
         stadium: stadiumInfo

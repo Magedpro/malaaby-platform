@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/Input';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useToast } from '@/components/ui/Toast';
 import { formatDate, formatDateTime } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 
 interface Owner {
   id: string; name: string; email: string; phone: string; isActive: boolean;
@@ -17,6 +18,7 @@ interface Owner {
 
 export default function AdminOwnersPage() {
   const { showToast } = useToast();
+  const router = useRouter();
   const [owners, setOwners] = useState<Owner[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
@@ -24,6 +26,7 @@ export default function AdminOwnersPage() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [impersonateLoading, setImpersonateLoading] = useState<string | null>(null);
 
   // Reset password / subscription state
   const [newPassword, setNewPassword] = useState('');
@@ -96,6 +99,34 @@ export default function AdminOwnersPage() {
     finally { setActionLoading(false); }
   };
 
+  // Impersonate: enter owner's account
+  const handleImpersonate = async (owner: Owner) => {
+    if (!confirm(`هل تريد الدخول لحساب "${owner.name}"؟ ستتمكن من العودة لحسابك في أي وقت.`)) return;
+    setImpersonateLoading(owner.id);
+    try {
+      const res = await fetch('/api/v1/admin/impersonate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: owner.id }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        showToast(json.message, 'success');
+        // Redirect to dashboard after short delay
+        setTimeout(() => {
+          router.push(json.redirectTo || '/dashboard');
+          router.refresh();
+        }, 800);
+      } else {
+        showToast(json.error || 'فشل الدخول للحساب', 'error');
+      }
+    } catch {
+      showToast('خطأ في الاتصال', 'error');
+    } finally {
+      setImpersonateLoading(null);
+    }
+  };
+
   const statusColor = (s: string) =>
     s === 'active' ? 'success' : s === 'trial' ? 'info' : s === 'expired' ? 'danger' : 'warning';
   const statusLabel = (s: string) =>
@@ -157,8 +188,33 @@ export default function AdminOwnersPage() {
                   <td><Badge variant={o.isActive ? 'success' : 'danger'}>{o.isActive ? 'نشط' : 'موقوف'}</Badge></td>
                   <td style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>{formatDate(o.createdAt)}</td>
                   <td>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                       <Button variant="secondary" size="sm" onClick={() => { setSelectedOwner(o); setSubStatus(o.subscriptionStatus); setDetailOpen(true); }}>إدارة</Button>
+                      <button
+                        title={`الدخول لحساب ${o.name}`}
+                        onClick={() => handleImpersonate(o)}
+                        disabled={impersonateLoading === o.id}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.3rem',
+                          padding: '0.3rem 0.6rem',
+                          borderRadius: 'var(--radius-sm)',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          cursor: impersonateLoading === o.id ? 'wait' : 'pointer',
+                          background: 'rgba(139, 92, 246, 0.12)',
+                          border: '1px solid rgba(139, 92, 246, 0.35)',
+                          color: '#a78bfa',
+                          transition: 'all 0.18s',
+                          whiteSpace: 'nowrap',
+                          opacity: impersonateLoading === o.id ? 0.6 : 1,
+                        }}
+                        onMouseEnter={e => { (e.target as HTMLButtonElement).style.background = 'rgba(139, 92, 246, 0.25)'; }}
+                        onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = 'rgba(139, 92, 246, 0.12)'; }}
+                      >
+                        {impersonateLoading === o.id ? '⏳' : '👁️'} دخول للحساب
+                      </button>
                       <Button variant="danger" size="sm" onClick={() => handleDelete(o.id)}>حذف</Button>
                     </div>
                   </td>
@@ -181,6 +237,42 @@ export default function AdminOwnersPage() {
               <div><strong>الملعب:</strong> {selectedOwner.stadiumName}</div>
               <div><strong>المدينة:</strong> {selectedOwner.city}</div>
               <div><strong>الرابط:</strong> /{selectedOwner.stadiumSlug}</div>
+            </div>
+
+            {/* Enter account button */}
+            <div style={{
+              background: 'rgba(139, 92, 246, 0.08)',
+              border: '1px solid rgba(139, 92, 246, 0.25)',
+              borderRadius: 'var(--radius-md)',
+              padding: '1rem 1.25rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '1rem',
+              flexWrap: 'wrap',
+            }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '0.9375rem', color: '#a78bfa', marginBottom: '0.25rem' }}>👁️ الدخول لحساب المالك</div>
+                <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>ستدخل كمالك هذا الملعب وتتمكن من رؤية كل شيء من منظوره. يمكنك العودة لحساب الأدمن في أي وقت.</div>
+              </div>
+              <button
+                onClick={() => { setDetailOpen(false); handleImpersonate(selectedOwner); }}
+                disabled={actionLoading}
+                style={{
+                  padding: '0.6rem 1.25rem',
+                  borderRadius: 'var(--radius-sm)',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  background: 'rgba(139, 92, 246, 0.2)',
+                  border: '1px solid rgba(139, 92, 246, 0.5)',
+                  color: '#c4b5fd',
+                  transition: 'all 0.18s',
+                  flexShrink: 0,
+                }}
+              >
+                👁️ دخول للحساب الآن
+              </button>
             </div>
 
             {/* Suspend/Activate */}
@@ -211,7 +303,7 @@ export default function AdminOwnersPage() {
                     size="sm"
                     onClick={() => handleAction('end_free_trial')}
                     isLoading={actionLoading}
-                    title="إلغاء أو حذف الفترة التجريبية المجانية فوراً وبدء احتساب المستحقات"
+                    title="إلغاء الشهر المجاني — العمولات ستُحسب فقط على الحجوزات الجديدة من الآن"
                     style={{ color: 'var(--danger)', borderColor: 'rgba(239,68,68,0.3)' }}
                   >
                     🗑️ إلغاء/حذف الشهر المجاني

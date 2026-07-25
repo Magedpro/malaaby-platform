@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { Stadiums, Bookings, ActivityLogs, PlatformSettingsDB } from '@/lib/db';
-import { isStadiumInFreeTrial, getFreeTrialUntilDate } from '@/app/api/v1/stadium/commission/route';
+import { isStadiumInFreeTrial, getFreeTrialUntilDate, getCommissionStartDate, isCommissionEligible } from '@/app/api/v1/stadium/commission/route';
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,21 +16,15 @@ export async function GET(request: NextRequest) {
       PlatformSettingsDB.get(),
     ]);
 
-    const now = Date.now();
-
     const report = stadiums.map(stadium => {
       const isFreeMonth = isStadiumInFreeTrial(stadium);
       const freeUntilDate = getFreeTrialUntilDate(stadium);
+      const commissionStartDate = getCommissionStartDate(stadium);
 
-      // Commission-eligible: completed OR confirmed + time has passed
+      // Commission-eligible: completed OR confirmed + time has passed, AND after commission start date
       const stadiumBookings = allBookings.filter(b => {
         if (b.stadiumSlug !== stadium.slug) return false;
-        if (b.status === 'completed') return true;
-        if (b.status === 'confirmed') {
-          const bookingEnd = new Date(`${b.date}T${b.endTime}`);
-          return bookingEnd.getTime() < now;
-        }
-        return false;
+        return isCommissionEligible(b, commissionStartDate);
       });
 
       const rate = stadium.commissionRate ?? settings.defaultCommissionRate ?? 5;
@@ -47,6 +41,7 @@ export async function GET(request: NextRequest) {
         createdAt: stadium.createdAt,
         isFreeMonth,
         freeUntilDate,
+        commissionStartDate: commissionStartDate || null,
         totalCompletedBookings: stadiumBookings.length,
         commissionRate: rate,
         totalCalculatedCommission: totalCommission,
@@ -200,9 +195,12 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'end_free_trial' || action === 'delete_free_trial') {
+      const removalTime = new Date().toISOString();
       await Stadiums.update(stadiumSlug, {
         freeTrialUntil: null,
         subscriptionStatus: 'active',
+        commissionStartDate: removalTime, // Commissions start from this moment
+        unpaidCommission: 0, // Reset: previous bookings during trial are not counted
       });
 
       ActivityLogs.log({
@@ -211,9 +209,10 @@ export async function POST(request: NextRequest) {
         performedByName: session.name,
         targetId: stadiumSlug,
         targetType: 'stadium',
+        details: { commissionStartDate: removalTime },
       });
 
-      return NextResponse.json({ success: true, message: 'تم إلغاء/حذف الفترة المجانية للملعب وبدء احتساب العمولات والاشتراكات فوراً! ⏳' });
+      return NextResponse.json({ success: true, message: 'تم إلغاء/حذف الفترة المجانية للملعب — سيتم احتساب العمولات على الحجوزات الجديدة فقط من الآن! ⏳' });
     }
 
     if (action === 'grant_free_trial') {

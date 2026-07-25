@@ -41,12 +41,13 @@ export const PricingSection: React.FC = () => {
       <div className="container">
         
         {/* Section Header */}
-        <div className="section-header" style={{ textAlign: 'center', maxWidth: '750px', margin: '0 auto 3rem' }}>
-          <div className="section-tag" style={{
+        <div style={{ textAlign: 'center', maxWidth: '700px', margin: '0 auto 2.5rem' }}>
+          <div style={{
             display: 'inline-flex',
             alignItems: 'center',
             gap: '0.5rem',
-            background: 'rgba(16, 185, 129, 0.12)',
+            background: 'rgba(16, 185, 129, 0.1)',
+            border: '1px solid rgba(16, 185, 129, 0.3)',
             color: '#10b981',
             padding: '0.4rem 1rem',
             borderRadius: 'var(--radius-full)',
@@ -82,7 +83,8 @@ export const PricingSection: React.FC = () => {
             gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
             gap: '1.5rem',
             maxWidth: '1100px',
-            margin: '2.5rem auto 0',
+            margin: '0 auto',
+            alignItems: 'stretch',
           }}>
             {/* Card 1: Free Month */}
             <Card className="pricing-card animate-fadeInUp" style={{
@@ -139,26 +141,21 @@ export const PricingSection: React.FC = () => {
               background: 'var(--bg-card)',
               border: '2px solid #10b981',
               borderRadius: 'var(--radius-xl)',
-              padding: '2rem',
+              padding: '0',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
               position: 'relative',
-              overflow: 'visible',
-              boxShadow: '0 10px 30px rgba(16, 185, 129, 0.15)',
+              overflow: 'hidden',
+              boxShadow: '0 12px 36px rgba(16, 185, 129, 0.2)',
             }}>
+              {/* Top Banner Ribbon */}
               <div style={{
-                position: 'absolute',
-                top: '-15px',
-                right: '24px',
                 background: 'linear-gradient(135deg, #10b981, #059669)',
                 color: '#ffffff',
-                fontSize: '0.78rem',
+                textAlign: 'center',
+                fontSize: '0.85rem',
                 fontWeight: 800,
-                padding: '0.35rem 0.9rem',
-                borderRadius: 'var(--radius-full)',
-                zIndex: 10,
-                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4)',
                 whiteSpace: 'nowrap',
               }}>
                 🔥 الأكثر عدلاً وشعبية

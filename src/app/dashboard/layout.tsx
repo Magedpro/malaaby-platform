@@ -32,6 +32,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [commissionData, setCommissionData] = useState<CommissionStatusData | null>(null);
+  const [impersonating, setImpersonating] = useState<{ adminName: string; adminEmail: string } | null>(null);
+  const [exitingImpersonation, setExitingImpersonation] = useState(false);
 
   const isFreeMonth = commissionData ? commissionData.isFreeMonth : (daysSince((stadium as any)?.createdAt) < 30);
 
@@ -100,12 +102,43 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       fetchCommissionStatus();
       const notifTimer = setInterval(fetchNotifCount, 30000);
       const commissionTimer = setInterval(fetchCommissionStatus, 30000);
+
+      // Check if currently impersonating
+      fetch('/api/v1/admin/impersonate')
+        .then(r => r.json())
+        .then(json => {
+          if (json.isImpersonating) {
+            setImpersonating({ adminName: json.adminName, adminEmail: json.adminEmail });
+          }
+        })
+        .catch(() => {});
+
       return () => {
         clearInterval(notifTimer);
         clearInterval(commissionTimer);
       };
     }
   }, [user, loading, router, fetchNotifCount, fetchCommissionStatus]);
+
+  const handleExitImpersonation = async () => {
+    setExitingImpersonation(true);
+    try {
+      const res = await fetch('/api/v1/admin/impersonate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'exit' }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        router.push(json.redirectTo || '/admin/owners');
+        router.refresh();
+      }
+    } catch (e) {
+      console.error('Exit impersonation failed', e);
+    } finally {
+      setExitingImpersonation(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -135,6 +168,53 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
           unreadNotifications={unreadCount}
         />
+
+        {/* Impersonation Banner — shown when admin is viewing as owner */}
+        {impersonating && (
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(139,92,246,0.25), rgba(109,40,217,0.2))',
+            borderBottom: '2px solid rgba(139,92,246,0.5)',
+            padding: '0.625rem 1.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '0.75rem',
+            position: 'sticky',
+            top: 0,
+            zIndex: 50,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+              <span style={{ fontSize: '1.25rem' }}>👁️</span>
+              <div>
+                <span style={{ fontSize: '0.8125rem', color: '#c4b5fd', fontWeight: 700 }}>
+                  وضع المراقبة — أنت تتصفح كمالك الملعب
+                </span>
+                <span style={{ fontSize: '0.75rem', color: '#a78bfa', marginRight: '0.5rem' }}>
+                  (حساب الأدمن: {impersonating.adminName})
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={handleExitImpersonation}
+              disabled={exitingImpersonation}
+              style={{
+                padding: '0.4rem 1rem',
+                borderRadius: 'var(--radius-full)',
+                fontSize: '0.8125rem',
+                fontWeight: 700,
+                cursor: exitingImpersonation ? 'wait' : 'pointer',
+                background: 'rgba(139,92,246,0.35)',
+                border: '1px solid rgba(139,92,246,0.6)',
+                color: '#e9d5ff',
+                transition: 'all 0.18s',
+                opacity: exitingImpersonation ? 0.7 : 1,
+              }}
+            >
+              {exitingImpersonation ? '⏳ جاري الخروج...' : '🔙 العودة لحساب الأدمن'}
+            </button>
+          </div>
+        )}
 
         {/* 5-Day Reminder Banner (Warning before trial ends) */}
         {show5DayWarning && !isOnSubscriptionPage && (

@@ -33,6 +33,26 @@ export function getFreeTrialUntilDate(stadium?: { createdAt?: string; freeTrialU
   return new Date(createdTime + 30 * 24 * 60 * 60 * 1000).toISOString();
 }
 
+/**
+ * Get the date from which commissions should start being counted.
+ * If stadium has a commissionStartDate set (free trial was manually removed),
+ * use that. Otherwise fall back to freeTrialUntil or createdAt + 30 days.
+ */
+export function getCommissionStartDate(stadium?: {
+  createdAt?: string;
+  freeTrialUntil?: string | null;
+  commissionStartDate?: string | null;
+} | null): string | null {
+  if (!stadium) return null;
+  // If admin explicitly set when commissions start (after removing free trial)
+  if (stadium.commissionStartDate) return stadium.commissionStartDate;
+  // If free trial was never set, commissions start from creation
+  if (stadium.freeTrialUntil === null) return stadium.createdAt || null;
+  // If free trial end date exists, commissions start after that
+  const trialEnd = getFreeTrialUntilDate(stadium);
+  return trialEnd;
+}
+
 /** Check if a stadium is in its free first month (30 days from creation) */
 export function isStadiumInFreeFirstMonth(createdAtStr?: string): boolean {
   return isStadiumInFreeTrial({ createdAt: createdAtStr });
@@ -42,9 +62,27 @@ export function isStadiumInFreeFirstMonth(createdAtStr?: string): boolean {
  * A booking is commission-eligible when:
  * 1. Status is 'completed', OR
  * 2. Status is 'confirmed' AND the booking date+endTime has already passed (booking happened in the past)
+ * AND the booking was created AFTER the commission start date (not during the free trial period)
  * This prevents manipulation: owners can't cancel past bookings to avoid commission.
  */
-export function isCommissionEligible(booking: { status: string; date: string; endTime: string }): boolean {
+export function isCommissionEligible(
+  booking: { status: string; date: string; endTime: string; createdAt?: string },
+  commissionStartDate?: string | null
+): boolean {
+  // Check if booking falls within free trial period
+  if (commissionStartDate) {
+    const startMs = Date.parse(commissionStartDate);
+    if (!isNaN(startMs)) {
+      // Use booking createdAt if available, otherwise booking date
+      const bookingTime = booking.createdAt
+        ? Date.parse(booking.createdAt)
+        : Date.parse(booking.date);
+      if (!isNaN(bookingTime) && bookingTime < startMs) {
+        return false; // Booking was made during free trial – not commission-eligible
+      }
+    }
+  }
+
   if (booking.status === 'completed') return true;
   if (booking.status === 'confirmed') {
     // Check if booking time has already passed
@@ -73,10 +111,12 @@ export async function GET(request: NextRequest) {
 
     const isFreeMonth = isStadiumInFreeTrial(stadium);
     const freeUntilDate = getFreeTrialUntilDate(stadium);
+    const commissionStartDate = getCommissionStartDate(stadium);
     const bookings = await Bookings.findByStadium(session.stadiumSlug);
 
-    // Commission-eligible: completed OR confirmed + time has passed
-    const chargeableBookings = bookings.filter(b => isCommissionEligible(b));
+    // Commission-eligible: completed OR confirmed + time has passed, AND created after commission start date
+    const chargeableBookings = bookings.filter(b => isCommissionEligible(b, commissionStartDate));
+
 
     const rate = stadium.commissionRate ?? settings.defaultCommissionRate ?? 5;
     const totalCalculatedCommission = isFreeMonth ? 0 : (chargeableBookings.length * rate);

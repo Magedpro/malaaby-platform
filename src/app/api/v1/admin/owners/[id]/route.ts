@@ -40,13 +40,16 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     if (action === 'end_free_trial' || action === 'delete_free_trial') {
       if (user.stadiumSlug) {
+        const removalTime = new Date().toISOString();
         await Stadiums.update(user.stadiumSlug, {
           freeTrialUntil: null,
           subscriptionStatus: 'active',
+          commissionStartDate: removalTime, // Commissions only count from this moment onwards
+          unpaidCommission: 0,             // Reset: bookings during free trial are not charged
         });
       }
-      ActivityLogs.log({ action: 'admin_end_free_trial', performedBy: session.userId, performedByName: session.name, targetId: id, targetType: 'stadium' });
-      return NextResponse.json({ success: true, message: 'تم إلغاء/حذف الشهر المجاني للمالك وبدء احتساب العمولات والاشتراكات بنجاح ✅' });
+      ActivityLogs.log({ action: 'admin_end_free_trial', performedBy: session.userId, performedByName: session.name, targetId: id, targetType: 'stadium', details: { commissionStartDate: new Date().toISOString() } });
+      return NextResponse.json({ success: true, message: 'تم إلغاء/حذف الشهر المجاني — العمولات ستُحسب على الحجوزات الجديدة فقط من الآن ✅' });
     }
 
     if (action === 'grant_free_trial') {

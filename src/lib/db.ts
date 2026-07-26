@@ -753,7 +753,12 @@ export async function generateTimeSlots(field: Field, date: string): Promise<Tim
   const duration = field.bookingDuration;
 
   let currentMinutes = timeToMinutes(field.openingTime);
-  const closeMinutes = timeToMinutes(field.closingTime === '00:00' ? '24:00' : field.closingTime);
+  let closeMinutes = timeToMinutes(field.closingTime === '00:00' ? '24:00' : field.closingTime);
+
+  // If closing time is less than or equal to opening time, it means the field closes after midnight (overnight)
+  if (closeMinutes <= currentMinutes) {
+    closeMinutes += 24 * 60; // e.g. 05:00 becomes 29:00 (5 AM next morning)
+  }
 
   // Check if date is TODAY in Egypt timezone
   const todayStr = getTodayString();
@@ -761,14 +766,14 @@ export async function generateTimeSlots(field: Field, date: string): Promise<Tim
   const nowMinutes = getEgyptMinutesNow();
 
   while (currentMinutes + duration <= closeMinutes) {
-    const startH = Math.floor(currentMinutes / 60);
+    const startH = Math.floor(currentMinutes / 60) % 24;
     const startM = currentMinutes % 60;
     const endMinutes = currentMinutes + duration;
-    const endH = Math.floor(endMinutes / 60);
+    const endH = Math.floor(endMinutes / 60) % 24;
     const endM = endMinutes % 60;
 
     const startTime = `${String(startH).padStart(2, '0')}:${String(startM).padStart(2, '0')}`;
-    const endTime = `${String(endH % 24).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
+    const endTime = `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
 
     let status: TimeSlot['status'] = 'available';
     let bookingId: string | undefined;

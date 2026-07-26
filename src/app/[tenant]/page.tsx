@@ -86,8 +86,27 @@ export default function PublicBookingPage() {
     try {
       const res = await fetch(`/api/v1/slots?fieldId=${selectedField.id}&date=${selectedDate}`);
       const json = await res.json();
-      if (json.success) setSlots(json.data);
-      else setSlots([]);
+      if (json.success && json.data) {
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const d = String(now.getDate()).padStart(2, '0');
+        const clientToday = `${y}-${m}-${d}`;
+        const clientNowMinutes = now.getHours() * 60 + now.getMinutes();
+
+        const processed = (json.data as TimeSlot[]).map(slot => {
+          if (selectedDate === clientToday) {
+            const [sh, sm] = slot.startTime.split(':').map(Number);
+            const slotStartMin = sh * 60 + sm;
+            if (slotStartMin <= clientNowMinutes) {
+              return { ...slot, status: 'closed' as const };
+            }
+          }
+          return slot;
+        });
+
+        setSlots(processed);
+      } else setSlots([]);
     } catch { setSlots([]); }
     finally { setSlotsLoading(false); }
   }, [selectedField, selectedDate]);

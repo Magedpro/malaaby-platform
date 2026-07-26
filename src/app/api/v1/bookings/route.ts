@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { Bookings, Fields, Notifications, Stadiums, ActivityLogs } from '@/lib/db';
 import { validateBooking } from '@/lib/validations';
-import { formatTime } from '@/lib/utils';
+import { formatTime, getTodayString, getEgyptMinutesNow } from '@/lib/utils';
 import { sendEmail } from '@/lib/email';
 import { sendPushNotification } from '@/lib/push';
 import { APP_URL } from '@/lib/constants';
@@ -96,16 +96,15 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Conflict & Past Time Detection
-    const now = new Date();
-    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const todayStr = getTodayString();
     if (date < todayStr) {
       return NextResponse.json({ success: false, error: 'لا يمكن الحجز في تاريخ سابق' }, { status: 400 });
     }
     if (date === todayStr) {
       const [startH, startM] = startTime.split(':').map(Number);
       const slotStartMinutes = startH * 60 + startM;
-      const currentMinutesNow = now.getHours() * 60 + now.getMinutes();
-      if (slotStartMinutes < currentMinutesNow) {
+      const currentMinutesNow = getEgyptMinutesNow();
+      if (slotStartMinutes <= currentMinutesNow) {
         return NextResponse.json({ success: false, error: 'عذراً، هذا الموعد انقضى بالفعل ولا يمكن حجزه!' }, { status: 400 });
       }
     }

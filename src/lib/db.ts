@@ -5,7 +5,7 @@ import {
   SubscriptionPlan, Notification, SupportTicket,
   ActivityLog, City, PlatformSettings, TimeSlot,
 } from './types';
-import { generateId, timeToMinutes } from './utils';
+import { generateId, timeToMinutes, getTodayString, getEgyptMinutesNow } from './utils';
 import { supabase } from './supabase';
 
 const DB_PATH = path.join(process.cwd(), 'data', 'db.json');
@@ -733,15 +733,10 @@ export async function generateTimeSlots(field: Field, date: string): Promise<Tim
   let currentMinutes = timeToMinutes(field.openingTime);
   const closeMinutes = timeToMinutes(field.closingTime === '00:00' ? '24:00' : field.closingTime);
 
-  // Check if date is TODAY in local time
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  const todayStr = `${year}-${month}-${day}`;
-
+  // Check if date is TODAY in Egypt timezone
+  const todayStr = getTodayString();
   const isToday = date === todayStr;
-  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const nowMinutes = getEgyptMinutesNow();
 
   while (currentMinutes + duration <= closeMinutes) {
     const startH = Math.floor(currentMinutes / 60);
@@ -756,8 +751,8 @@ export async function generateTimeSlots(field: Field, date: string): Promise<Tim
     let status: TimeSlot['status'] = 'available';
     let bookingId: string | undefined;
 
-    // 1. If date is TODAY and the slot start time has already passed, mark as closed
-    if (isToday && currentMinutes < nowMinutes) {
+    // 1. If date is TODAY and the slot start time has already passed or started, mark as closed
+    if (isToday && currentMinutes <= nowMinutes) {
       status = 'closed';
     } else {
       // 2. Check for conflicts with existing bookings

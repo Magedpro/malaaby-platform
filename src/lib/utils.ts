@@ -68,8 +68,28 @@ export function timeAgo(isoStr: string): string {
   return formatDate(isoStr);
 }
 
+/** Get current Date in Africa/Cairo (Egypt) timezone */
+export function getEgyptNow(): Date {
+  const now = new Date();
+  try {
+    const egyptStr = now.toLocaleString('en-US', { timeZone: 'Africa/Cairo' });
+    return new Date(egyptStr);
+  } catch {
+    return now;
+  }
+}
+
 export function getTodayString(): string {
-  return new Date().toISOString().split('T')[0];
+  const egyptNow = getEgyptNow();
+  const year = egyptNow.getFullYear();
+  const month = String(egyptNow.getMonth() + 1).padStart(2, '0');
+  const day = String(egyptNow.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+export function getEgyptMinutesNow(): number {
+  const egyptNow = getEgyptNow();
+  return egyptNow.getHours() * 60 + egyptNow.getMinutes();
 }
 
 export function getMonthString(date = new Date()): string {

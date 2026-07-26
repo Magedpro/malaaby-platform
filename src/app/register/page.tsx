@@ -259,7 +259,7 @@ function RegisterForm() {
           </div>
           <div className={`step-item ${step === 4 ? 'active' : step > 4 ? 'done' : ''}`}>
             <div className="step-circle">٤</div>
-            <div className="step-label">إعداد الأرضية</div>
+            <div className="step-label">إعداد الملعب</div>
           </div>
           <div className={`step-item ${step === 5 ? 'active' : step > 5 ? 'done' : ''}`}>
             <div className="step-circle">٥</div>
@@ -653,7 +653,7 @@ function RegisterForm() {
                   <div><strong>المدينة والعنوان:</strong> {formData.city}، {formData.address}</div>
                   <div><strong>رقم المحفظة:</strong> {formData.vodafoneCash || 'غير مدخل'}</div>
                   <div><strong>إنستا باي:</strong> {formData.instaPay || 'غير مدخل'}</div>
-                  <div><strong>الأرضية الأولى:</strong> {formData.fieldName} — {formData.fieldPricePerHour} ج.م/ساعة — {formData.fieldOpeningTime} إلى {formData.fieldClosingTime}</div>
+                  <div><strong>الملعب الأول:</strong> {formData.fieldName} — {formData.fieldPricePerHour} ج.م/ساعة — {formData.fieldOpeningTime} إلى {formData.fieldClosingTime}</div>
                 </div>
               </div>
 

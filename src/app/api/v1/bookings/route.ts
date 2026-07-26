@@ -120,8 +120,12 @@ export async function POST(request: NextRequest) {
     const durationMinutes = (endH * 60 + endM) - (startH * 60 + startM);
     const amount = (fieldObj.pricePerHour * durationMinutes) / 60;
 
-    // 4. Create Booking(s) - Supports recurring fixed weekly bookings for owners
-    const weeksCount = (isOwner && body.recurringWeeks && !isNaN(Number(body.recurringWeeks)))
+    // 4. Create Booking(s)
+    // Only explicit owner actions from Dashboard (owner_fixed_booking or recurring weeks) are auto-confirmed.
+    // All public page bookings (even if owner is logged in during testing) start as 'pending' requiring owner approval.
+    const isExplicitDashboardFix = isOwner && (paymentScreenshot === 'owner_fixed_booking' || Boolean(body.recurringWeeks));
+    
+    const weeksCount = (isExplicitDashboardFix && body.recurringWeeks && !isNaN(Number(body.recurringWeeks)))
       ? Math.min(Math.max(Number(body.recurringWeeks), 1), 52)
       : 1;
 
@@ -150,13 +154,13 @@ export async function POST(request: NextRequest) {
         customerName: customerName.trim(),
         customerPhone: customerPhone.trim(),
         customerEmail: customerEmail ? customerEmail.trim() : undefined,
-        notes: isOwner ? (notes ? `${notes} (موعد ثابت أسبوعي)` : 'حجز ثابت أسبوعي') : (notes || '').trim(),
+        notes: isExplicitDashboardFix ? (notes ? `${notes} (موعد ثابت أسبوعي)` : 'حجز ثابت أسبوعي') : (notes || '').trim(),
         date: targetDate,
         startTime,
         endTime,
         amount,
         paymentScreenshot: paymentScreenshot || '',
-        status: isOwner ? 'confirmed' : 'pending',
+        status: isExplicitDashboardFix ? 'confirmed' : 'pending',
       });
 
       createdBookings.push(booking);

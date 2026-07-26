@@ -109,6 +109,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // 2.5 Anti-Spam: Limit pending bookings per phone per day (max 3) — skip for owner dashboard actions
+    if (!isOwner) {
+      const pendingCount = await Bookings.countPendingByPhoneAndDate(slug, customerPhone.trim(), date);
+      if (pendingCount >= 3) {
+        return NextResponse.json({
+          success: false,
+          error: 'لقد وصلت للحد الأقصى (3 حجوزات معلقة) لهذا اليوم. يرجى انتظار الموافقة على طلباتك السابقة أو التواصل مع الملعب مباشرة.'
+        }, { status: 429 });
+      }
+    }
+
     // 3. Compute cost/amount
     const fieldObj = await Fields.findById(fieldId);
     if (!fieldObj) {

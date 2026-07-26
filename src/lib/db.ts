@@ -647,6 +647,7 @@ export const Bookings = {
     );
   },
 
+
   hasConflict: async (
     fieldId: string, date: string, startTime: string, endTime: string, excludeId?: string
   ): Promise<boolean> => {
@@ -656,6 +657,27 @@ export const Bookings = {
       if (startTime < b.endTime && endTime > b.startTime) return true;
     }
     return false;
+  },
+
+  /** Count pending bookings for a phone number in a stadium on a given day */
+  countPendingByPhoneAndDate: async (
+    stadiumSlug: string, phone: string, date: string
+  ): Promise<number> => {
+    if (supabase) {
+      const { data } = await supabase.from('bookings').select('data')
+        .eq('stadium_slug', stadiumSlug)
+        .eq('date', date)
+        .eq('status', 'pending');
+      if (!data) return 0;
+      return data.filter((row: any) => row.data?.customerPhone === phone).length;
+    }
+    return readDb().bookings.filter(
+      (b: any) =>
+        b.stadiumSlug === stadiumSlug &&
+        b.date === date &&
+        b.status === 'pending' &&
+        b.customerPhone === phone
+    ).length;
   },
 
   create: async (booking: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'>): Promise<Booking> => {

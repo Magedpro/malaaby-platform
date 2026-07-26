@@ -50,6 +50,7 @@ export default function PublicBookingPage() {
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false);
+  const [doubleSlot, setDoubleSlot] = useState(false); // Book 2 consecutive hours
 
   // Customer form
   const [customerName, setCustomerName] = useState('');
@@ -132,6 +133,18 @@ export default function PublicBookingPage() {
       showToast('يرجى رفع صورة إيصال التحويل لتتمكن من تقديم طلب الحجز 📸', 'error'); return;
     }
     if (!selectedSlot || !selectedField || !selectedDate) { showToast('يرجى اختيار موعد أولاً', 'error'); return; }
+
+    // If doubleSlot, verify the next consecutive slot is available
+    let finalEndTime = selectedSlot.endTime;
+    if (doubleSlot) {
+      const nextSlot = slots.find(s => s.startTime === selectedSlot.endTime);
+      if (!nextSlot || nextSlot.status !== 'available') {
+        showToast('الساعة التالية غير متاحة للحجز. يرجى إلغاء خيار ساعتين أو اختيار موعد آخر.', 'error');
+        return;
+      }
+      finalEndTime = nextSlot.endTime;
+    }
+
     setSubmitting(true);
     try {
       let paymentScreenshot = '';
@@ -155,7 +168,7 @@ export default function PublicBookingPage() {
           stadiumSlug: tenant,
           date: selectedDate,
           startTime: selectedSlot.startTime,
-          endTime: selectedSlot.endTime,
+          endTime: finalEndTime,
           customerName: customerName.trim(),
           customerPhone: customerPhone.trim(),
           customerEmail: customerEmail.trim() || undefined,
@@ -167,6 +180,7 @@ export default function PublicBookingPage() {
       if (json.success) {
         setBookingSuccess(true);
         setBookingOpen(false);
+        setDoubleSlot(false);
         showToast('تم إرسال طلب حجزك بنجاح! ⚽', 'success');
         setCustomerName(''); setCustomerPhone(''); setCustomerEmail(''); setNotes('');
         setPaymentFile(null); setPaymentPreview('');
@@ -481,40 +495,74 @@ export default function PublicBookingPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
             {/* Booking Summary (when slot selected) */}
-            {selectedSlot && selectedField && selectedDate && (
-              <div style={{
-                background: 'linear-gradient(135deg, rgba(34,197,94,0.12), rgba(34,197,94,0.04))',
-                border: '1px solid var(--border-primary)',
-                borderRadius: 'var(--radius-lg)', padding: '1.5rem',
-                animation: 'fadeInUp 0.3s ease',
-              }}>
-                <h3 style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '1rem', color: 'var(--primary-light)' }}>
-                  ✅ ملخص الحجز
-                </h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem', fontSize: '0.875rem' }}>
-                  {[
-                    { label: 'الملعب', value: selectedField.name, icon: '🏟️' },
-                    { label: 'اليوم', value: `${getDayName(parseInt(selectedDate.split('-')[2]))} ${formatDate(selectedDate)}`, icon: '📅' },
-                    { label: 'من', value: formatTime(selectedSlot.startTime), icon: '🕐' },
-                    { label: 'إلى', value: formatTime(selectedSlot.endTime), icon: '🕑' },
-                  ].map(({ label, value, icon }) => (
-                    <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid var(--border-subtle)' }}>
-                      <span style={{ color: 'var(--text-muted)' }}>{icon} {label}</span>
-                      <span style={{ fontWeight: 700 }}>{value}</span>
+            {selectedSlot && selectedField && selectedDate && (() => {
+              const nextSlot = slots.find(s => s.startTime === selectedSlot.endTime);
+              const canDouble = nextSlot && nextSlot.status === 'available';
+              const displayEndTime = doubleSlot && canDouble ? nextSlot!.endTime : selectedSlot.endTime;
+              const baseAmount = selectedSlot.amount || 0;
+              const totalAmount = doubleSlot && canDouble ? baseAmount * 2 : baseAmount;
+              return (
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(34,197,94,0.12), rgba(34,197,94,0.04))',
+                  border: '1px solid var(--border-primary)',
+                  borderRadius: 'var(--radius-lg)', padding: '1.5rem',
+                  animation: 'fadeInUp 0.3s ease',
+                }}>
+                  <h3 style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '1rem', color: 'var(--primary-light)' }}>
+                    ✅ ملخص الحجز
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem', fontSize: '0.875rem' }}>
+                    {[
+                      { label: 'الملعب', value: selectedField.name, icon: '🏟️' },
+                      { label: 'اليوم', value: `${getDayName(parseInt(selectedDate.split('-')[2]))} ${formatDate(selectedDate)}`, icon: '📅' },
+                      { label: 'من', value: formatTime(selectedSlot.startTime), icon: '🕐' },
+                      { label: 'إلى', value: formatTime(displayEndTime), icon: '🕑' },
+                    ].map(({ label, value, icon }) => (
+                      <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid var(--border-subtle)' }}>
+                        <span style={{ color: 'var(--text-muted)' }}>{icon} {label}</span>
+                        <span style={{ fontWeight: 700 }}>{value}</span>
+                      </div>
+                    ))}
+
+                    {/* Double slot toggle */}
+                    <div style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '0.625rem 0.75rem', marginTop: '0.25rem',
+                      background: canDouble ? 'rgba(34,197,94,0.07)' : 'rgba(100,100,100,0.07)',
+                      borderRadius: 'var(--radius-md)',
+                      border: `1px solid ${canDouble ? 'rgba(34,197,94,0.2)' : 'var(--border-subtle)'}`,
+                      opacity: canDouble ? 1 : 0.5,
+                    }}>
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: '0.8125rem' }}>⏱ حجز ساعتين</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                          {canDouble ? `${formatTime(selectedSlot.startTime)} — ${formatTime(nextSlot!.endTime)}` : 'الساعة التالية غير متاحة'}
+                        </div>
+                      </div>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', cursor: canDouble ? 'pointer' : 'not-allowed' }}>
+                        <input
+                          type="checkbox"
+                          checked={doubleSlot && !!canDouble}
+                          disabled={!canDouble}
+                          onChange={e => setDoubleSlot(e.target.checked)}
+                          style={{ width: '18px', height: '18px', accentColor: 'var(--primary)', cursor: canDouble ? 'pointer' : 'not-allowed' }}
+                        />
+                      </label>
                     </div>
-                  ))}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.75rem' }}>
-                    <span style={{ fontWeight: 700 }}>💰 الإجمالي</span>
-                    <span style={{ fontSize: '1.375rem', fontWeight: 900, color: 'var(--primary-light)' }}>
-                      {formatCurrency(selectedSlot.amount || 0)}
-                    </span>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.75rem' }}>
+                      <span style={{ fontWeight: 700 }}>💰 الإجمالي</span>
+                      <span style={{ fontSize: '1.375rem', fontWeight: 900, color: 'var(--primary-light)' }}>
+                        {formatCurrency(totalAmount)}
+                      </span>
+                    </div>
                   </div>
+                  <Button variant="primary" fullWidth style={{ marginTop: '1.25rem' }} onClick={() => setBookingOpen(true)}>
+                    تأكيد الحجز →
+                  </Button>
                 </div>
-                <Button variant="primary" fullWidth style={{ marginTop: '1.25rem' }} onClick={() => setBookingOpen(true)}>
-                  تأكيد الحجز →
-                </Button>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Payment Methods */}
             {(stadium?.vodafoneCash || stadium?.instaPay) && (

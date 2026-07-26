@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 
+import { formatWhatsAppNumber } from '@/lib/utils';
+
 interface FloatingWhatsAppProps {
-  phone: string;           // بدون + مثال: 201126947405
+  phone: string;           // رقم الواتساب بدون تشكيل أو مع تشكيل
   message?: string;
   tooltip?: string;
   position?: 'bottom-right' | 'bottom-left';
@@ -25,8 +27,9 @@ export const FloatingWhatsApp: React.FC<FloatingWhatsAppProps> = ({
     return () => clearTimeout(timer);
   }, []);
 
+  const formattedPhone = formatWhatsAppNumber(phone);
   const encodedMsg = encodeURIComponent(message);
-  const href = `https://wa.me/${phone}${message ? `?text=${encodedMsg}` : ''}`;
+  const href = `https://wa.me/${formattedPhone}${message ? `?text=${encodedMsg}` : ''}`;
 
   const posStyle: React.CSSProperties =
     position === 'bottom-right'

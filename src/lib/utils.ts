@@ -114,6 +114,27 @@ export function timeToMinutes(timeStr: string): number {
   return h * 60 + m;
 }
 
+export function formatWhatsAppNumber(phone: string): string {
+  if (!phone) return '';
+  let clean = phone.replace(/\D/g, '');
+  if (clean.length === 0) return '';
+
+  // Local Egyptian number 01xxxxxxxxx (11 digits)
+  if (clean.startsWith('01') && clean.length === 11) {
+    clean = '2' + clean; // -> 201126947405
+  }
+  // Local Egyptian number 1xxxxxxxxx (10 digits without leading 0)
+  else if (clean.startsWith('1') && clean.length === 10) {
+    clean = '20' + clean; // -> 201126947405
+  }
+  // Egyptian number starting with 002
+  else if (clean.startsWith('002')) {
+    clean = clean.slice(2);
+  }
+
+  return clean;
+}
+
 export function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }

@@ -8,7 +8,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useToast } from '@/components/ui/Toast';
 import { FloatingWhatsApp } from '@/components/ui/FloatingWhatsApp';
-import { formatCurrency, formatDate, formatTime } from '@/lib/utils';
+import { formatCurrency, formatDate, formatTime, formatWhatsAppNumber } from '@/lib/utils';
 
 interface Field {
   id: string; name: string; description: string;
@@ -398,7 +398,7 @@ export default function PublicBookingPage() {
               </div>
               {(stadium?.whatsapp || stadium?.phone) && (
                 <a
-                  href={stadium.whatsapp ? `https://wa.me/${stadium.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent('السلام عليكم، أرغب في التنسيق والتعاقد لحجز موعد ثابت أسبوعياً في الملعب.')}` : `tel:${stadium.phone}`}
+                  href={stadium.whatsapp || stadium.phone ? `https://wa.me/${formatWhatsAppNumber(stadium.whatsapp || stadium.phone)}?text=${encodeURIComponent('السلام عليكم، أرغب في التنسيق والتعاقد لحجز موعد ثابت أسبوعياً في الملعب.')}` : `tel:${stadium.phone}`}
                   target="_blank"
                   rel="noreferrer"
                   style={{
@@ -603,7 +603,7 @@ export default function PublicBookingPage() {
                     </a>
                   )}
                   {stadium.whatsapp && (
-                    <a href={`https://wa.me/${stadium.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" style={{
+                    <a href={`https://wa.me/${formatWhatsAppNumber(stadium.whatsapp)}`} target="_blank" rel="noreferrer" style={{
                       display: 'flex', gap: '0.75rem', alignItems: 'center',
                       padding: '0.75rem', background: 'rgba(34,197,94,0.08)',
                       borderRadius: 'var(--radius-md)', border: '1px solid rgba(34,197,94,0.25)',

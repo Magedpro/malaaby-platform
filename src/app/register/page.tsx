@@ -41,19 +41,20 @@ function RegisterForm() {
     instaPay: '',
     acceptTerms: false,
     // Field setup (step 4)
-    fieldName: 'أرضية 1',
+    fieldName: '',
     fieldPricePerHour: '',
     fieldOpeningTime: '08:00',
     fieldClosingTime: '23:00',
     fieldDuration: '60',
   });
 
-  // Automatically suggest slug based on stadium name
+  // Automatically suggest slug and fieldName based on stadium name
   useEffect(() => {
-    if (formData.stadiumName && step === 2) {
+    if (formData.stadiumName) {
       setFormData((prev) => ({
         ...prev,
-        slug: slugify(prev.stadiumName),
+        slug: step === 2 ? slugify(prev.stadiumName) : prev.slug,
+        fieldName: prev.fieldName && prev.fieldName !== prev.stadiumName ? prev.fieldName : prev.stadiumName,
       }));
     }
   }, [formData.stadiumName, step]);
@@ -498,17 +499,17 @@ function RegisterForm() {
                 <span style={{ fontSize: '1.5rem' }}>⚽</span>
                 <div>
                   <p style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'var(--primary-light)', marginBottom: '0.25rem' }}>
-                    إعداد أول أرضية في مجمعك
+                    إعداد أسعار وساعات حجز الملعب
                   </p>
                   <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', margin: 0 }}>
-                    حدد بيانات أول أرضية لديك (السعر وساعات العمل). يمكنك إضافة مزيد من الأراضي لاحقاً من لوحة التحكم.
+                    حدد سعر الساعة وساعات العمل لملعبك. يمكنك إضافة أراضٍ فرعية لاحقاً من لوحة التحكم إن وجدت.
                   </p>
                 </div>
               </div>
 
               <Input
-                label="اسم الأرضية *"
-                placeholder="مثال: ملعب كرة قدم - أرض اصطناعية"
+                label="اسم الملعب / الأرضية *"
+                placeholder="اسم الملعب"
                 value={formData.fieldName}
                 onChange={(e) => setFormData({ ...formData, fieldName: e.target.value })}
                 error={errors.fieldName}

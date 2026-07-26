@@ -78,12 +78,13 @@ export async function POST(request: NextRequest) {
       approvalStatus: 'approved', // Auto-approved by default in settings
     });
 
-    // 5. Create the first Field (أرضية) if field data was provided
-    if (fieldName && fieldPricePerHour && Number(fieldPricePerHour) > 0) {
+    // 5. Create the first Field using stadiumName or provided fieldName
+    const targetFieldName = (fieldName || stadiumName || 'الملعب').trim();
+    if (fieldPricePerHour && Number(fieldPricePerHour) > 0) {
       const duration = [30, 60, 90, 120].includes(Number(fieldDuration)) ? Number(fieldDuration) : 60;
       await Fields.create({
         stadiumSlug: cleanSlug,
-        name: fieldName.trim(),
+        name: targetFieldName,
         description: '',
         pricePerHour: Number(fieldPricePerHour),
         bookingDuration: duration as 30 | 60 | 90 | 120,

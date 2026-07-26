@@ -18,7 +18,14 @@ export async function GET(
     }
 
     const allFields = await Fields.findByStadium(slug);
-    const fields = allFields.filter(f => f.status === 'available');
+    const fields = allFields
+      .filter(f => f.status === 'available')
+      .map(f => {
+        if (!f.name || f.name.includes('أرضية 1') || f.name === 'أرضية') {
+          return { ...f, name: stadium.name };
+        }
+        return f;
+      });
 
     return NextResponse.json({
       success: true,

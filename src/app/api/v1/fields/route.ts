@@ -10,8 +10,22 @@ export async function GET() {
       return NextResponse.json({ success: false, error: 'غير مصرح بالدخول' }, { status: 401 });
     }
 
+    const stadium = await Stadiums.findBySlug(session.stadiumSlug);
     const fieldsList = await Fields.findByStadium(session.stadiumSlug);
-    return NextResponse.json({ success: true, data: fieldsList });
+    
+    // Auto fix legacy fields named 'أرضية 1' or 'أرضية' to use stadium name
+    const cleanedFieldsList = await Promise.all(
+      fieldsList.map(async (field) => {
+        if (stadium && (!field.name || field.name.includes('أرضية 1') || field.name === 'أرضية')) {
+          const updatedName = stadium.name;
+          await Fields.update(field.id, { name: updatedName });
+          return { ...field, name: updatedName };
+        }
+        return field;
+      })
+    );
+
+    return NextResponse.json({ success: true, data: cleanedFieldsList });
   } catch (error) {
     console.error('GET fields API error:', error);
     return NextResponse.json({ success: false, error: 'حدث خطأ أثناء جلب بيانات الملاعب' }, { status: 500 });

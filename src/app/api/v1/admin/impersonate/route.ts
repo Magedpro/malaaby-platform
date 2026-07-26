@@ -35,16 +35,24 @@ export async function POST(request: NextRequest) {
         const { payload } = await jwtVerify(backupToken, KEY);
         adminPayload = payload;
       } catch {
+        cookieStore.delete(ADMIN_BACKUP_COOKIE);
         return NextResponse.json({ success: false, error: 'انتهت صلاحية جلسة الأدمن' }, { status: 401 });
+      }
+
+      // Verify original admin exists and is active super_admin
+      const adminUser = await Users.findById(adminPayload.userId);
+      if (!adminUser || adminUser.role !== 'super_admin' || !adminUser.isActive) {
+        cookieStore.delete(ADMIN_BACKUP_COOKIE);
+        return NextResponse.json({ success: false, error: 'حساب الأدمن غير متاح للعودة إليه' }, { status: 403 });
       }
 
       // Restore admin session
       await createSession({
-        userId: adminPayload.userId,
-        role: adminPayload.role,
-        stadiumSlug: adminPayload.stadiumSlug,
-        name: adminPayload.name,
-        email: adminPayload.email,
+        userId: adminUser.id,
+        role: adminUser.role,
+        stadiumSlug: adminUser.stadiumSlug,
+        name: adminUser.name,
+        email: adminUser.email,
       });
 
       // Clear the backup cookie
@@ -138,10 +146,17 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
+    const session = await getSession();
     const cookieStore = await cookies();
     const backupToken = cookieStore.get(ADMIN_BACKUP_COOKIE)?.value;
 
     if (!backupToken) {
+      return NextResponse.json({ success: true, isImpersonating: false });
+    }
+
+    // Security Guard: If user is not logged in OR is already super_admin, purge stale backup token
+    if (!session || session.role === 'super_admin') {
+      cookieStore.delete(ADMIN_BACKUP_COOKIE);
       return NextResponse.json({ success: true, isImpersonating: false });
     }
 
@@ -154,6 +169,7 @@ export async function GET(request: NextRequest) {
         adminEmail: (payload as any).email,
       });
     } catch {
+      cookieStore.delete(ADMIN_BACKUP_COOKIE);
       return NextResponse.json({ success: true, isImpersonating: false });
     }
   } catch (error) {

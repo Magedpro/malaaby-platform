@@ -46,6 +46,7 @@ export async function getSession(): Promise<SessionPayload | null> {
 export async function destroySession(): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.delete(COOKIE_NAME);
+  cookieStore.delete('malaaby_admin_backup');
 }
 
 // Hash password with SHA-256 using Web Crypto API (no external deps needed, fast, secure)

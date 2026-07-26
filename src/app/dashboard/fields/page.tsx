@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -24,11 +25,22 @@ interface Field {
 }
 
 export default function FieldsManagement() {
+  return (
+    <React.Suspense fallback={<div style={{ padding: '2rem', textAlign: 'center' }}>جاري التحميل...</div>}>
+      <FieldsContent />
+    </React.Suspense>
+  );
+}
+
+function FieldsContent() {
   const { showToast } = useToast();
+  const searchParams = useSearchParams();
+  const isNewAccount = searchParams.get('new') === '1';
   const [fields, setFields] = useState<Field[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
+  const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
 
   // Form states
   const [form, setForm] = useState({
@@ -64,6 +76,10 @@ export default function FieldsManagement() {
   useEffect(() => {
     loadFields();
   }, []);
+
+  useEffect(() => {
+    if (isNewAccount) setShowWelcomeBanner(true);
+  }, [isNewAccount]);
 
   const openAddModal = () => {
     setEditId(null);
@@ -182,6 +198,39 @@ export default function FieldsManagement() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }} className="animate-fadeIn">
+      {/* Welcome Banner for new registrations */}
+      {showWelcomeBanner && (
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(34,197,94,0.15), rgba(16,185,129,0.08))',
+          border: '1.5px solid rgba(34,197,94,0.35)',
+          borderRadius: 'var(--radius-lg)',
+          padding: '1.25rem 1.5rem',
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: '1rem',
+          position: 'relative',
+        }}>
+          <div style={{ fontSize: '2.25rem', flexShrink: 0 }}>🎉</div>
+          <div style={{ flex: 1 }}>
+            <h3 style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--primary-light)', marginBottom: '0.375rem' }}>
+              أهلاً بك في منصة ملعبي! تم إنشاء أول أرضية بنجاح ✅
+            </h3>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.7 }}>
+              تم إنشاء أول أرضية ببياناتك وهي ظاهرة أدناه. يمكنك <strong>تعديلها</strong> لتعديل الوصف أو إضافة صورة، وإضافة <strong>مزيد من الأراضي</strong> إذا كان لديك أكثر من ملعب.
+            </p>
+          </div>
+          <button
+            onClick={() => setShowWelcomeBanner(false)}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: 'var(--text-muted)', fontSize: '1.25rem', flexShrink: 0,
+              padding: '0.25rem',
+            }}
+            aria-label="إغلاق"
+          >×</button>
+        </div>
+      )}
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '1.50rem', fontWeight: 800 }}>إدارة ملاعب كرة القدم</h1>

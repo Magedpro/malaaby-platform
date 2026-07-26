@@ -40,6 +40,12 @@ function RegisterForm() {
     vodafoneCash: '',
     instaPay: '',
     acceptTerms: false,
+    // Field setup (step 4)
+    fieldName: 'أرضية 1',
+    fieldPricePerHour: '',
+    fieldOpeningTime: '08:00',
+    fieldClosingTime: '23:00',
+    fieldDuration: '60',
   });
 
   // Automatically suggest slug based on stadium name
@@ -94,6 +100,15 @@ function RegisterForm() {
     }
 
     if (step === 4) {
+      if (!formData.fieldName.trim()) newErrors.fieldName = 'اسم الأرضية مطلوب';
+      if (!formData.fieldPricePerHour || isNaN(Number(formData.fieldPricePerHour)) || Number(formData.fieldPricePerHour) <= 0) {
+        newErrors.fieldPricePerHour = 'يرجى إدخال سعر صحيح أكبر من صفر';
+      }
+      if (!formData.fieldOpeningTime) newErrors.fieldOpeningTime = 'وقت الفتح مطلوب';
+      if (!formData.fieldClosingTime) newErrors.fieldClosingTime = 'وقت الإغلاق مطلوب';
+    }
+
+    if (step === 5) {
       if (!formData.acceptTerms) {
         newErrors.acceptTerms = 'يجب الموافقة على شروط الخدمة وسياسة الخصوصية';
       }
@@ -132,11 +147,12 @@ function RegisterForm() {
       if (json.success) {
         showToast('تم إنشاء حساب ملعبك بنجاح! جاري توجيهك للوحة التحكم.', 'success');
         await refresh(); // reload session context
+        // Redirect to fields page so user sees the newly created field
+        router.push('/dashboard/fields?new=1');
       } else {
         showToast(json.error || 'حدث خطأ أثناء التسجيل', 'error');
         if (json.errors) {
           setErrors(json.errors);
-          // If errors belong to previous steps, move user back
           if (json.errors.email || json.errors.phone) setStep(1);
           else if (json.errors.slug || json.errors.stadiumName) setStep(2);
         }
@@ -216,6 +232,10 @@ function RegisterForm() {
           </div>
           <div className={`step-item ${step === 4 ? 'active' : step > 4 ? 'done' : ''}`}>
             <div className="step-circle">٤</div>
+            <div className="step-label">إعداد الأرضية</div>
+          </div>
+          <div className={`step-item ${step === 5 ? 'active' : step > 5 ? 'done' : ''}`}>
+            <div className="step-circle">٥</div>
             <div className="step-label">التأكيد</div>
           </div>
         </div>
@@ -463,8 +483,88 @@ function RegisterForm() {
             </div>
           )}
 
-          {/* Step 4: Confirm terms */}
+          {/* Step 4: First Field Setup */}
           {step === 4 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }} className="animate-fadeIn">
+              <div style={{
+                background: 'rgba(34,197,94,0.06)',
+                border: '1px solid rgba(34,197,94,0.2)',
+                borderRadius: 'var(--radius-md)',
+                padding: '1rem',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '0.75rem',
+              }}>
+                <span style={{ fontSize: '1.5rem' }}>⚽</span>
+                <div>
+                  <p style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'var(--primary-light)', marginBottom: '0.25rem' }}>
+                    إعداد أول أرضية في مجمعك
+                  </p>
+                  <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', margin: 0 }}>
+                    حدد بيانات أول أرضية لديك (السعر وساعات العمل). يمكنك إضافة مزيد من الأراضي لاحقاً من لوحة التحكم.
+                  </p>
+                </div>
+              </div>
+
+              <Input
+                label="اسم الأرضية *"
+                placeholder="مثال: ملعب كرة قدم - أرض اصطناعية"
+                value={formData.fieldName}
+                onChange={(e) => setFormData({ ...formData, fieldName: e.target.value })}
+                error={errors.fieldName}
+                required
+              />
+
+              <Input
+                label="سعر الساعة بالجنيه المصري *"
+                type="number"
+                placeholder="مثال: 200"
+                value={formData.fieldPricePerHour}
+                onChange={(e) => setFormData({ ...formData, fieldPricePerHour: e.target.value })}
+                error={errors.fieldPricePerHour}
+                required
+              />
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="form-group">
+                  <label className="form-label">وقت فتح الملعب *</label>
+                  <input
+                    type="time"
+                    className="form-input"
+                    value={formData.fieldOpeningTime}
+                    onChange={(e) => setFormData({ ...formData, fieldOpeningTime: e.target.value })}
+                  />
+                  {errors.fieldOpeningTime && <p className="form-error">⚠️ {errors.fieldOpeningTime}</p>}
+                </div>
+                <div className="form-group">
+                  <label className="form-label">وقت إغلاق الملعب *</label>
+                  <input
+                    type="time"
+                    className="form-input"
+                    value={formData.fieldClosingTime}
+                    onChange={(e) => setFormData({ ...formData, fieldClosingTime: e.target.value })}
+                  />
+                  {errors.fieldClosingTime && <p className="form-error">⚠️ {errors.fieldClosingTime}</p>}
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">مدة كل حجز (دقيقة)</label>
+                <select
+                  className="form-input form-select"
+                  value={formData.fieldDuration}
+                  onChange={(e) => setFormData({ ...formData, fieldDuration: e.target.value })}
+                >
+                  <option value="60">ساعة كاملة (60 دقيقة)</option>
+                  <option value="90">ساعة ونصف (90 دقيقة)</option>
+                  <option value="120">ساعتان (120 دقيقة)</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* Step 5: Confirm terms */}
+          {step === 5 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }} className="animate-fadeIn">
               <div
                 style={{
@@ -485,6 +585,7 @@ function RegisterForm() {
                   <div><strong>المدينة والعنوان:</strong> {formData.city}، {formData.address}</div>
                   <div><strong>رقم المحفظة:</strong> {formData.vodafoneCash || 'غير مدخل'}</div>
                   <div><strong>إنستا باي:</strong> {formData.instaPay || 'غير مدخل'}</div>
+                  <div><strong>الأرضية الأولى:</strong> {formData.fieldName} — {formData.fieldPricePerHour} ج.م/ساعة — {formData.fieldOpeningTime} إلى {formData.fieldClosingTime}</div>
                 </div>
               </div>
 
@@ -525,7 +626,7 @@ function RegisterForm() {
             </Button>
           )}
 
-          {step < 4 ? (
+          {step < 5 ? (
             <Button variant="primary" onClick={handleNext}>
               التالي
             </Button>

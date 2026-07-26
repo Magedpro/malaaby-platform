@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Users, Stadiums } from '@/lib/db';
+import { Users, Stadiums, Fields } from '@/lib/db';
 import { generateId } from '@/lib/utils';
 import { createSession, hashPassword } from '@/lib/auth';
 import { validateRegister } from '@/lib/validations';
@@ -19,6 +19,8 @@ export async function POST(request: NextRequest) {
       name, email, password, phone,
       stadiumName, slug, city, address,
       logo, coverImage, vodafoneCash, instaPay,
+      // First field data
+      fieldName, fieldPricePerHour, fieldOpeningTime, fieldClosingTime, fieldDuration,
     } = body;
 
     const cleanEmail = email.toLowerCase().trim();
@@ -76,7 +78,23 @@ export async function POST(request: NextRequest) {
       approvalStatus: 'approved', // Auto-approved by default in settings
     });
 
-    // 5. Create session cookie
+    // 5. Create the first Field (أرضية) if field data was provided
+    if (fieldName && fieldPricePerHour && Number(fieldPricePerHour) > 0) {
+      const duration = [30, 60, 90, 120].includes(Number(fieldDuration)) ? Number(fieldDuration) : 60;
+      await Fields.create({
+        stadiumSlug: cleanSlug,
+        name: fieldName.trim(),
+        description: '',
+        pricePerHour: Number(fieldPricePerHour),
+        bookingDuration: duration as 30 | 60 | 90 | 120,
+        openingTime: fieldOpeningTime || '08:00',
+        closingTime: fieldClosingTime || '23:00',
+        status: 'available',
+        coverImage: 'https://images.unsplash.com/photo-1568194157720-8eae79728929?w=600&h=400&fit=crop',
+      });
+    }
+
+    // 6. Create session cookie
     await createSession({
       userId: user.id,
       role: user.role,
@@ -85,7 +103,7 @@ export async function POST(request: NextRequest) {
       email: user.email,
     });
 
-    // 6. Log activity
+    // 7. Log activity
     ActivityLogs.log({
       action: 'owner_registration',
       performedBy: user.id,

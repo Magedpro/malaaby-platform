@@ -139,6 +139,54 @@ export function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+export async function compressImage(file: File, maxWidth = 1600, quality = 0.85): Promise<File> {
+  if (typeof window === 'undefined' || !file || !file.type.startsWith('image/')) return file;
+  if (file.size < 180 * 1024) return file; // Already small
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { resolve(file); return; }
+
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) { resolve(file); return; }
+            const webpFile = new File([blob], file.name.replace(/\.[^/.]+$/, '') + '.webp', {
+              type: 'image/webp',
+              lastModified: Date.now(),
+            });
+            resolve(webpFile);
+          },
+          'image/webp',
+          quality
+        );
+      };
+      img.onerror = () => resolve(file);
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = () => resolve(file);
+    reader.readAsDataURL(file);
+  });
+}
+
 export function isValidPhone(phone: string): boolean {
   return /^(\+20|0)?1[0-2,5]\d{8}$/.test(phone.replace(/\s/g, ''));
 }

@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { useToast } from '@/components/ui/Toast';
 import { useSession } from '@/hooks/useSession';
 import { CITIES_DEFAULT } from '@/lib/constants';
+import { compressImage } from '@/lib/utils';
 
 interface StadiumSettings {
   name: string; description: string; phone: string; whatsapp: string;
@@ -181,8 +182,9 @@ export default function SettingsPage() {
     else setUploadingCover(true);
 
     try {
+      const compressed = await compressImage(file, 1600, 0.85);
       const fd = new FormData();
-      fd.append('file', file);
+      fd.append('file', compressed);
       const res = await fetch('/api/v1/upload', {
         method: 'POST',
         body: fd

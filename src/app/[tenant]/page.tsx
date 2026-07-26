@@ -8,7 +8,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useToast } from '@/components/ui/Toast';
 import { FloatingWhatsApp } from '@/components/ui/FloatingWhatsApp';
-import { formatCurrency, formatDate, formatTime, formatWhatsAppNumber } from '@/lib/utils';
+import { formatCurrency, formatDate, formatTime, formatWhatsAppNumber, compressImage } from '@/lib/utils';
 
 interface Field {
   id: string; name: string; description: string;
@@ -113,14 +113,14 @@ export default function PublicBookingPage() {
 
   useEffect(() => { loadSlots(); }, [loadSlots]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 10 * 1024 * 1024) { showToast('حجم الصورة يجب أن لا يتجاوز 10 ميجابايت', 'error'); return; }
-    setPaymentFile(file);
+    const compressed = await compressImage(file, 1600, 0.85);
+    setPaymentFile(compressed);
     const reader = new FileReader();
     reader.onload = ev => setPaymentPreview(ev.target?.result as string);
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(compressed);
   };
 
   const handleSubmitBooking = async () => {

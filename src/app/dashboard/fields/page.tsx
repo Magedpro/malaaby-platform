@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useToast } from '@/components/ui/Toast';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, compressImage } from '@/lib/utils';
 import { FIELD_STATUSES, BOOKING_DURATIONS } from '@/lib/constants';
 
 interface Field {
@@ -105,8 +105,9 @@ export default function FieldsManagement() {
     
     setUploadingCover(true);
     try {
+      const compressed = await compressImage(file, 1600, 0.85);
       const fd = new FormData();
-      fd.append('file', file);
+      fd.append('file', compressed);
       const res = await fetch('/api/v1/upload', {
         method: 'POST',
         body: fd

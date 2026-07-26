@@ -40,6 +40,19 @@ export default function BookingsManagement() {
   const [cancelReason, setCancelReason] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
 
+  // Fixed/Recurring booking modal state
+  const [fixedOpen, setFixedOpen] = useState(false);
+  const [fixedForm, setFixedForm] = useState({
+    fieldId: '',
+    customerName: '',
+    customerPhone: '',
+    date: new Date().toISOString().split('T')[0],
+    startTime: '18:00',
+    endTime: '19:00',
+    recurringWeeks: '4',
+    notes: '',
+  });
+
   // Filters
   const [filterStatus, setFilterStatus] = useState('');
   const [filterDate, setFilterDate] = useState('');
@@ -60,7 +73,12 @@ export default function BookingsManagement() {
   }, [filterStatus, filterDate, filterQuery]);
 
   useEffect(() => {
-    fetch('/api/v1/fields').then(r => r.json()).then(j => { if (j.success) setFields(j.data); });
+    fetch('/api/v1/fields').then(r => r.json()).then(j => {
+      if (j.success && j.data.length > 0) {
+        setFields(j.data);
+        setFixedForm(prev => ({ ...prev, fieldId: j.data[0].id }));
+      }
+    });
     loadBookings();
   }, [loadBookings]);
 
@@ -132,11 +150,53 @@ export default function BookingsManagement() {
     finally { setActionLoading(false); }
   };
 
+  const handleCreateFixedBooking = async () => {
+    if (!fixedForm.fieldId || !fixedForm.customerName || !fixedForm.customerPhone || !fixedForm.date) {
+      showToast('يرجى إدخال جميع البيانات الإلزامية', 'error');
+      return;
+    }
+    setActionLoading(true);
+    try {
+      const res = await fetch('/api/v1/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fieldId: fixedForm.fieldId,
+          date: fixedForm.date,
+          startTime: fixedForm.startTime,
+          endTime: fixedForm.endTime,
+          customerName: fixedForm.customerName,
+          customerPhone: fixedForm.customerPhone,
+          recurringWeeks: Number(fixedForm.recurringWeeks),
+          notes: fixedForm.notes || 'حجز ثابت أسبوعي',
+          paymentScreenshot: 'owner_fixed_booking',
+        }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        showToast(`تم تثبيت الموعد الأسبوعي لمدة ${fixedForm.recurringWeeks} أسابيع قادمة بنجاح 📌`, 'success');
+        setFixedOpen(false);
+        loadBookings();
+      } else {
+        showToast(json.error || 'فشل تثبيت الموعد', 'error');
+      }
+    } catch {
+      showToast('حدث خطأ في الاتصال', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }} className="animate-fadeIn">
-      <div>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 800 }}>إدارة الحجوزات</h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>مراجعة وتأكيد ورفض جميع طلبات الحجز الواردة</p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        <div>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 800 }}>إدارة الحجوزات</h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>مراجعة وتأكيد الحجوزات وتثبيت المواعيد الأسبوعية الثابتة</p>
+        </div>
+        <Button variant="primary" onClick={() => setFixedOpen(true)}>
+          📌 تثبيت موعد أسبوعي ثابت
+        </Button>
       </div>
 
       {/* Filters */}
@@ -198,8 +258,16 @@ export default function BookingsManagement() {
                 return (
                   <tr key={b.id} style={{ cursor: 'pointer' }} onClick={() => openDetail(b)}>
                     <td>
-                      <div style={{ fontWeight: 600 }}>{b.customerName}</div>
+                      <div style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                        {b.notes?.includes('ثابت') && <span title="حجز موعد أسبوعي ثابت">📌</span>}
+                        {b.customerName}
+                      </div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', direction: 'ltr' }}>{b.customerPhone}</div>
+                      {b.notes && (
+                        <div style={{ fontSize: '0.75rem', color: 'var(--primary-light)', marginTop: '2px' }}>
+                          ℹ️ {b.notes}
+                        </div>
+                      )}
                     </td>
                     <td style={{ fontSize: '0.875rem' }}>{getFieldName(b.fieldId)}</td>
                     <td style={{ fontSize: '0.875rem' }}>{formatDate(b.date)}</td>
@@ -356,6 +424,119 @@ export default function BookingsManagement() {
               value={cancelReason}
               onChange={e => setCancelReason(e.target.value)}
               style={{ minHeight: '80px' }}
+            />
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal: Fix/Lock Recurring Booking */}
+      <Modal
+        isOpen={fixedOpen}
+        onClose={() => setFixedOpen(false)}
+        title="📌 تثبيت موعد أسبوعي ثابت"
+        size="md"
+        footer={
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+            <Button variant="secondary" onClick={() => setFixedOpen(false)}>إلغاء</Button>
+            <Button variant="primary" onClick={handleCreateFixedBooking} isLoading={actionLoading}>
+              تثبيت الموعد الأسبوعي 📌
+            </Button>
+          </div>
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+            قم بتحديد بيانات العميل وتوقيت الموعد وعدد الأسابيع، وسيتم قفل وتأكيد هذا الوقت في جميع الأسابيع القادمة تلقائياً ومنع أي لاعب آخر من حجزه.
+          </p>
+
+          <div className="form-group">
+            <label className="form-label">اختر الملعب *</label>
+            <select
+              className="form-input form-select"
+              value={fixedForm.fieldId}
+              onChange={e => setFixedForm({ ...fixedForm, fieldId: e.target.value })}
+            >
+              <option value="">اختر الملعب</option>
+              {fields.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+            </select>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div className="form-group">
+              <label className="form-label">اسم العميل / الفريق *</label>
+              <input
+                type="text"
+                className="form-input"
+                value={fixedForm.customerName}
+                onChange={e => setFixedForm({ ...fixedForm, customerName: e.target.value })}
+                placeholder="مثال: فريق الكابتن أحمد"
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">رقم الهاتف *</label>
+              <input
+                type="text"
+                className="form-input"
+                value={fixedForm.customerPhone}
+                onChange={e => setFixedForm({ ...fixedForm, customerPhone: e.target.value })}
+                placeholder="01xxxxxxxxx"
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
+            <div className="form-group">
+              <label className="form-label">أول تاريخ *</label>
+              <input
+                type="date"
+                className="form-input"
+                value={fixedForm.date}
+                onChange={e => setFixedForm({ ...fixedForm, date: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">وقت البداية *</label>
+              <input
+                type="time"
+                className="form-input"
+                value={fixedForm.startTime}
+                onChange={e => setFixedForm({ ...fixedForm, startTime: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">وقت النهاية *</label>
+              <input
+                type="time"
+                className="form-input"
+                value={fixedForm.endTime}
+                onChange={e => setFixedForm({ ...fixedForm, endTime: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">عدد الأسابيع المراد تثبيتها *</label>
+            <select
+              className="form-input form-select"
+              value={fixedForm.recurringWeeks}
+              onChange={e => setFixedForm({ ...fixedForm, recurringWeeks: e.target.value })}
+            >
+              <option value="4">4 أسابيع (شهر كامل)</option>
+              <option value="8">8 أسابيع (شهرين)</option>
+              <option value="12">12 أسبوع (3 أشهر)</option>
+              <option value="24">24 أسبوع (6 أشهر)</option>
+              <option value="52">52 أسبوع (سنة كاملة)</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">ملاحظات (اختياري)</label>
+            <input
+              type="text"
+              className="form-input"
+              value={fixedForm.notes}
+              onChange={e => setFixedForm({ ...fixedForm, notes: e.target.value })}
+              placeholder="مثال: تم سداد العربون 200 ج.م."
             />
           </div>
         </div>

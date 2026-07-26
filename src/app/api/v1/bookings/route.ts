@@ -109,14 +109,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const hasConflict = await Bookings.hasConflict(fieldId, date, startTime, endTime);
-    if (hasConflict) {
-      return NextResponse.json({
-        success: false,
-        error: 'عذراً، هذا الوقت محجوز بالفعل! يرجى اختيار وقت آخر.'
-      }, { status: 409 });
-    }
-
     // 3. Compute cost/amount
     const fieldObj = await Fields.findById(fieldId);
     if (!fieldObj) {
@@ -128,21 +120,53 @@ export async function POST(request: NextRequest) {
     const durationMinutes = (endH * 60 + endM) - (startH * 60 + startM);
     const amount = (fieldObj.pricePerHour * durationMinutes) / 60;
 
-    // 4. Create Booking
-    const booking = await Bookings.create({
-      fieldId,
-      stadiumSlug: slug,
-      customerName: customerName.trim(),
-      customerPhone: customerPhone.trim(),
-      customerEmail: customerEmail ? customerEmail.trim() : undefined,
-      notes: (notes || '').trim(),
-      date,
-      startTime,
-      endTime,
-      amount,
-      paymentScreenshot: paymentScreenshot || '',
-      status: 'pending', // All bookings start as pending and require approval
-    });
+    // 4. Create Booking(s) - Supports recurring fixed weekly bookings for owners
+    const weeksCount = (isOwner && body.recurringWeeks && !isNaN(Number(body.recurringWeeks)))
+      ? Math.min(Math.max(Number(body.recurringWeeks), 1), 52)
+      : 1;
+
+    const createdBookings = [];
+    const [y, m, d] = date.split('-').map(Number);
+
+    for (let i = 0; i < weeksCount; i++) {
+      const targetDateObj = new Date(y, m - 1, d + i * 7);
+      const targetYear = targetDateObj.getFullYear();
+      const targetMonth = String(targetDateObj.getMonth() + 1).padStart(2, '0');
+      const targetDay = String(targetDateObj.getDate()).padStart(2, '0');
+      const targetDate = `${targetYear}-${targetMonth}-${targetDay}`;
+
+      // Check conflict for this week
+      const hasConflict = await Bookings.hasConflict(fieldId, targetDate, startTime, endTime);
+      if (hasConflict) {
+        if (weeksCount === 1) {
+          return NextResponse.json({ success: false, error: 'عذراً، هذا الوقت محجوز بالفعل! يرجى اختيار وقت آخر.' }, { status: 409 });
+        }
+        continue; // Skip conflicted week if batch recurring
+      }
+
+      const booking = await Bookings.create({
+        fieldId,
+        stadiumSlug: slug,
+        customerName: customerName.trim(),
+        customerPhone: customerPhone.trim(),
+        customerEmail: customerEmail ? customerEmail.trim() : undefined,
+        notes: isOwner ? (notes ? `${notes} (موعد ثابت أسبوعي)` : 'حجز ثابت أسبوعي') : (notes || '').trim(),
+        date: targetDate,
+        startTime,
+        endTime,
+        amount,
+        paymentScreenshot: paymentScreenshot || '',
+        status: isOwner ? 'confirmed' : 'pending',
+      });
+
+      createdBookings.push(booking);
+    }
+
+    if (createdBookings.length === 0) {
+      return NextResponse.json({ success: false, error: 'تعذر تثبيت المواعيد نظراً لتضاربها مع حجوزات قادمة' }, { status: 409 });
+    }
+
+    const booking = createdBookings[0];
 
     // 5. Notify owner
     await Notifications.create({

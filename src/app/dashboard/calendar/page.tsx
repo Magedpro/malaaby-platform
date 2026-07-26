@@ -9,7 +9,7 @@ import { DAYS_AR, DAY_KEYS } from '@/lib/constants';
 
 interface Field { id: string; name: string; bookingDuration: number; }
 interface Booking {
-  id: string; fieldId: string; customerName: string;
+  id: string; fieldId: string; customerName: string; customerPhone?: string; notes?: string;
   date: string; startTime: string; endTime: string; status: string;
   amount: number;
 }
@@ -157,9 +157,16 @@ export default function CalendarPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {dayBookings.map(b => (
                 <div key={b.id} style={{ padding: '0.875rem', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', borderRight: `3px solid ${b.status === 'confirmed' ? 'var(--success)' : 'var(--warning)'}` }}>
-                  <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{b.customerName}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', direction: 'ltr', textAlign: 'right' }}>{b.startTime} - {b.endTime}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--primary-light)', fontWeight: 600, marginTop: '0.25rem' }}>{b.amount} ج.م</div>
+                  <div style={{ fontWeight: 700, fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                    {b.notes?.includes('ثابت') && <span title="حجز ثابت أسبوعي">📌</span>}
+                    {b.customerName}
+                  </div>
+                  {b.customerPhone && (
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', direction: 'ltr', textAlign: 'right' }}>{b.customerPhone}</div>
+                  )}
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', direction: 'ltr', textAlign: 'right', marginTop: '0.25rem' }}>{b.startTime} - {b.endTime}</div>
+                  {b.notes && <div style={{ fontSize: '0.75rem', color: 'var(--primary-light)', marginTop: '0.25rem' }}>ℹ️ {b.notes}</div>}
+                  <div style={{ fontSize: '0.75rem', color: 'var(--primary-light)', fontWeight: 700, marginTop: '0.25rem' }}>{b.amount} ج.م</div>
                 </div>
               ))}
             </div>

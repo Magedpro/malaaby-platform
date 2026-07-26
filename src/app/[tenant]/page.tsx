@@ -372,6 +372,55 @@ export default function PublicBookingPage() {
               )}
             </div>
 
+            {/* ── Fixed/Recurring Booking Info Banner ── */}
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(22, 163, 74, 0.12), rgba(16, 185, 129, 0.05))',
+              border: '1px solid rgba(22, 163, 74, 0.3)',
+              borderRadius: 'var(--radius-lg)',
+              padding: '1.25rem 1.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '1rem',
+              marginBottom: '1.5rem',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+                <div style={{ fontSize: '2rem', flexShrink: 0 }}>📌</div>
+                <div>
+                  <h3 style={{ fontWeight: 800, fontSize: '0.9375rem', color: 'var(--primary-light)', marginBottom: '0.25rem' }}>
+                    تريد حجز موعد ثابت أسبوعياً؟
+                  </h3>
+                  <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.6 }}>
+                    لحجز موعد دوري مخصص لك أسبوعياً، يرجى التواصل والتعاقد مباشرة مع إدارة الملعب لتثبيت الموعد.
+                  </p>
+                </div>
+              </div>
+              {(stadium?.whatsapp || stadium?.phone) && (
+                <a
+                  href={stadium.whatsapp ? `https://wa.me/${stadium.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent('السلام عليكم، أرغب في التنسيق والتعاقد لحجز موعد ثابت أسبوعياً في الملعب.')}` : `tel:${stadium.phone}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    background: 'var(--primary)',
+                    color: '#fff',
+                    padding: '0.55rem 1.125rem',
+                    borderRadius: 'var(--radius-md)',
+                    fontSize: '0.8125rem',
+                    fontWeight: 700,
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    whiteSpace: 'nowrap',
+                    boxShadow: 'var(--shadow-primary)',
+                  }}
+                >
+                  💬 تعاقد على موعد ثابت
+                </a>
+              )}
+            </div>
+
             {/* ── Step 3: Time Slots ── */}
             {selectedDate && (
               <div className="booking-card">

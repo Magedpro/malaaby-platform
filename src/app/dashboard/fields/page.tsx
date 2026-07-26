@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useToast } from '@/components/ui/Toast';
+import { useSession } from '@/hooks/useSession';
 import { formatCurrency, compressImage } from '@/lib/utils';
 import { FIELD_STATUSES, BOOKING_DURATIONS } from '@/lib/constants';
 
@@ -34,6 +35,7 @@ export default function FieldsManagement() {
 
 function FieldsContent() {
   const { showToast } = useToast();
+  const { stadium } = useSession();
   const searchParams = useSearchParams();
   const isNewAccount = searchParams.get('new') === '1';
   const [fields, setFields] = useState<Field[]>([]);
@@ -213,10 +215,10 @@ function FieldsContent() {
           <div style={{ fontSize: '2.25rem', flexShrink: 0 }}>🎉</div>
           <div style={{ flex: 1 }}>
             <h3 style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--primary-light)', marginBottom: '0.375rem' }}>
-              أهلاً بك في منصة ملعبي! تم إنشاء أول أرضية بنجاح ✅
+              أهلاً بك في منصة ملعبي! تم إنشاء ملعبك الأول بنجاح ✅
             </h3>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.7 }}>
-              تم إنشاء أول أرضية ببياناتك وهي ظاهرة أدناه. يمكنك <strong>تعديلها</strong> لتعديل الوصف أو إضافة صورة، وإضافة <strong>مزيد من الأراضي</strong> إذا كان لديك أكثر من ملعب.
+              تم إنشاء ملعبك الأول ببياناتك وهو ظاهر أدناه. يمكنك <strong>تعديله</strong> لتعديل الوصف أو إضافة صورة، وإضافة <strong>مزيد من الملاعب الفرعية</strong> إذا كان لديك أكثر من أرضية.
             </p>
           </div>
           <button
@@ -259,18 +261,38 @@ function FieldsContent() {
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
           {fields.map((field) => (
-            <Card key={field.id} style={{ display: 'flex', flexDirection: 'column' }}>
-              <div style={{ height: '160px', position: 'relative', overflow: 'hidden' }}>
+            <Card key={field.id} style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              <div style={{ height: '170px', position: 'relative', overflow: 'hidden' }}>
                 <img
-                  src={field.coverImage}
+                  src={field.coverImage || stadium?.coverImage || 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=1200&h=400&fit=crop'}
                   alt={field.name}
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
+                
+                {/* Status Badge */}
                 <div style={{ position: 'absolute', top: '10px', left: '10px' }}>
                   <Badge variant={FIELD_STATUSES[field.status]?.color || 'primary'}>
                     {FIELD_STATUSES[field.status]?.label || field.status}
                   </Badge>
                 </div>
+
+                {/* Stadium Logo Badge */}
+                {stadium?.logo && (
+                  <div style={{
+                    position: 'absolute',
+                    bottom: '10px',
+                    right: '10px',
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '50%',
+                    border: '2px solid rgba(255,255,255,0.9)',
+                    overflow: 'hidden',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                    background: '#000',
+                  }}>
+                    <img src={stadium.logo} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                )}
               </div>
 
               <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', flexGrow: 1, gap: '0.5rem' }}>

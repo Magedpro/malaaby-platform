@@ -23,6 +23,7 @@ function RegisterForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingFieldCover, setUploadingFieldCover] = useState(false);
 
   // Form states
   const [formData, setFormData] = useState({
@@ -46,6 +47,7 @@ function RegisterForm() {
     fieldOpeningTime: '08:00',
     fieldClosingTime: '23:00',
     fieldDuration: '60',
+    fieldCoverImage: '', // Will be set by upload
   });
 
   // Automatically suggest slug and fieldName based on stadium name
@@ -101,7 +103,7 @@ function RegisterForm() {
     }
 
     if (step === 4) {
-      if (!formData.fieldName.trim()) newErrors.fieldName = 'اسم الأرضية مطلوب';
+      if (!formData.fieldName.trim()) newErrors.fieldName = 'اسم الملعب مطلوب';
       if (!formData.fieldPricePerHour || isNaN(Number(formData.fieldPricePerHour)) || Number(formData.fieldPricePerHour) <= 0) {
         newErrors.fieldPricePerHour = 'يرجى إدخال سعر صحيح أكبر من صفر';
       }
@@ -179,10 +181,7 @@ function RegisterForm() {
     try {
       const fd = new FormData();
       fd.append('file', file);
-      const res = await fetch('/api/v1/upload', {
-        method: 'POST',
-        body: fd
-      });
+      const res = await fetch('/api/v1/upload', { method: 'POST', body: fd });
       const json = await res.json();
       if (json && json.success) {
         setFormData(prev => ({ ...prev, [field]: json.url }));
@@ -196,6 +195,33 @@ function RegisterForm() {
     } finally {
       if (field === 'logo') setUploadingLogo(false);
       else setUploadingCover(false);
+    }
+  };
+
+  const handleUploadFieldCover = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      showToast('حجم الصورة يجب أن لا يتجاوز 10 ميجابايت', 'error');
+      return;
+    }
+    setUploadingFieldCover(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/v1/upload', { method: 'POST', body: fd });
+      const json = await res.json();
+      if (json && json.success) {
+        setFormData(prev => ({ ...prev, fieldCoverImage: json.url }));
+        showToast('تم رفع صورة الملعب بنجاح ✅', 'success');
+      } else {
+        showToast(json?.error || 'فشل رفع الصورة', 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('خطأ أثناء رفع الصورة', 'error');
+    } finally {
+      setUploadingFieldCover(false);
     }
   };
 
@@ -560,6 +586,47 @@ function RegisterForm() {
                   <option value="90">ساعة ونصف (90 دقيقة)</option>
                   <option value="120">ساعتان (120 دقيقة)</option>
                 </select>
+              </div>
+
+              {/* Field Cover Image Upload */}
+              <div className="form-group">
+                <label className="form-label">صورة الملعب (اختياري)</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  {/* Preview */}
+                  <div style={{
+                    width: '100px', height: '60px',
+                    borderRadius: 'var(--radius-md)',
+                    background: 'var(--bg-elevated)',
+                    border: '1px dashed var(--border-default)',
+                    overflow: 'hidden',
+                    flexShrink: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    {formData.fieldCoverImage ? (
+                      <img src={formData.fieldCoverImage} alt="صورة الملعب" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <span style={{ fontSize: '1.5rem' }}>⚽</span>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1 }}>
+                    <label
+                      className="btn btn-secondary btn-sm"
+                      style={{ cursor: 'pointer', display: 'inline-block', margin: 0, padding: '0.4rem 0.8rem', fontSize: '0.8125rem' }}
+                    >
+                      {uploadingFieldCover ? 'جاري الرفع...' : '📸 رفع صورة الملعب'}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        disabled={uploadingFieldCover}
+                        onChange={handleUploadFieldCover}
+                      />
+                    </label>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>ستظهر في صفحة الحجز امام اللاعبين</span>
+                  </div>
+                </div>
               </div>
             </div>
           )}

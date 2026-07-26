@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       stadiumName, slug, city, address,
       logo, coverImage, vodafoneCash, instaPay,
       // First field data
-      fieldName, fieldPricePerHour, fieldOpeningTime, fieldClosingTime, fieldDuration,
+      fieldName, fieldPricePerHour, fieldOpeningTime, fieldClosingTime, fieldDuration, fieldCoverImage,
     } = body;
 
     const cleanEmail = email.toLowerCase().trim();
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
         openingTime: fieldOpeningTime || '08:00',
         closingTime: fieldClosingTime || '23:00',
         status: 'available',
-        coverImage: 'https://images.unsplash.com/photo-1568194157720-8eae79728929?w=600&h=400&fit=crop',
+        coverImage: fieldCoverImage || coverImage || 'https://images.unsplash.com/photo-1568194157720-8eae79728929?w=600&h=400&fit=crop',
       });
     }
 

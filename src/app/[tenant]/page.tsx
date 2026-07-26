@@ -473,7 +473,10 @@ export default function PublicBookingPage() {
                       <button
                         key={i}
                         disabled={slot.status !== 'available'}
-                        onClick={() => { setSelectedSlot(slot); setBookingOpen(true); }}
+                        onClick={() => {
+                          setSelectedSlot(slot);
+                          setBookingOpen(false);
+                        }}
                         className={`slot-btn slot-${slot.status} ${selectedSlot?.startTime === slot.startTime ? 'slot-selected' : ''}`}
                       >
                         <div style={{ fontWeight: 800, fontSize: '1.0625rem' }}>{formatTime(slot.startTime)}</div>
@@ -501,22 +504,30 @@ export default function PublicBookingPage() {
               const displayEndTime = doubleSlot && canDouble ? nextSlot!.endTime : selectedSlot.endTime;
               const baseAmount = selectedSlot.amount || 0;
               const totalAmount = doubleSlot && canDouble ? baseAmount * 2 : baseAmount;
+
               return (
                 <div style={{
                   background: 'linear-gradient(135deg, rgba(34,197,94,0.12), rgba(34,197,94,0.04))',
-                  border: '1px solid var(--border-primary)',
+                  border: '1.5px solid var(--border-primary)',
                   borderRadius: 'var(--radius-lg)', padding: '1.5rem',
                   animation: 'fadeInUp 0.3s ease',
+                  boxShadow: 'var(--shadow-lg)',
                 }}>
-                  <h3 style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '1rem', color: 'var(--primary-light)' }}>
-                    ✅ ملخص الحجز
-                  </h3>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                    <h3 style={{ fontWeight: 800, fontSize: '1.0625rem', color: 'var(--primary-light)', margin: 0 }}>
+                      📋 ملخص الموعد المختار
+                    </h3>
+                    <span style={{ fontSize: '0.75rem', background: 'var(--primary)', color: '#fff', padding: '0.2rem 0.6rem', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
+                      خطوة ١ من ٢
+                    </span>
+                  </div>
+
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem', fontSize: '0.875rem' }}>
                     {[
                       { label: 'الملعب', value: selectedField.name, icon: '🏟️' },
-                      { label: 'اليوم', value: `${getDayName(parseInt(selectedDate.split('-')[2]))} ${formatDate(selectedDate)}`, icon: '📅' },
-                      { label: 'من', value: formatTime(selectedSlot.startTime), icon: '🕐' },
-                      { label: 'إلى', value: formatTime(displayEndTime), icon: '🕑' },
+                      { label: 'التاريخ', value: `${getDayName(parseInt(selectedDate.split('-')[2]))} ${formatDate(selectedDate)}`, icon: '📅' },
+                      { label: 'وقت البدء', value: formatTime(selectedSlot.startTime), icon: '🕐' },
+                      { label: 'وقت الانتهاء', value: formatTime(displayEndTime), icon: '🕑' },
                     ].map(({ label, value, icon }) => (
                       <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid var(--border-subtle)' }}>
                         <span style={{ color: 'var(--text-muted)' }}>{icon} {label}</span>
@@ -524,41 +535,77 @@ export default function PublicBookingPage() {
                       </div>
                     ))}
 
-                    {/* Double slot toggle */}
-                    <div style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      padding: '0.625rem 0.75rem', marginTop: '0.25rem',
-                      background: canDouble ? 'rgba(34,197,94,0.07)' : 'rgba(100,100,100,0.07)',
-                      borderRadius: 'var(--radius-md)',
-                      border: `1px solid ${canDouble ? 'rgba(34,197,94,0.2)' : 'var(--border-subtle)'}`,
-                      opacity: canDouble ? 1 : 0.5,
-                    }}>
-                      <div>
-                        <div style={{ fontWeight: 700, fontSize: '0.8125rem' }}>⏱ حجز ساعتين</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                          {canDouble ? `${formatTime(selectedSlot.startTime)} — ${formatTime(nextSlot!.endTime)}` : 'الساعة التالية غير متاحة'}
-                        </div>
-                      </div>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', cursor: canDouble ? 'pointer' : 'not-allowed' }}>
-                        <input
-                          type="checkbox"
-                          checked={doubleSlot && !!canDouble}
-                          disabled={!canDouble}
-                          onChange={e => setDoubleSlot(e.target.checked)}
-                          style={{ width: '18px', height: '18px', accentColor: 'var(--primary)', cursor: canDouble ? 'pointer' : 'not-allowed' }}
-                        />
+                    {/* Duration selector: 1 Hour vs 2 Hours */}
+                    <div style={{ marginTop: '0.5rem' }}>
+                      <label style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: '0.5rem' }}>
+                        ⏱ حدد مدة الحجز:
                       </label>
+                      {canDouble ? (
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                          <button
+                            type="button"
+                            onClick={() => setDoubleSlot(false)}
+                            style={{
+                              padding: '0.625rem 0.5rem',
+                              borderRadius: 'var(--radius-md)',
+                              border: `1.5px solid ${!doubleSlot ? 'var(--primary)' : 'var(--border-default)'}`,
+                              background: !doubleSlot ? 'var(--primary-subtle)' : 'var(--bg-elevated)',
+                              color: !doubleSlot ? 'var(--primary-light)' : 'var(--text-secondary)',
+                              fontWeight: 700,
+                              fontSize: '0.8125rem',
+                              cursor: 'pointer',
+                              textAlign: 'center',
+                              transition: 'all 0.2s',
+                            }}
+                          >
+                            ⚡ ساعة واحدة<br />
+                            <span style={{ fontSize: '0.75rem', fontWeight: 500, opacity: 0.8 }}>({formatCurrency(baseAmount)})</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDoubleSlot(true)}
+                            style={{
+                              padding: '0.625rem 0.5rem',
+                              borderRadius: 'var(--radius-md)',
+                              border: `1.5px solid ${doubleSlot ? 'var(--primary)' : 'var(--border-default)'}`,
+                              background: doubleSlot ? 'var(--primary-subtle)' : 'var(--bg-elevated)',
+                              color: doubleSlot ? 'var(--primary-light)' : 'var(--text-secondary)',
+                              fontWeight: 700,
+                              fontSize: '0.8125rem',
+                              cursor: 'pointer',
+                              textAlign: 'center',
+                              transition: 'all 0.2s',
+                            }}
+                          >
+                            🔥 ساعتين متتاليتين<br />
+                            <span style={{ fontSize: '0.75rem', fontWeight: 500, opacity: 0.8 }}>({formatCurrency(baseAmount * 2)})</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <div style={{
+                          padding: '0.625rem 0.875rem',
+                          background: 'rgba(245,158,11,0.08)',
+                          border: '1px solid rgba(245,158,11,0.25)',
+                          borderRadius: 'var(--radius-md)',
+                          fontSize: '0.8125rem',
+                          color: 'var(--warning)',
+                          fontWeight: 600,
+                        }}>
+                          ℹ️ مدة الحجز المتاحة لهذا الموعد هي ساعة واحدة فقط (الساعة التالية غير متاحة).
+                        </div>
+                      )}
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.75rem' }}>
-                      <span style={{ fontWeight: 700 }}>💰 الإجمالي</span>
-                      <span style={{ fontSize: '1.375rem', fontWeight: 900, color: 'var(--primary-light)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.875rem', borderTop: '1px dashed var(--border-primary)', marginTop: '0.5rem' }}>
+                      <span style={{ fontWeight: 800, fontSize: '1rem' }}>💰 الإجمالي المطلوب</span>
+                      <span style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--primary-light)' }}>
                         {formatCurrency(totalAmount)}
                       </span>
                     </div>
                   </div>
-                  <Button variant="primary" fullWidth style={{ marginTop: '1.25rem' }} onClick={() => setBookingOpen(true)}>
-                    تأكيد الحجز →
+
+                  <Button variant="primary" fullWidth style={{ marginTop: '1.25rem', padding: '0.875rem', fontSize: '1rem' }} onClick={() => setBookingOpen(true)}>
+                    متابعة كتابة البيانات والدفع ←
                   </Button>
                 </div>
               );
@@ -723,26 +770,34 @@ export default function PublicBookingPage() {
           </div>
         }
       >
-        {selectedSlot && selectedField && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            {/* Booking summary in modal */}
-            <div style={{
-              background: 'var(--primary-subtle)', border: '1px solid var(--border-primary)',
-              borderRadius: 'var(--radius-md)', padding: '1.125rem',
-            }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.625rem', fontSize: '0.875rem' }}>
-                <div><span style={{ color: 'var(--text-muted)' }}>الملعب:</span> <strong>{selectedField.name}</strong></div>
-                <div><span style={{ color: 'var(--text-muted)' }}>التاريخ:</span> <strong>{formatDate(selectedDate)}</strong></div>
-                <div><span style={{ color: 'var(--text-muted)' }}>من:</span> <strong>{formatTime(selectedSlot.startTime)}</strong></div>
-                <div><span style={{ color: 'var(--text-muted)' }}>إلى:</span> <strong>{formatTime(selectedSlot.endTime)}</strong></div>
-                <div style={{ gridColumn: '1/-1', paddingTop: '0.5rem', borderTop: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontWeight: 700 }}>إجمالي المبلغ</span>
-                  <span style={{ color: 'var(--primary-light)', fontSize: '1.25rem', fontWeight: 900 }}>
-                    {formatCurrency(selectedSlot.amount || 0)}
-                  </span>
+        {selectedSlot && selectedField && (() => {
+          const nextSlot = slots.find(s => s.startTime === selectedSlot.endTime);
+          const canDouble = nextSlot && nextSlot.status === 'available';
+          const displayEndTime = doubleSlot && canDouble ? nextSlot!.endTime : selectedSlot.endTime;
+          const durationLabel = doubleSlot && canDouble ? 'ساعتين (120 دقيقة)' : 'ساعة واحدة (60 دقيقة)';
+          const baseAmount = selectedSlot.amount || 0;
+          const totalAmount = doubleSlot && canDouble ? baseAmount * 2 : baseAmount;
+
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              {/* Booking summary header inside modal */}
+              <div style={{
+                background: 'var(--primary-subtle)', border: '1px solid var(--border-primary)',
+                borderRadius: 'var(--radius-md)', padding: '1.125rem',
+              }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.625rem', fontSize: '0.875rem' }}>
+                  <div><span style={{ color: 'var(--text-muted)' }}>الملعب:</span> <strong>{selectedField.name}</strong></div>
+                  <div><span style={{ color: 'var(--text-muted)' }}>التاريخ:</span> <strong>{formatDate(selectedDate)}</strong></div>
+                  <div><span style={{ color: 'var(--text-muted)' }}>التوقيت:</span> <strong>{formatTime(selectedSlot.startTime)} - {formatTime(displayEndTime)}</strong></div>
+                  <div><span style={{ color: 'var(--text-muted)' }}>المدة:</span> <strong>{durationLabel}</strong></div>
+                  <div style={{ gridColumn: '1/-1', paddingTop: '0.625rem', borderTop: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: 700 }}>إجمالي المبلغ المطلوب تحويله</span>
+                    <span style={{ color: 'var(--primary-light)', fontSize: '1.25rem', fontWeight: 900 }}>
+                      {formatCurrency(totalAmount)}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
 
             <Input label="الاسم بالكامل *" placeholder="أدخل اسمك الثلاثي" value={customerName} onChange={e => setCustomerName(e.target.value)} required />
             <div className="form-group">
@@ -790,7 +845,8 @@ export default function PublicBookingPage() {
               <input id="payment-upload" type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
             </div>
           </div>
-        )}
+        );
+      })()}
       </Modal>
 
       {/* ═══ SUCCESS ═══ */}

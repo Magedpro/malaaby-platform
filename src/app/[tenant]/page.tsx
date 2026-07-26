@@ -367,6 +367,7 @@ export default function PublicBookingPage() {
                     { color: 'var(--success)', bg: 'rgba(34,197,94,0.08)', border: 'rgba(34,197,94,0.25)', text: 'متاح' },
                     { color: 'var(--warning)', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.25)', text: 'معلق' },
                     { color: 'var(--danger)', bg: 'rgba(239,68,68,0.08)', border: 'rgba(239,68,68,0.25)', text: 'محجوز' },
+                    { color: 'var(--text-muted)', bg: 'rgba(55,65,81,0.2)', border: 'var(--border-subtle)', text: 'انتهى الموعد' },
                   ].map(l => (
                     <div key={l.text} style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
                       <div style={{ width: '14px', height: '14px', borderRadius: '3px', background: l.bg, border: `1px solid ${l.border}` }} />

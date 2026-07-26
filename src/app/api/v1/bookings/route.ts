@@ -95,7 +95,21 @@ export async function POST(request: NextRequest) {
       }, { status: 403 });
     }
 
-    // 2. Conflict Detection (Double booking prevention)
+    // 2. Conflict & Past Time Detection
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    if (date < todayStr) {
+      return NextResponse.json({ success: false, error: 'لا يمكن الحجز في تاريخ سابق' }, { status: 400 });
+    }
+    if (date === todayStr) {
+      const [startH, startM] = startTime.split(':').map(Number);
+      const slotStartMinutes = startH * 60 + startM;
+      const currentMinutesNow = now.getHours() * 60 + now.getMinutes();
+      if (slotStartMinutes < currentMinutesNow) {
+        return NextResponse.json({ success: false, error: 'عذراً، هذا الموعد انقضى بالفعل ولا يمكن حجزه!' }, { status: 400 });
+      }
+    }
+
     const hasConflict = await Bookings.hasConflict(fieldId, date, startTime, endTime);
     if (hasConflict) {
       return NextResponse.json({

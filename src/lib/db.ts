@@ -733,6 +733,16 @@ export async function generateTimeSlots(field: Field, date: string): Promise<Tim
   let currentMinutes = timeToMinutes(field.openingTime);
   const closeMinutes = timeToMinutes(field.closingTime === '00:00' ? '24:00' : field.closingTime);
 
+  // Check if date is TODAY in local time
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const todayStr = `${year}-${month}-${day}`;
+
+  const isToday = date === todayStr;
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
   while (currentMinutes + duration <= closeMinutes) {
     const startH = Math.floor(currentMinutes / 60);
     const startM = currentMinutes % 60;
@@ -746,11 +756,17 @@ export async function generateTimeSlots(field: Field, date: string): Promise<Tim
     let status: TimeSlot['status'] = 'available';
     let bookingId: string | undefined;
 
-    for (const b of existingBookings) {
-      if (startTime < b.endTime && endTime > b.startTime) {
-        status = b.status === 'confirmed' ? 'booked' : 'pending';
-        bookingId = b.id;
-        break;
+    // 1. If date is TODAY and the slot start time has already passed, mark as closed
+    if (isToday && currentMinutes < nowMinutes) {
+      status = 'closed';
+    } else {
+      // 2. Check for conflicts with existing bookings
+      for (const b of existingBookings) {
+        if (startTime < b.endTime && endTime > b.startTime) {
+          status = b.status === 'confirmed' ? 'booked' : 'pending';
+          bookingId = b.id;
+          break;
+        }
       }
     }
 

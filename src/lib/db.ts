@@ -812,11 +812,7 @@ export async function generateTimeSlots(field: Field, date: string): Promise<Tim
       }
     }
 
-    // 2. If date is TODAY and the slot start time has already passed, mark as closed if not already booked
-    if (status === 'available' && isToday && currentMinutes <= nowMinutes) {
-      status = 'closed';
-    }
-
+    // Slots stay available for booking unless reserved
     slots.push({
       startTime,
       endTime,

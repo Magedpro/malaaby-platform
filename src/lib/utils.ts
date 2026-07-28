@@ -68,28 +68,42 @@ export function timeAgo(isoStr: string): string {
   return formatDate(isoStr);
 }
 
-/** Get current Date in Africa/Cairo (Egypt) timezone */
-export function getEgyptNow(): Date {
+/** Get current Egypt time components (Africa/Cairo) */
+export function getEgyptTimeParts() {
   const now = new Date();
-  try {
-    const egyptStr = now.toLocaleString('en-US', { timeZone: 'Africa/Cairo' });
-    return new Date(egyptStr);
-  } catch {
-    return now;
-  }
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Africa/Cairo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+
+  const parts = formatter.formatToParts(now);
+  const getPart = (type: string) => parts.find(p => p.type === type)?.value || '0';
+
+  let hour = parseInt(getPart('hour'), 10);
+  if (hour === 24) hour = 0; // Handle 24-hour format edge cases
+
+  return {
+    year: getPart('year'),
+    month: getPart('month'),
+    day: getPart('day'),
+    hour,
+    minute: parseInt(getPart('minute'), 10),
+  };
 }
 
 export function getTodayString(): string {
-  const egyptNow = getEgyptNow();
-  const year = egyptNow.getFullYear();
-  const month = String(egyptNow.getMonth() + 1).padStart(2, '0');
-  const day = String(egyptNow.getDate()).padStart(2, '0');
+  const { year, month, day } = getEgyptTimeParts();
   return `${year}-${month}-${day}`;
 }
 
 export function getEgyptMinutesNow(): number {
-  const egyptNow = getEgyptNow();
-  return egyptNow.getHours() * 60 + egyptNow.getMinutes();
+  const { hour, minute } = getEgyptTimeParts();
+  return hour * 60 + minute;
 }
 
 export function getMonthString(date = new Date()): string {

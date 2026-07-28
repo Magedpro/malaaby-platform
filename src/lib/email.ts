@@ -23,7 +23,7 @@ async function sendViaGmail(params: SendEmailParams): Promise<boolean> {
     });
 
     const info = await transporter.sendMail({
-      from: `"منصة ملعبي 🏟️" <${user}>`,
+      from: `"منصة ملعبي" <${user}>`,
       to: params.to,
       subject: params.subject,
       html: params.html,

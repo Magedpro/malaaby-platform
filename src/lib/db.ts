@@ -633,11 +633,22 @@ export const Bookings = {
 
   findByFieldAndDate: async (fieldId: string, date: string): Promise<Booking[]> => {
     if (supabase) {
-      return rows<Booking>(
-        await supabase.from('bookings').select('data')
-          .eq('field_id', fieldId).eq('date', date)
-          .in('status', ['confirmed', 'pending'])
-      );
+      const { data, error } = await supabase.from('bookings')
+        .select('id, field_id, stadium_slug, date, start_time, end_time, status, data')
+        .eq('field_id', fieldId).eq('date', date)
+        .in('status', ['confirmed', 'pending']);
+      
+      if (error) throw error;
+      return (data || []).map((row: any) => ({
+        ...row.data,
+        id: row.id || row.data?.id,
+        fieldId: row.field_id || row.data?.fieldId,
+        stadiumSlug: row.stadium_slug || row.data?.stadiumSlug,
+        date: row.date || row.data?.date,
+        startTime: row.start_time || row.data?.startTime,
+        endTime: row.end_time || row.data?.endTime,
+        status: row.status || row.data?.status || 'pending',
+      }));
     }
     return readDb().bookings.filter(
       (b: any) =>

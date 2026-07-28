@@ -19,6 +19,7 @@ interface Stadium {
   name: string; description: string; phone: string; whatsapp: string;
   city: string; address: string; logo?: string; coverImage?: string;
   vodafoneCash: string; instaPay: string; paymentInstructions: string;
+  googleMapsUrl?: string;
 }
 interface TimeSlot {
   startTime: string; endTime: string;

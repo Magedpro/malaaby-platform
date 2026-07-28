@@ -141,7 +141,7 @@ export const PricingSection: React.FC = () => {
               background: 'var(--bg-card)',
               border: '2px solid #10b981',
               borderRadius: 'var(--radius-xl)',
-              padding: '0',
+              padding: '0 0 1.5rem 0',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
@@ -154,51 +154,57 @@ export const PricingSection: React.FC = () => {
                 background: 'linear-gradient(135deg, #10b981, #059669)',
                 color: '#ffffff',
                 textAlign: 'center',
-                fontSize: '0.85rem',
+                fontSize: '0.8125rem',
                 fontWeight: 800,
-                whiteSpace: 'nowrap',
+                padding: '0.4rem 1rem',
+                letterSpacing: '0.02em',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
               }}>
                 🔥 الأكثر عدلاً وشعبية
               </div>
-              <div>
+
+              <div style={{ padding: '1.5rem 1.5rem 0 1.5rem' }}>
                 <div style={{
-                  fontSize: '2.5rem',
+                  fontSize: '2rem',
                   marginBottom: '1rem',
                   background: 'rgba(59, 130, 246, 0.1)',
-                  width: '60px',
-                  height: '60px',
+                  width: '56px',
+                  height: '56px',
                   borderRadius: 'var(--radius-lg)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}>⚡</div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.5rem' }}>نظام العمولة الثابتة</h3>
-                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '1.5rem' }}>
+                <h3 style={{ fontSize: '1.35rem', fontWeight: 800, marginBottom: '0.6rem', color: 'var(--text-main)' }}>نظام العمولة الثابتة</h3>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.65, marginBottom: '1.25rem' }}>
                   بعد انتهاء الشهر المجاني، يتم تحصيل عمولة رمزية ثابتة عن كل حجز يكتمل بنجاح.
                 </p>
-                <div style={{ fontSize: '2.25rem', fontWeight: 900, color: 'var(--primary-light)', marginBottom: '1.5rem' }}>
-                  {rate} ج.م <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)', fontWeight: 500 }}>/ لكل حجز مكتمل</span>
+                <div style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--primary-light)', marginBottom: '1.25rem', display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
+                  <span>{rate} ج.م</span>
+                  <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', fontWeight: 500 }}>/ لكل حجز مكتمل</span>
                 </div>
-                <ul className="pricing-features" style={{ listStyle: 'none', padding: 0, margin: '0 0 2rem 0', display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.875rem' }}>
-                  <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                    <span style={{ color: 'var(--primary-light)', fontWeight: 900 }}>✓</span> تدفع فقط عند تنفيذ وحضور الحجز
+                <ul className="pricing-features" style={{ listStyle: 'none', padding: 0, margin: '0 0 1.5rem 0', display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.875rem' }}>
+                  <li style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+                    <span style={{ color: 'var(--primary-light)', fontWeight: 900, fontSize: '1rem' }}>✓</span> تدفع فقط عند تنفيذ وحضور الحجز
                   </li>
-                  <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                    <span style={{ color: 'var(--primary-light)', fontWeight: 900 }}>✓</span> لا توجد عمولة على الحجوزات الملغاة
+                  <li style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+                    <span style={{ color: 'var(--primary-light)', fontWeight: 900, fontSize: '1rem' }}>✓</span> لا توجد عمولة على الحجوزات الملغاة
                   </li>
-                  <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                    <span style={{ color: 'var(--primary-light)', fontWeight: 900 }}>✓</span> بدون أي رسوم أو اشتراكات شهرية
+                  <li style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+                    <span style={{ color: 'var(--primary-light)', fontWeight: 900, fontSize: '1rem' }}>✓</span> بدون أي رسوم أو اشتراكات شهرية
                   </li>
-                  <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                    <span style={{ color: 'var(--primary-light)', fontWeight: 900 }}>✓</span> لوحة تقارير مالية وتنبيهات فورية
+                  <li style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+                    <span style={{ color: 'var(--primary-light)', fontWeight: 900, fontSize: '1rem' }}>✓</span> لوحة تقارير مالية وتنبيهات فورية
                   </li>
                 </ul>
               </div>
-              <Link href="/register" style={{ textDecoration: 'none' }}>
-                <Button variant="primary" fullWidth style={{ borderRadius: 'var(--radius-lg)', fontWeight: 800, padding: '0.875rem' }}>
-                  سجل ملعبك مجاناً الآن 🚀
-                </Button>
-              </Link>
+              <div style={{ padding: '0 1.5rem' }}>
+                <Link href="/register" style={{ textDecoration: 'none' }}>
+                  <Button variant="primary" fullWidth style={{ borderRadius: 'var(--radius-lg)', fontWeight: 800, padding: '0.875rem' }}>
+                    سجل ملعبك مجاناً الآن 🚀
+                  </Button>
+                </Link>
+              </div>
             </Card>
 
             {/* Card 3: Flexible Payment */}

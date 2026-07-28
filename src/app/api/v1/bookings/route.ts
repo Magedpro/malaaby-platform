@@ -224,7 +224,12 @@ export async function POST(request: NextRequest) {
     }
 
     // 5.6 Send Email notification (if enabled)
-    const recipientEmail = stadium.notificationEmail || stadium.email;
+    let recipientEmail = stadium.notificationEmail || stadium.email;
+    if (!recipientEmail && stadium.ownerId) {
+      const ownerUser = await Users.findById(stadium.ownerId);
+      if (ownerUser?.email) recipientEmail = ownerUser.email;
+    }
+
     if (prefs.email && recipientEmail) {
       const dashboardUrl = `${APP_URL}/dashboard/bookings`;
 

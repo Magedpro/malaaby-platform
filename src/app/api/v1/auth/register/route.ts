@@ -63,6 +63,7 @@ export async function POST(request: NextRequest) {
       slug: cleanSlug,
       ownerId: user.id,
       name: stadiumName.trim(),
+      email: cleanEmail,
       phone: phone.trim(),
       city: city.trim(),
       address: (address || '').trim(),

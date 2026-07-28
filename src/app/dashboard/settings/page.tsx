@@ -13,10 +13,7 @@ interface StadiumSettings {
   name: string; description: string; phone: string; whatsapp: string;
   email: string; city: string; address: string; googleMapsUrl: string;
   vodafoneCash: string; instaPay: string; paymentInstructions: string;
-  logo: string; coverImage: string; callmebotApiKey: string;
-  notificationEmail: string;
-  enableWhatsapp: boolean;
-  enableEmail: boolean;
+  logo: string; coverImage: string;
   enableBrowser: boolean;
 }
 
@@ -35,10 +32,7 @@ export default function SettingsPage() {
     name: '', description: '', phone: '', whatsapp: '',
     email: '', city: 'القاهرة', address: '', googleMapsUrl: '',
     vodafoneCash: '', instaPay: '', paymentInstructions: '',
-    logo: '', coverImage: '', callmebotApiKey: '',
-    notificationEmail: '',
-    enableWhatsapp: true,
-    enableEmail: true,
+    logo: '', coverImage: '',
     enableBrowser: true,
   });
 
@@ -360,177 +354,27 @@ export default function SettingsPage() {
       {/* Notifications Tab */}
       {activeTab === 'notifications' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }} className="animate-fadeIn">
-          <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-md)', padding: '1.25rem', fontSize: '0.875rem' }}>
-            <h4 style={{ fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>⚙️ تفضيلات استقبال تنبيهات الحجوزات الجديدة</h4>
-            <p style={{ color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-              عندما يقوم أي لاعب بإنشاء طلب حجز جديد، ستتلقى إشعاراً فورياً على القنوات المفعلة بالأسفل. يمكنك اختيار تفعيلها جميعاً أو الاكتفاء بواحدة.
-            </p>
-          </div>
-
-          {/* 1. WhatsApp Settings */}
-          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '1.25rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <div>
-                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#25D366' }}>💬 إشعارات الواتساب (CallMeBot)</h3>
-                <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>استقبال تفاصيل الحجز كرسالة نصية مباشرة على واتساب الخاص بك</p>
-              </div>
-              <label style={{ position: 'relative', display: 'inline-block', width: '48px', height: '24px', cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={form.enableWhatsapp}
-                  onChange={e => setForm({...form, enableWhatsapp: e.target.checked})}
-                  style={{ opacity: 0, width: 0, height: 0 }}
-                />
-                <span style={{
-                  position: 'absolute', inset: 0, borderRadius: '24px',
-                  backgroundColor: form.enableWhatsapp ? '#25D366' : 'var(--border-default)',
-                  transition: '0.3s'
-                }}>
-                  <span style={{
-                    position: 'absolute', content: '""', height: '18px', width: '18px',
-                    left: form.enableWhatsapp ? '26px' : '3px', bottom: '3px',
-                    backgroundColor: 'white', borderRadius: '50%', transition: '0.3s'
-                  }} />
-                </span>
-              </label>
+          {/* Email Auto-notification Info */}
+          <div style={{
+            background: 'rgba(34,197,94,0.07)',
+            border: '1px solid rgba(34,197,94,0.25)',
+            borderRadius: 'var(--radius-md)',
+            padding: '1rem 1.25rem',
+            display: 'flex',
+            gap: '0.75rem',
+            alignItems: 'flex-start',
+          }}>
+            <span style={{ fontSize: '1.5rem', lineHeight: 1 }}>📧</span>
+            <div>
+              <h4 style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'var(--primary-light)', marginBottom: '0.25rem' }}>إشعارات البريد الإلكتروني مفعلة تلقائياً ✅</h4>
+              <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                سيتلقى حسابك إشعاراً فورياً على البريد الإلكتروني <strong style={{ color: 'var(--text-secondary)' }}>{form.email}</strong> عند كل حجز جديد تلقائياً بدون أي إعداد.
+              </p>
             </div>
-            
-            {form.enableWhatsapp && (
-              <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }} className="animate-fadeIn">
-                <div style={{
-                  background: 'rgba(34, 197, 94, 0.05)',
-                  border: '1px solid rgba(34, 197, 94, 0.2)',
-                  borderRadius: 'var(--radius-md)',
-                  padding: '1rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.75rem'
-                }}>
-                  <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-main)', margin: 0 }}>
-                    ⚡ خطوات تفعيل البوت (مرة واحدة فقط):
-                  </p>
-                  
-                  <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                      <span>1. أرسل هذه الرسالة للبوت:</span>
-                      <span style={{
-                        background: 'var(--bg-elevated)',
-                        border: '1px solid var(--border-subtle)',
-                        borderRadius: '6px',
-                        padding: '0.25rem 0.6rem',
-                        fontFamily: 'monospace',
-                        color: 'var(--primary-light)',
-                        fontWeight: 600,
-                        direction: 'ltr',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.5rem'
-                      }}>
-                        I allow callmebot to send me messages
-                        <button
-                          type="button"
-                          onClick={() => {
-                            navigator.clipboard.writeText('I allow callmebot to send me messages');
-                            showToast('تم نسخ نص التفعيل 📋', 'success');
-                          }}
-                          style={{
-                            background: 'rgba(34,197,94,0.15)',
-                            border: 'none',
-                            borderRadius: '4px',
-                            color: 'var(--primary-light)',
-                            cursor: 'pointer',
-                            padding: '0.15rem 0.4rem',
-                            fontSize: '0.7rem',
-                            fontWeight: 700
-                          }}
-                        >
-                          نسخ 📋
-                        </button>
-                      </span>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                      <span>2. اضغط للتواصل مباشرة مع البوت عبر الواتساب:</span>
-                      <a
-                        href="https://wa.me/34644992698?text=I%20allow%20callmebot%20to%20send%20me%20messages"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn btn-sm"
-                        style={{
-                          background: '#25D366',
-                          color: '#fff',
-                          fontWeight: 700,
-                          borderRadius: '6px',
-                          padding: '0.3rem 0.75rem',
-                          textDecoration: 'none',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.35rem',
-                          fontSize: '0.8rem'
-                        }}
-                      >
-                        💬 فتح واتساب البوت (+34 644 99 26 98)
-                      </a>
-                    </div>
-
-                    <div>
-                      3. بعد إرسال الرسالة، سيرد عليك البوت بمفتاح <strong>API Key</strong>. قم بنسخه ولصقه أدناه:
-                    </div>
-                  </div>
-                </div>
-
-                <Input 
-                  label="مفتاح API لـ CallMeBot" 
-                  value={form.callmebotApiKey} 
-                  onChange={e => setForm({...form, callmebotApiKey: e.target.value})} 
-                  placeholder="أدخل الـ API Key المكون من 6 أرقام..." 
-                />
-              </div>
-            )}
           </div>
 
-          {/* 2. Email Settings */}
-          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '1.25rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <div>
-                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--primary-light)' }}>📧 إشعارات البريد الإلكتروني (Resend)</h3>
-                <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>تلقي بريد إلكتروني يحتوي على تفاصيل الحجز الجديد فوراً</p>
-              </div>
-              <label style={{ position: 'relative', display: 'inline-block', width: '48px', height: '24px', cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={form.enableEmail}
-                  onChange={e => setForm({...form, enableEmail: e.target.checked})}
-                  style={{ opacity: 0, width: 0, height: 0 }}
-                />
-                <span style={{
-                  position: 'absolute', inset: 0, borderRadius: '24px',
-                  backgroundColor: form.enableEmail ? 'var(--primary)' : 'var(--border-default)',
-                  transition: '0.3s'
-                }}>
-                  <span style={{
-                    position: 'absolute', content: '""', height: '18px', width: '18px',
-                    left: form.enableEmail ? '26px' : '3px', bottom: '3px',
-                    backgroundColor: 'white', borderRadius: '50%', transition: '0.3s'
-                  }} />
-                </span>
-              </label>
-            </div>
-            
-            {form.enableEmail && (
-              <div style={{ marginTop: '1rem' }} className="animate-fadeIn">
-                <Input 
-                  label="البريد الإلكتروني لاستقبال الإشعارات" 
-                  type="email"
-                  value={form.notificationEmail} 
-                  onChange={e => setForm({...form, notificationEmail: e.target.value})} 
-                  placeholder="example@mail.com" 
-                />
-              </div>
-            )}
-          </div>
 
-          {/* 3. Browser Push Settings */}
+          {/* Browser Push Settings */}
           <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '1.25rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <div>

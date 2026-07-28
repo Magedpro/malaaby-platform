@@ -4,11 +4,18 @@ import { Bookings, Notifications, Fields, ActivityLogs } from '@/lib/db';
 import { formatTime } from '@/lib/utils';
 
 /** Check if booking date & end time has already passed */
-function hasBookingTimePassed(dateStr: string, endTimeStr: string): boolean {
+function hasBookingTimePassed(dateStr: string, endTimeStr: string, startTimeStr?: string): boolean {
   try {
-    // Combine date (YYYY-MM-DD) and endTime (HH:MM)
-    const bookingDateTime = new Date(`${dateStr}T${endTimeStr}:00`);
-    return Date.now() > bookingDateTime.getTime();
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const [endH, endM] = endTimeStr.split(':').map(Number);
+    const [startH] = (startTimeStr || '00:00').split(':').map(Number);
+
+    // If endTime is 00:00 or less than startTime, it ends on the NEXT calendar day (overnight)
+    const isOvernight = endTimeStr === '00:00' || endH < startH;
+    
+    // Create target end Date
+    const targetDate = new Date(y, m - 1, isOvernight ? d + 1 : d, endH, endM, 0);
+    return Date.now() > targetDate.getTime();
   } catch {
     return false;
   }
@@ -35,7 +42,7 @@ export async function POST(
     }
 
     // Anti-Fraud Check: Prevent cancelling bookings whose time has already passed!
-    if (hasBookingTimePassed(booking.date, booking.endTime)) {
+    if (hasBookingTimePassed(booking.date, booking.endTime, booking.startTime)) {
       return NextResponse.json({
         success: false,
         error: '⚠️ لا يمكن إلغاء حجز انقضى موعده وزمنه بالفعل لمنع التلاعب بالعمولات. إذا كان هناك إلغاء طارئ، يرجى التواصل مع إدارة المنصة.',

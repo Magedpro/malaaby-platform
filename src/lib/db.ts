@@ -778,18 +778,18 @@ export async function generateTimeSlots(field: Field, date: string): Promise<Tim
     let status: TimeSlot['status'] = 'available';
     let bookingId: string | undefined;
 
-    // 1. If date is TODAY and the slot start time has already passed or started, mark as closed
-    if (isToday && currentMinutes <= nowMinutes) {
-      status = 'closed';
-    } else {
-      // 2. Check for conflicts with existing bookings
-      for (const b of existingBookings) {
-        if (startTime < b.endTime && endTime > b.startTime) {
-          status = b.status === 'confirmed' ? 'booked' : 'pending';
-          bookingId = b.id;
-          break;
-        }
+    // 1. Check for conflicts with existing active/pending bookings first
+    for (const b of existingBookings) {
+      if (startTime < b.endTime && endTime > b.startTime) {
+        status = b.status === 'confirmed' ? 'booked' : 'pending';
+        bookingId = b.id;
+        break;
       }
+    }
+
+    // 2. If date is TODAY and the slot start time has already passed, mark as closed if not already booked
+    if (status === 'available' && isToday && currentMinutes <= nowMinutes) {
+      status = 'closed';
     }
 
     slots.push({

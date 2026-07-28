@@ -332,8 +332,12 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: booking }, { status: 201 });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('POST bookings API error:', error);
-    return NextResponse.json({ success: false, error: 'حدث خطأ أثناء إتمام عملية الحجز' }, { status: 500 });
+    // Supabase unique constraint: slot already taken (race condition)
+    if (error?.code === '23505') {
+      return NextResponse.json({ success: false, error: 'عذراً، هذا الوقت تم حجزه للتو من شخص آخر! يرجى اختيار وقت آخر.' }, { status: 409 });
+    }
+    return NextResponse.json({ success: false, error: 'حدث خطأ أثناء إتمام عملية الحجز، يرجى المحاولة مجدداً' }, { status: 500 });
   }
 }

@@ -662,21 +662,17 @@ export const Bookings = {
   hasConflict: async (
     fieldId: string, date: string, startTime: string, endTime: string, excludeId?: string
   ): Promise<boolean> => {
-    // Convert new slot time to minutes from midnight
-    let startMin = timeToMinutes(startTime);
-    let endMin = timeToMinutes(endTime);
-    if (endMin <= startMin) endMin += 24 * 60; // Handle 00:00 midnight as 1440
-
     const existing = await Bookings.findByFieldAndDate(fieldId, date);
     for (const b of existing) {
       if (excludeId && b.id === excludeId) continue;
-
-      let bStartMin = timeToMinutes(b.startTime);
-      let bEndMin = timeToMinutes(b.endTime);
-      if (bEndMin <= bStartMin) bEndMin += 24 * 60; // Handle 00:00 midnight as 1440
-
-      // Check overlap in minutes
-      if (startMin < bEndMin && endMin > bStartMin) return true;
+      if (
+        (startTime >= b.startTime && startTime < b.endTime) ||
+        (endTime > b.startTime && endTime <= b.endTime) ||
+        (startTime <= b.startTime && endTime >= b.endTime) ||
+        (b.startTime === startTime)
+      ) {
+        return true;
+      }
     }
     return false;
   },
@@ -800,13 +796,14 @@ export async function generateTimeSlots(field: Field, date: string): Promise<Tim
     let status: TimeSlot['status'] = 'available';
     let bookingId: string | undefined;
 
-    // 1. Check for conflicts with existing active/pending bookings first using minutes
+    // 1. Check for conflicts with existing active/pending bookings matching startTime & endTime strings exactly
     for (const b of existingBookings) {
-      let bStartMin = timeToMinutes(b.startTime);
-      let bEndMin = timeToMinutes(b.endTime);
-      if (bEndMin <= bStartMin) bEndMin += 24 * 60; // Midnight 00:00 -> 1440
-
-      if (currentMinutes < bEndMin && endMinutes > bStartMin) {
+      if (
+        (startTime >= b.startTime && startTime < b.endTime) ||
+        (endTime > b.startTime && endTime <= b.endTime) ||
+        (startTime <= b.startTime && endTime >= b.endTime) ||
+        (b.startTime === startTime)
+      ) {
         status = b.status === 'confirmed' ? 'booked' : 'pending';
         bookingId = b.id;
         break;

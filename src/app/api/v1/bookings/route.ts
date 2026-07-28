@@ -290,11 +290,15 @@ export async function POST(request: NextRequest) {
           </p>
         </div>
       `;
-      sendEmail({
-        to: recipientEmail,
-        subject: `طلب حجز جديد ⚽ - ${booking.customerName} — ${fieldObj.name}`,
-        html: emailHtml
-      }).catch(err => console.error('[Email] Notification send failed:', err));
+      try {
+        await sendEmail({
+          to: recipientEmail,
+          subject: `طلب حجز جديد ⚽ - ${booking.customerName} — ${fieldObj.name}`,
+          html: emailHtml
+        });
+      } catch (err) {
+        console.error('[Email] Notification send failed:', err);
+      }
     }
 
     // 5.7 Send Browser Push notification (Always sent if subscriptions exist)

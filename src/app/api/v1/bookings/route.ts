@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
-import { Bookings, Fields, Notifications, Stadiums, ActivityLogs } from '@/lib/db';
+import { Bookings, Fields, Notifications, Stadiums, ActivityLogs, Users } from '@/lib/db';
 import { validateBooking } from '@/lib/validations';
 import { formatTime, getTodayString, getEgyptMinutesNow } from '@/lib/utils';
 import { sendEmail } from '@/lib/email';

@@ -66,10 +66,6 @@ export default function SettingsPage() {
           paymentInstructions: s.paymentInstructions || '',
           logo: s.logo || '',
           coverImage: s.coverImage || '',
-          callmebotApiKey: s.callmebotApiKey || '',
-          notificationEmail: s.notificationEmail || s.email || '',
-          enableWhatsapp: s.notificationPrefs?.whatsapp !== false,
-          enableEmail: s.notificationPrefs?.email !== false,
           enableBrowser: s.notificationPrefs?.browser !== false,
         });
       }
@@ -147,8 +143,8 @@ export default function SettingsPage() {
       const payload = {
         ...form,
         notificationPrefs: {
-          whatsapp: form.enableWhatsapp,
-          email: form.enableEmail,
+          whatsapp: false,
+          email: true,
           browser: form.enableBrowser,
         }
       };

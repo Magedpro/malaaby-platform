@@ -221,12 +221,16 @@ export async function POST(request: NextRequest) {
       const dashboardUrl = `${APP_URL}/dashboard/bookings`;
       const screenshotHtml = booking.paymentScreenshot
         ? `
-          <div style="margin-top: 20px; padding: 15px; background-color: #f0faf5; border: 1px solid #a8d5b8; border-radius: 8px;">
-            <p style="margin: 0 0 10px 0; font-weight: bold; color: #2b8259;">📎 إيصال التحويل المرفق من العميل:</p>
-            <a href="${booking.paymentScreenshot}" target="_blank" style="display: block;">
-              <img src="${booking.paymentScreenshot}" alt="إيصال التحويل" style="max-width: 100%; border-radius: 6px; border: 1px solid #ccc;" />
+          <div style="margin-top: 20px; padding: 15px; background-color: #f0faf5; border: 1px solid #a8d5b8; border-radius: 8px; text-align: center;">
+            <p style="margin: 0 0 12px 0; font-weight: bold; color: #2b8259; text-align: right;">📎 إيصال التحويل المرفق من العميل:</p>
+            <a href="${booking.paymentScreenshot}" target="_blank" style="display: inline-block; margin-bottom: 10px;">
+              <img src="${booking.paymentScreenshot}" alt="إيصال التحويل" style="max-width: 100%; max-height: 350px; border-radius: 8px; border: 1px solid #c8e6c9; box-shadow: 0 2px 8px rgba(0,0,0,0.08);" />
             </a>
-            <p style="margin: 8px 0 0 0; font-size: 12px; color: #666;">انقر على الصورة لعرضها بالحجم الكامل</p>
+            <div style="margin-top: 8px;">
+              <a href="${booking.paymentScreenshot}" target="_blank" style="display: inline-block; background-color: #2b8259; color: #ffffff; padding: 8px 18px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: bold;">
+                🔍 فتح صورة الإيصال بالحجم الكامل
+              </a>
+            </div>
           </div>`
         : `<p style="margin-top: 15px; color: #c0392b; font-weight: bold;">⚠️ لم يتم إرفاق إيصال تحويل مع هذا الطلب.</p>`;
 

@@ -280,12 +280,18 @@ export async function POST(request: NextRequest) {
         </div>
       `;
       
-      // Execute email asynchronously without throwing to client
-      sendEmail({
-        to: recipientEmail,
-        subject: `طلب حجز جديد ⚽ - ${booking.customerName} — ${fieldObj.name}`,
-        html: emailHtml
-      }).catch(err => console.error('[Email] Notification send failed silently:', err));
+      // Execute email & push notification promises together
+      try {
+        await Promise.allSettled([
+          sendEmail({
+            to: recipientEmail,
+            subject: `طلب حجز جديد ⚽ - ${booking.customerName} — ${fieldObj.name}`,
+            html: emailHtml
+          })
+        ]);
+      } catch (emailErr) {
+        console.error('[Email] Silent error during background dispatch:', emailErr);
+      }
     }
 
     // 5.7 Send Browser Push notification safely

@@ -651,12 +651,29 @@ export const Bookings = {
   hasConflict: async (
     fieldId: string, date: string, startTime: string, endTime: string, excludeId?: string
   ): Promise<boolean> => {
-    const existing = await Bookings.findByFieldAndDate(fieldId, date);
-    for (const b of existing) {
-      if (excludeId && b.id === excludeId) continue;
-      if (startTime < b.endTime && endTime > b.startTime) return true;
+    if (supabase) {
+      // Query Supabase directly using indexed columns for 100% accuracy
+      let q = supabase.from('bookings').select('id, start_time, end_time', { count: 'exact' })
+        .eq('field_id', fieldId)
+        .eq('date', date)
+        .in('status', ['confirmed', 'pending'])
+        .lt('start_time', endTime)   // existing.start < new.end
+        .gt('end_time', startTime);  // existing.end > new.start
+      if (excludeId) q = q.neq('id', excludeId);
+      const { count, error } = await q;
+      if (error) throw error;
+      return (count ?? 0) > 0;
     }
-    return false;
+    const existing = readDb().bookings.filter(
+      (b: any) =>
+        b.fieldId === fieldId &&
+        b.date === date &&
+        (b.status === 'confirmed' || b.status === 'pending') &&
+        (!excludeId || b.id !== excludeId) &&
+        b.startTime < endTime &&
+        b.endTime > startTime
+    );
+    return existing.length > 0;
   },
 
   /** Count pending bookings for a phone number in a stadium on a given day */

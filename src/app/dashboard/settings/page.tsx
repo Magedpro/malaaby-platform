@@ -84,53 +84,62 @@ export default function SettingsPage() {
     return outputArray;
   };
 
-  const subscribeToPush = async () => {
+  const togglePushSubscription = async () => {
     if (!pushSupported) return;
     setSubscribingPush(true);
     try {
-      // 1. Request permission
-      const permission = await Notification.requestPermission();
-      if (permission !== 'granted') {
-        showToast('يرجى السماح بالإشعارات في المتصفح لتفعيل هذه الميزة 🔔', 'error');
-        setSubscribingPush(false);
-        return;
-      }
-
-      // 2. Register Service Worker if not registered
-      let reg = await navigator.serviceWorker.getRegistration();
-      if (!reg) {
-        reg = await navigator.serviceWorker.register('/sw.js');
-      }
-
-      // 3. Fetch VAPID public key
-      const keyRes = await fetch('/api/v1/push/vapid-key');
-      const keyJson = await keyRes.json();
-      if (!keyJson.success || !keyJson.publicKey) {
-        throw new Error('Failed to get public VAPID key');
-      }
-
-      // 4. Subscribe
-      const subscription = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(keyJson.publicKey)
-      });
-
-      // 5. Send subscription to API
-      const subRes = await fetch('/api/v1/push/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subscription })
-      });
-      const subJson = await subRes.json();
-      if (subJson.success) {
-        setIsPushSubscribed(true);
-        showToast('تم تفعيل إشعارات المتصفح لهذا الجهاز بنجاح! 🔔', 'success');
+      if (isPushSubscribed) {
+        // Unsubscribe
+        const reg = await navigator.serviceWorker.getRegistration();
+        if (reg) {
+          const sub = await reg.pushManager.getSubscription();
+          if (sub) {
+            await sub.unsubscribe();
+          }
+        }
+        setIsPushSubscribed(false);
+        showToast('تم إلغاء تفعيل إشعارات المتصفح لهذا الجهاز 🔕', 'warning');
       } else {
-        showToast(subJson.error || 'فشل تفعيل الإشعار المباشر', 'error');
+        // Subscribe
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+          showToast('يرجى السماح بالإشعارات في المتصفح لتفعيل هذه الميزة 🔔', 'error');
+          setSubscribingPush(false);
+          return;
+        }
+
+        let reg = await navigator.serviceWorker.getRegistration();
+        if (!reg) {
+          reg = await navigator.serviceWorker.register('/sw.js');
+        }
+
+        const keyRes = await fetch('/api/v1/push/vapid-key');
+        const keyJson = await keyRes.json();
+        if (!keyJson.success || !keyJson.publicKey) {
+          throw new Error('Failed to get public VAPID key');
+        }
+
+        const subscription = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(keyJson.publicKey)
+        });
+
+        const subRes = await fetch('/api/v1/push/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ subscription })
+        });
+        const subJson = await subRes.json();
+        if (subJson.success) {
+          setIsPushSubscribed(true);
+          showToast('تم تفعيل إشعارات المتصفح لهذا الجهاز بنجاح! 🔔', 'success');
+        } else {
+          showToast(subJson.error || 'فشل تفعيل الإشعار المباشر', 'error');
+        }
       }
     } catch (err) {
       console.error(err);
-      showToast('حدث خطأ أثناء تفعيل إشعارات المتصفح', 'error');
+      showToast('حدث خطأ أثناء تغيير حالة إشعارات المتصفح', 'error');
     } finally {
       setSubscribingPush(false);
     }
@@ -404,16 +413,15 @@ export default function SettingsPage() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <Button 
                       type="button" 
-                      variant={isPushSubscribed ? 'secondary' : 'primary'}
-                      onClick={subscribeToPush}
+                      variant={isPushSubscribed ? 'danger' : 'primary'}
+                      onClick={togglePushSubscription}
                       isLoading={subscribingPush}
-                      disabled={isPushSubscribed}
                     >
-                      {isPushSubscribed ? '✅ تم تفعيل إشعارات المتصفح' : '🔔 تفعيل استقبال إشعارات هذا الجهاز'}
+                      {isPushSubscribed ? '🔕 إلغاء تفعيل الإشعارات لهذا الجهاز' : '🔔 تفعيل استقبال إشعارات هذا الجهاز'}
                     </Button>
                     <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
                       {isPushSubscribed 
-                        ? 'جهازك مسجل حالياً لاستلام إشعارات فورية.' 
+                        ? 'جهازك مسجل حالياً. اضغط لإلغاء التفعيل في أي وقت.' 
                         : 'انقر لتفعيل التنبيهات المباشرة على هذا المتصفح.'}
                     </p>
                   </div>

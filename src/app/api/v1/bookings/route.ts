@@ -223,17 +223,19 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 5.6 Send Email notification (Always sent to recipientEmail)
+    // 5.6 Send Email notification safely in background
     let recipientEmail = stadium.notificationEmail || stadium.email;
     if (!recipientEmail && stadium.ownerId) {
-      const ownerUser = await Users.findById(stadium.ownerId);
-      if (ownerUser?.email) recipientEmail = ownerUser.email;
+      try {
+        const ownerUser = await Users.findById(stadium.ownerId);
+        if (ownerUser?.email) recipientEmail = ownerUser.email;
+      } catch (e) {
+        console.error('[Email] Failed to fetch owner email:', e);
+      }
     }
 
     if (recipientEmail) {
       const dashboardUrl = `${APP_URL}/dashboard/bookings`;
-
-      // Build payment screenshot section (only if a screenshot was uploaded)
       const screenshotHtml = booking.paymentScreenshot
         ? `
           <div style="margin-top: 20px; padding: 15px; background-color: #f0faf5; border: 1px solid #a8d5b8; border-radius: 8px;">
@@ -290,18 +292,16 @@ export async function POST(request: NextRequest) {
           </p>
         </div>
       `;
-      try {
-        await sendEmail({
-          to: recipientEmail,
-          subject: `طلب حجز جديد ⚽ - ${booking.customerName} — ${fieldObj.name}`,
-          html: emailHtml
-        });
-      } catch (err) {
-        console.error('[Email] Notification send failed:', err);
-      }
+      
+      // Execute email asynchronously without throwing to client
+      sendEmail({
+        to: recipientEmail,
+        subject: `طلب حجز جديد ⚽ - ${booking.customerName} — ${fieldObj.name}`,
+        html: emailHtml
+      }).catch(err => console.error('[Email] Notification send failed silently:', err));
     }
 
-    // 5.7 Send Browser Push notification (Always sent if subscriptions exist)
+    // 5.7 Send Browser Push notification safely
     if (stadium.pushSubscriptions && stadium.pushSubscriptions.length > 0) {
       const payload = JSON.stringify({
         title: 'طلب حجز جديد ⚽',
@@ -309,22 +309,10 @@ export async function POST(request: NextRequest) {
         url: `${APP_URL}/dashboard/bookings`
       });
       
-      const expiredSubscriptions: string[] = [];
       const subs = stadium.pushSubscriptions || [];
-      const pushPromises = subs.map(async (sub: any) => {
-        const result = await sendPushNotification(sub, payload);
-        if (result.expired) {
-          expiredSubscriptions.push(sub.endpoint);
-        }
+      subs.forEach((sub: any) => {
+        sendPushNotification(sub, payload).catch(err => console.error('[Push] Silent error:', err));
       });
-      
-      Promise.all(pushPromises).then(async () => {
-        if (expiredSubscriptions.length > 0) {
-          console.log(`[Push] Cleaning up ${expiredSubscriptions.length} expired subscriptions...`);
-          const activeSubs = subs.filter((s: any) => !expiredSubscriptions.includes(s.endpoint));
-          await Stadiums.update(slug, { pushSubscriptions: activeSubs });
-        }
-      }).catch(err => console.error('[Push] Browser notifications broadcast error:', err));
     }
 
     // 6. Log activity

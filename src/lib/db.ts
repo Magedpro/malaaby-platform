@@ -635,26 +635,28 @@ export const Bookings = {
     if (supabase) {
       const { data, error } = await supabase.from('bookings')
         .select('id, field_id, stadium_slug, date, start_time, end_time, status, data')
-        .eq('field_id', fieldId).eq('date', date)
-        .in('status', ['confirmed', 'pending']);
+        .eq('field_id', fieldId).eq('date', date);
       
       if (error) throw error;
-      return (data || []).map((row: any) => ({
-        ...row.data,
-        id: row.id || row.data?.id,
-        fieldId: row.field_id || row.data?.fieldId,
-        stadiumSlug: row.stadium_slug || row.data?.stadiumSlug,
-        date: row.date || row.data?.date,
-        startTime: row.start_time || row.data?.startTime,
-        endTime: row.end_time || row.data?.endTime,
-        status: row.status || row.data?.status || 'pending',
-      }));
+      return (data || [])
+        .map((row: any) => ({
+          ...row.data,
+          id: row.id || row.data?.id,
+          fieldId: row.field_id || row.data?.fieldId,
+          stadiumSlug: row.stadium_slug || row.data?.stadiumSlug,
+          date: row.date || row.data?.date,
+          startTime: row.start_time || row.data?.startTime,
+          endTime: row.end_time || row.data?.endTime,
+          status: row.status || row.data?.status || 'pending',
+        }))
+        .filter((b: any) => b.status !== 'cancelled' && b.status !== 'rejected');
     }
     return readDb().bookings.filter(
       (b: any) =>
         b.fieldId === fieldId &&
         b.date === date &&
-        (b.status === 'confirmed' || b.status === 'pending')
+        b.status !== 'cancelled' &&
+        b.status !== 'rejected'
     );
   },
 

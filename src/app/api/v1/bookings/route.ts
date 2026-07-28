@@ -100,15 +100,6 @@ export async function POST(request: NextRequest) {
     if (date < todayStr) {
       return NextResponse.json({ success: false, error: 'لا يمكن الحجز في تاريخ سابق' }, { status: 400 });
     }
-    if (date === todayStr) {
-      const [startH, startM] = startTime.split(':').map(Number);
-      const slotStartMinutes = startH * 60 + startM;
-      const currentMinutesNow = getEgyptMinutesNow();
-      // Only block if slot is strictly in the past by more than 15 mins buffer
-      if (slotStartMinutes < currentMinutesNow - 15) {
-        return NextResponse.json({ success: false, error: 'عذراً، هذا الموعد انقضى بالفعل ولا يمكن حجزه!' }, { status: 400 });
-      }
-    }
 
 
 

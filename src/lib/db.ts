@@ -339,7 +339,7 @@ function defaultDb() {
   };
 }
 
-function readDb() {
+export function readDb() {
   ensureDb();
   if (memoryDbCache) return memoryDbCache;
   // Note: On Vercel/production, Supabase handles all data (see exported CRUD objects below).
@@ -349,7 +349,7 @@ function readDb() {
   return memoryDbCache;
 }
 
-function writeDb(db: any) {
+export function writeDb(db: any) {
   ensureDb();
   memoryDbCache = db;
   // Note: On Vercel/production, Supabase handles all data writes (see exported CRUD objects below).

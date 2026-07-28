@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
-import { Users, Stadiums, ActivityLogs } from '@/lib/db';
+import { Users, Stadiums, ActivityLogs, readDb, writeDb } from '@/lib/db';
+import { supabase } from '@/lib/supabase';
 import { hashPassword } from '@/lib/auth';
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -124,10 +125,30 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     if (!user) return NextResponse.json({ success: false, error: 'المستخدم غير موجود' }, { status: 404 });
     if (user.role === 'super_admin') return NextResponse.json({ success: false, error: 'لا يمكن حذف حساب المشرف الرئيسي' }, { status: 403 });
 
+    const slug = user.stadiumSlug;
+
+    // 1. Delete user account
     await Users.delete(id);
-    if (user.stadiumSlug) await Stadiums.delete(user.stadiumSlug);
+
+    // 2. Cascade delete stadium & all related data (fields, bookings, notifications)
+    if (slug) {
+      await Stadiums.delete(slug);
+
+      if (supabase) {
+        await supabase.from('fields').delete().eq('stadium_slug', slug);
+        await supabase.from('bookings').delete().eq('stadium_slug', slug);
+        await supabase.from('notifications').delete().eq('stadium_slug', slug);
+      } else {
+        const db = readDb();
+        db.fields = db.fields.filter((f: any) => f.stadiumSlug !== slug);
+        db.bookings = db.bookings.filter((b: any) => b.stadiumSlug !== slug);
+        db.notifications = db.notifications.filter((n: any) => n.stadiumSlug !== slug);
+        writeDb(db);
+      }
+    }
+
     ActivityLogs.log({ action: 'admin_delete_owner', performedBy: session.userId, performedByName: session.name, targetId: id, targetType: 'user' });
-    return NextResponse.json({ success: true, message: 'تم حذف الحساب والملعب' });
+    return NextResponse.json({ success: true, message: 'تم حذف الحساب والملعب وجميع بياناته بنجاح' });
   } catch (e) {
     return NextResponse.json({ success: false, error: 'خطأ في حذف الحساب' }, { status: 500 });
   }

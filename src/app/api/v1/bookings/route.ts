@@ -223,14 +223,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 5.6 Send Email notification (if enabled)
+    // 5.6 Send Email notification (Always sent to recipientEmail)
     let recipientEmail = stadium.notificationEmail || stadium.email;
     if (!recipientEmail && stadium.ownerId) {
       const ownerUser = await Users.findById(stadium.ownerId);
       if (ownerUser?.email) recipientEmail = ownerUser.email;
     }
 
-    if (prefs.email && recipientEmail) {
+    if (recipientEmail) {
       const dashboardUrl = `${APP_URL}/dashboard/bookings`;
 
       // Build payment screenshot section (only if a screenshot was uploaded)
@@ -297,8 +297,8 @@ export async function POST(request: NextRequest) {
       }).catch(err => console.error('[Email] Notification send failed:', err));
     }
 
-    // 5.7 Send Browser Push notification (if enabled)
-    if (prefs.browser && stadium.pushSubscriptions && stadium.pushSubscriptions.length > 0) {
+    // 5.7 Send Browser Push notification (Always sent if subscriptions exist)
+    if (stadium.pushSubscriptions && stadium.pushSubscriptions.length > 0) {
       const payload = JSON.stringify({
         title: 'طلب حجز جديد ⚽',
         body: `قام ${booking.customerName} بحجز ${fieldObj.name} يوم ${booking.date} الساعة ${formatTime(booking.startTime)}`,

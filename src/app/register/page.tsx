@@ -36,8 +36,8 @@ function RegisterForm() {
     slug: '',
     city: 'القاهرة',
     address: '',
-    logo: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=100&h=100&fit=crop',
-    coverImage: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=1200&h=400&fit=crop',
+    logo: '',
+    coverImage: '',
     vodafoneCash: '',
     instaPay: '',
     acceptTerms: false,
@@ -407,13 +407,22 @@ function RegisterForm() {
                 أدخل وسيلة دفع واحدة على الأقل ليستلم العملاء أرقام تحويلك
               </h4>
               
-              <Input
-                label="رقم محفظة فودافون كاش"
-                placeholder="01012345678"
-                value={formData.vodafoneCash}
-                onChange={(e) => setFormData({ ...formData, vodafoneCash: e.target.value })}
-                error={errors.vodafoneCash}
-              />
+              <div style={{ position: 'relative' }}>
+                <Input
+                  label="رقم محفظة فودافون كاش"
+                  placeholder="01012345678"
+                  value={formData.vodafoneCash}
+                  onChange={(e) => setFormData({ ...formData, vodafoneCash: e.target.value })}
+                  error={errors.vodafoneCash}
+                />
+                <span style={{
+                  position: 'absolute', top: '0', left: '0',
+                  background: 'rgba(34,197,94,0.15)', color: 'var(--primary-light)',
+                  fontSize: '0.65rem', fontWeight: 700, padding: '0.15rem 0.45rem',
+                  borderRadius: '4px', border: '1px solid rgba(34,197,94,0.3)',
+                  letterSpacing: '0.02em',
+                }}>مطلوب واحد على الأقل</span>
+              </div>
               
               <Input
                 label="عنوان الدفع إنستا باي"
@@ -434,39 +443,52 @@ function RegisterForm() {
                       justifyContent: 'center',
                       gap: '0.5rem',
                       width: '100%',
-                      height: '110px',
+                      height: '120px',
                       borderRadius: 'var(--radius-md)',
-                      border: formData.logo ? '2px solid var(--primary)' : '2px dashed var(--border-default)',
-                      background: 'var(--bg-elevated)',
+                      border: formData.logo ? '2px solid var(--primary)' : '2px dashed rgba(255,255,255,0.15)',
+                      background: formData.logo ? 'transparent' : 'linear-gradient(135deg, rgba(34,197,94,0.04) 0%, rgba(34,197,94,0.01) 100%)',
                       cursor: uploadingLogo ? 'not-allowed' : 'pointer',
                       overflow: 'hidden',
                       position: 'relative',
-                      transition: 'border-color 0.2s, box-shadow 0.2s',
+                      transition: 'all 0.25s ease',
                     }}
+                    className="upload-dropzone"
                   >
                     {uploadingLogo ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem' }}>
-                        <div className="btn-spinner" style={{ width: '24px', height: '24px' }} />
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>جاري الرفع...</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                        <div className="btn-spinner" style={{ width: '28px', height: '28px', borderColor: 'rgba(34,197,94,0.3)', borderTopColor: 'var(--primary)' }} />
+                        <span style={{ fontSize: '0.75rem', color: 'var(--primary-light)', fontWeight: 600 }}>جاري الرفع...</span>
                       </div>
                     ) : formData.logo ? (
                       <>
                         <img src={formData.logo} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }} />
                         <div style={{
-                          position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)',
+                          position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)',
                           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                           opacity: 0, transition: 'opacity 0.2s',
-                          color: 'white', fontSize: '0.75rem', gap: '0.25rem',
+                          color: 'white', fontSize: '0.75rem', gap: '0.35rem',
                         }} className="upload-overlay">
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                          تغيير الصورة
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                          <span style={{ fontWeight: 600 }}>تغيير الصورة</span>
                         </div>
                       </>
                     ) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem', color: 'var(--text-muted)' }}>
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>رفع الشعار</span>
-                        <span style={{ fontSize: '0.65rem' }}>مربع • PNG/JPG</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                        <div style={{
+                          width: '44px', height: '44px',
+                          background: 'linear-gradient(135deg, rgba(34,197,94,0.2), rgba(34,197,94,0.08))',
+                          borderRadius: '12px',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          border: '1px solid rgba(34,197,94,0.25)',
+                        }}>
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary-light)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="16 16 12 12 8 16"/>
+                            <line x1="12" y1="12" x2="12" y2="21"/>
+                            <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+                          </svg>
+                        </div>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)' }}>اضغط لرفع الشعار</span>
+                        <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>PNG / JPG • مربع</span>
                       </div>
                     )}
                     <input type="file" accept="image/*" style={{ display: 'none' }} disabled={uploadingLogo} onChange={(e) => handleUploadFile(e, 'logo')} />
@@ -484,39 +506,52 @@ function RegisterForm() {
                       justifyContent: 'center',
                       gap: '0.5rem',
                       width: '100%',
-                      height: '110px',
+                      height: '120px',
                       borderRadius: 'var(--radius-md)',
-                      border: formData.coverImage ? '2px solid var(--primary)' : '2px dashed var(--border-default)',
-                      background: 'var(--bg-elevated)',
+                      border: formData.coverImage ? '2px solid var(--primary)' : '2px dashed rgba(255,255,255,0.15)',
+                      background: formData.coverImage ? 'transparent' : 'linear-gradient(135deg, rgba(34,197,94,0.04) 0%, rgba(34,197,94,0.01) 100%)',
                       cursor: uploadingCover ? 'not-allowed' : 'pointer',
                       overflow: 'hidden',
                       position: 'relative',
-                      transition: 'border-color 0.2s, box-shadow 0.2s',
+                      transition: 'all 0.25s ease',
                     }}
+                    className="upload-dropzone"
                   >
                     {uploadingCover ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem' }}>
-                        <div className="btn-spinner" style={{ width: '24px', height: '24px' }} />
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>جاري الرفع...</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                        <div className="btn-spinner" style={{ width: '28px', height: '28px', borderColor: 'rgba(34,197,94,0.3)', borderTopColor: 'var(--primary)' }} />
+                        <span style={{ fontSize: '0.75rem', color: 'var(--primary-light)', fontWeight: 600 }}>جاري الرفع...</span>
                       </div>
                     ) : formData.coverImage ? (
                       <>
                         <img src={formData.coverImage} alt="Cover" style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }} />
                         <div style={{
-                          position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)',
+                          position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)',
                           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                           opacity: 0, transition: 'opacity 0.2s',
-                          color: 'white', fontSize: '0.75rem', gap: '0.25rem',
+                          color: 'white', fontSize: '0.75rem', gap: '0.35rem',
                         }} className="upload-overlay">
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                          تغيير الصورة
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                          <span style={{ fontWeight: 600 }}>تغيير الصورة</span>
                         </div>
                       </>
                     ) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem', color: 'var(--text-muted)' }}>
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>رفع الغلاف</span>
-                        <span style={{ fontSize: '0.65rem' }}>عريض • PNG/JPG</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                        <div style={{
+                          width: '44px', height: '44px',
+                          background: 'linear-gradient(135deg, rgba(34,197,94,0.2), rgba(34,197,94,0.08))',
+                          borderRadius: '12px',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          border: '1px solid rgba(34,197,94,0.25)',
+                        }}>
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary-light)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="16 16 12 12 8 16"/>
+                            <line x1="12" y1="12" x2="12" y2="21"/>
+                            <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+                          </svg>
+                        </div>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)' }}>اضغط لرفع الغلاف</span>
+                        <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>PNG / JPG • عريض</span>
                       </div>
                     )}
                     <input type="file" accept="image/*" style={{ display: 'none' }} disabled={uploadingCover} onChange={(e) => handleUploadFile(e, 'coverImage')} />

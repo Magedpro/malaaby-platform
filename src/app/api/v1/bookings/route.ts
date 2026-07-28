@@ -104,18 +104,19 @@ export async function POST(request: NextRequest) {
       const [startH, startM] = startTime.split(':').map(Number);
       const slotStartMinutes = startH * 60 + startM;
       const currentMinutesNow = getEgyptMinutesNow();
-      if (slotStartMinutes <= currentMinutesNow) {
+      // Only block if slot is strictly in the past by more than 15 mins buffer
+      if (slotStartMinutes < currentMinutesNow - 15) {
         return NextResponse.json({ success: false, error: 'عذراً، هذا الموعد انقضى بالفعل ولا يمكن حجزه!' }, { status: 400 });
       }
     }
 
-    // 2.5 Anti-Spam: Limit pending bookings per phone per day (max 3) — skip for owner dashboard actions
+    // 2.5 Anti-Spam: Limit pending bookings per phone per day (max 10) — skip for owner dashboard actions
     if (!isOwner) {
       const pendingCount = await Bookings.countPendingByPhoneAndDate(slug, customerPhone.trim(), date);
-      if (pendingCount >= 3) {
+      if (pendingCount >= 10) {
         return NextResponse.json({
           success: false,
-          error: 'لقد وصلت للحد الأقصى (3 حجوزات معلقة) لهذا اليوم. يرجى انتظار الموافقة على طلباتك السابقة أو التواصل مع الملعب مباشرة.'
+          error: 'لقد وصلت للحد الأقصى (10 حجوزات معلقة) لهذا اليوم. يرجى انتظار الموافقة على طلباتك السابقة.'
         }, { status: 429 });
       }
     }

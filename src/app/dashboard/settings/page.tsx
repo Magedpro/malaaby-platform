@@ -397,13 +397,88 @@ export default function SettingsPage() {
             
             {form.enableWhatsapp && (
               <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }} className="animate-fadeIn">
-                <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
-                  لتلقي الرسالة، يجب تفعيل البوت أولاً:
-                  <br />
-                  1. أرسل <code>I allow callmebot to send me messages</code> للرقم <strong>+34 644 99 26 98</strong> في واتساب.
-                  <br />
-                  2. الصق مفتاح الـ API المرسل لك أدناه.
-                </p>
+                <div style={{
+                  background: 'rgba(34, 197, 94, 0.05)',
+                  border: '1px solid rgba(34, 197, 94, 0.2)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '1rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.75rem'
+                }}>
+                  <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-main)', margin: 0 }}>
+                    ⚡ خطوات تفعيل البوت (مرة واحدة فقط):
+                  </p>
+                  
+                  <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <span>1. أرسل هذه الرسالة للبوت:</span>
+                      <span style={{
+                        background: 'var(--bg-elevated)',
+                        border: '1px solid var(--border-subtle)',
+                        borderRadius: '6px',
+                        padding: '0.25rem 0.6rem',
+                        fontFamily: 'monospace',
+                        color: 'var(--primary-light)',
+                        fontWeight: 600,
+                        direction: 'ltr',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.5rem'
+                      }}>
+                        I allow callmebot to send me messages
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText('I allow callmebot to send me messages');
+                            showToast('تم نسخ نص التفعيل 📋', 'success');
+                          }}
+                          style={{
+                            background: 'rgba(34,197,94,0.15)',
+                            border: 'none',
+                            borderRadius: '4px',
+                            color: 'var(--primary-light)',
+                            cursor: 'pointer',
+                            padding: '0.15rem 0.4rem',
+                            fontSize: '0.7rem',
+                            fontWeight: 700
+                          }}
+                        >
+                          نسخ 📋
+                        </button>
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <span>2. اضغط للتواصل مباشرة مع البوت عبر الواتساب:</span>
+                      <a
+                        href="https://wa.me/34644992698?text=I%20allow%20callmebot%20to%20send%20me%20messages"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-sm"
+                        style={{
+                          background: '#25D366',
+                          color: '#fff',
+                          fontWeight: 700,
+                          borderRadius: '6px',
+                          padding: '0.3rem 0.75rem',
+                          textDecoration: 'none',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          fontSize: '0.8rem'
+                        }}
+                      >
+                        💬 فتح واتساب البوت (+34 644 99 26 98)
+                      </a>
+                    </div>
+
+                    <div>
+                      3. بعد إرسال الرسالة، سيرد عليك البوت بمفتاح <strong>API Key</strong>. قم بنسخه ولصقه أدناه:
+                    </div>
+                  </div>
+                </div>
+
                 <Input 
                   label="مفتاح API لـ CallMeBot" 
                   value={form.callmebotApiKey} 

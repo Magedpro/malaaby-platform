@@ -167,6 +167,10 @@ export default function PublicBookingPage() {
         showToast('تم إرسال طلب حجزك بنجاح! ⚽', 'success');
         setCustomerName(''); setCustomerPhone(''); setCustomerEmail(''); setNotes('');
         setPaymentFile(null); setPaymentPreview('');
+        if (typeof window !== 'undefined') {
+          const fileInput = document.getElementById('receipt-upload-input') as HTMLInputElement;
+          if (fileInput) fileInput.value = '';
+        }
         loadSlots();
       } else {
         showToast(json.error || 'فشل إرسال طلب الحجز', 'error');

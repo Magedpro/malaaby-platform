@@ -317,6 +317,11 @@ input, textarea, select {
   animation: spin 0.8s linear infinite;
 }
 
+/* ── Upload Area Hover Overlay ───────────────────────────────── */
+label:hover .upload-overlay {
+  opacity: 1 !important;
+}
+
 /* ── Card System ─────────────────────────────────────────────── */
 
 .card {

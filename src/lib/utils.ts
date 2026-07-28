@@ -196,12 +196,34 @@ export function isValidSlug(slug: string): boolean {
 }
 
 export function slugify(text: string): string {
-  return text
+  if (!text) return '';
+
+  // Arabic transliterated mapping for clean URLs
+  const arabicMap: Record<string, string> = {
+    'أ': 'a', 'إ': 'e', 'آ': 'a', 'ا': 'a', 'ب': 'b', 'ت': 't', 'ث': 'th',
+    'ج': 'g', 'ح': 'h', 'خ': 'kh', 'د': 'd', 'ذ': 'th', 'ر': 'r', 'ز': 'z',
+    'س': 's', 'ش': 'sh', 'ص': 's', 'ض': 'd', 'ط': 't', 'ظ': 'z', 'ع': 'a',
+    'غ': 'gh', 'ف': 'f', 'ق': 'q', 'ك': 'k', 'ل': 'l', 'م': 'm', 'ن': 'n',
+    'ه': 'h', 'و': 'w', 'ي': 'y', 'ى': 'a', 'ئ': 'e', 'ء': 'a', 'ؤ': 'o',
+    'ة': 'ah', ' ': '-',
+  };
+
+  const translated = text
     .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
+    .split('')
+    .map(ch => arabicMap[ch] || ch)
+    .join('');
+
+  let clean = translated
+    .replace(/[^a-z0-9-]/g, '')
     .replace(/-+/g, '-')
-    .trim();
+    .replace(/^-|-$/g, '');
+
+  if (!clean || clean === '-') {
+    clean = 'stadium';
+  }
+
+  return clean;
 }
 
 export function truncate(str: string, length = 60): string {

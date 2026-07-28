@@ -50,14 +50,18 @@ function RegisterForm() {
     fieldCoverImage: '', // Will be set by upload
   });
 
-  // Automatically suggest slug and fieldName based on stadium name
+  // Automatically suggest slug based on stadium name
   useEffect(() => {
-    if (formData.stadiumName) {
-      setFormData((prev) => ({
-        ...prev,
-        slug: step === 2 ? slugify(prev.stadiumName) : prev.slug,
-        fieldName: prev.fieldName && prev.fieldName !== prev.stadiumName ? prev.fieldName : prev.stadiumName,
-      }));
+    if (formData.stadiumName && step === 2) {
+      const generated = slugify(formData.stadiumName);
+      // Only update if result is not empty or just a dash
+      if (generated && generated !== '-') {
+        setFormData((prev) => ({
+          ...prev,
+          slug: generated,
+          fieldName: prev.stadiumName,
+        }));
+      }
     }
   }, [formData.stadiumName, step]);
 
@@ -103,7 +107,6 @@ function RegisterForm() {
     }
 
     if (step === 4) {
-      if (!formData.fieldName.trim()) newErrors.fieldName = 'اسم الملعب مطلوب';
       if (!formData.fieldPricePerHour || isNaN(Number(formData.fieldPricePerHour)) || Number(formData.fieldPricePerHour) <= 0) {
         newErrors.fieldPricePerHour = 'يرجى إدخال سعر صحيح أكبر من صفر';
       }
@@ -336,7 +339,7 @@ function RegisterForm() {
               />
               
               <div className="form-group">
-                <label className="form-label">رابط الحجز العام المقترح</label>
+                <label className="form-label">رابط الحجز الخاص بملعبك</label>
                 <div style={{ display: 'flex', direction: 'ltr', alignItems: 'stretch' }}>
                   <div
                     style={{
@@ -348,6 +351,8 @@ function RegisterForm() {
                       color: 'var(--text-muted)',
                       display: 'flex',
                       alignItems: 'center',
+                      fontSize: '0.8125rem',
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     {APP_URL.replace(/^https?:\/\//, '').replace(/\/$/, '')}/
@@ -358,12 +363,15 @@ function RegisterForm() {
                     style={{ borderRadius: '0 var(--radius-md) var(--radius-md) 0', flex: 1, direction: 'ltr' }}
                     placeholder="khalil-fields"
                     value={formData.slug}
-                    onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/\s/g, '-') })}
+                    onChange={(e) => {
+                      const val = e.target.value.toLowerCase().replace(/\s/g, '-').replace(/[^a-z0-9-]/g, '');
+                      setFormData({ ...formData, slug: val });
+                    }}
                   />
                 </div>
                 {errors.slug && <p className="form-error">⚠️ {errors.slug}</p>}
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                  هذا الرابط الذي سترسله للاعبين للحجز مباشرة
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                  ⚠️ يجب أن يحتوي على أحرف إنجليزية صغيرة وأرقام وشرطات فقط (3-50 حرف)
                 </p>
               </div>
 
@@ -400,7 +408,7 @@ function RegisterForm() {
               </h4>
               
               <Input
-                label="رقم محفظة فودافون كاش (اختياري)"
+                label="رقم محفظة فودافون كاش"
                 placeholder="01012345678"
                 value={formData.vodafoneCash}
                 onChange={(e) => setFormData({ ...formData, vodafoneCash: e.target.value })}
@@ -408,7 +416,7 @@ function RegisterForm() {
               />
               
               <Input
-                label="عنوان الدفع إنستا باي InstaPay Address (اختياري)"
+                label="عنوان الدفع إنستا باي"
                 placeholder="khalil@instapay"
                 value={formData.instaPay}
                 onChange={(e) => setFormData({ ...formData, instaPay: e.target.value })}
@@ -416,95 +424,103 @@ function RegisterForm() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginTop: '0.5rem' }}>
                 {/* Logo Upload */}
-                <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <label className="form-label">شعار الملعب (Logo)</label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div 
-                      style={{ 
-                        width: '60px', 
-                        height: '60px', 
-                        borderRadius: '50%', 
-                        background: 'var(--bg-elevated)', 
-                        border: '1px dashed var(--border-default)', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center',
-                        overflow: 'hidden',
-                        position: 'relative',
-                        flexShrink: 0
-                      }}
-                    >
-                      {uploadingLogo ? (
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>جاري...</span>
-                      ) : formData.logo ? (
-                        <img src={formData.logo} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      ) : (
-                        <span style={{ fontSize: '1.25rem' }}>🛡️</span>
-                      )}
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                      <label 
-                        className="btn btn-secondary btn-sm" 
-                        style={{ cursor: 'pointer', display: 'inline-block', margin: 0, padding: '0.4rem 0.8rem', fontSize: '0.75rem' }}
-                      >
-                        {uploadingLogo ? 'جاري الرفع...' : 'اختر شعار'}
-                        <input 
-                          type="file" 
-                          accept="image/*" 
-                          style={{ display: 'none' }} 
-                          disabled={uploadingLogo} 
-                          onChange={(e) => handleUploadFile(e, 'logo')} 
-                        />
-                      </label>
-                      <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>أبعاد مربعة</span>
-                    </div>
-                  </div>
+                <div className="form-group">
+                  <label className="form-label">شعار الملعب</label>
+                  <label
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem',
+                      width: '100%',
+                      height: '110px',
+                      borderRadius: 'var(--radius-md)',
+                      border: formData.logo ? '2px solid var(--primary)' : '2px dashed var(--border-default)',
+                      background: 'var(--bg-elevated)',
+                      cursor: uploadingLogo ? 'not-allowed' : 'pointer',
+                      overflow: 'hidden',
+                      position: 'relative',
+                      transition: 'border-color 0.2s, box-shadow 0.2s',
+                    }}
+                  >
+                    {uploadingLogo ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem' }}>
+                        <div className="btn-spinner" style={{ width: '24px', height: '24px' }} />
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>جاري الرفع...</span>
+                      </div>
+                    ) : formData.logo ? (
+                      <>
+                        <img src={formData.logo} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }} />
+                        <div style={{
+                          position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)',
+                          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                          opacity: 0, transition: 'opacity 0.2s',
+                          color: 'white', fontSize: '0.75rem', gap: '0.25rem',
+                        }} className="upload-overlay">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                          تغيير الصورة
+                        </div>
+                      </>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem', color: 'var(--text-muted)' }}>
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>رفع الشعار</span>
+                        <span style={{ fontSize: '0.65rem' }}>مربع • PNG/JPG</span>
+                      </div>
+                    )}
+                    <input type="file" accept="image/*" style={{ display: 'none' }} disabled={uploadingLogo} onChange={(e) => handleUploadFile(e, 'logo')} />
+                  </label>
                 </div>
 
                 {/* Cover Upload */}
-                <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <label className="form-label">صورة غلاف الموقع (Cover)</label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div 
-                      style={{ 
-                        width: '100px', 
-                        height: '60px', 
-                        borderRadius: 'var(--radius-md)', 
-                        background: 'var(--bg-elevated)', 
-                        border: '1px dashed var(--border-default)', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center',
-                        overflow: 'hidden',
-                        position: 'relative',
-                        flexShrink: 0
-                      }}
-                    >
-                      {uploadingCover ? (
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>جاري...</span>
-                      ) : formData.coverImage ? (
-                        <img src={formData.coverImage} alt="Cover" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      ) : (
-                        <span style={{ fontSize: '1.25rem' }}>🖼️</span>
-                      )}
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                      <label 
-                        className="btn btn-secondary btn-sm" 
-                        style={{ cursor: 'pointer', display: 'inline-block', margin: 0, padding: '0.4rem 0.8rem', fontSize: '0.75rem' }}
-                      >
-                        {uploadingCover ? 'جاري الرفع...' : 'اختر غلاف'}
-                        <input 
-                          type="file" 
-                          accept="image/*" 
-                          style={{ display: 'none' }} 
-                          disabled={uploadingCover} 
-                          onChange={(e) => handleUploadFile(e, 'coverImage')} 
-                        />
-                      </label>
-                      <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>أبعاد عريضة</span>
-                    </div>
-                  </div>
+                <div className="form-group">
+                  <label className="form-label">صورة الغلاف</label>
+                  <label
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem',
+                      width: '100%',
+                      height: '110px',
+                      borderRadius: 'var(--radius-md)',
+                      border: formData.coverImage ? '2px solid var(--primary)' : '2px dashed var(--border-default)',
+                      background: 'var(--bg-elevated)',
+                      cursor: uploadingCover ? 'not-allowed' : 'pointer',
+                      overflow: 'hidden',
+                      position: 'relative',
+                      transition: 'border-color 0.2s, box-shadow 0.2s',
+                    }}
+                  >
+                    {uploadingCover ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem' }}>
+                        <div className="btn-spinner" style={{ width: '24px', height: '24px' }} />
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>جاري الرفع...</span>
+                      </div>
+                    ) : formData.coverImage ? (
+                      <>
+                        <img src={formData.coverImage} alt="Cover" style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }} />
+                        <div style={{
+                          position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)',
+                          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                          opacity: 0, transition: 'opacity 0.2s',
+                          color: 'white', fontSize: '0.75rem', gap: '0.25rem',
+                        }} className="upload-overlay">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                          تغيير الصورة
+                        </div>
+                      </>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem', color: 'var(--text-muted)' }}>
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>رفع الغلاف</span>
+                        <span style={{ fontSize: '0.65rem' }}>عريض • PNG/JPG</span>
+                      </div>
+                    )}
+                    <input type="file" accept="image/*" style={{ display: 'none' }} disabled={uploadingCover} onChange={(e) => handleUploadFile(e, 'coverImage')} />
+                  </label>
                 </div>
               </div>
             </div>
@@ -522,28 +538,19 @@ function RegisterForm() {
                 alignItems: 'flex-start',
                 gap: '0.75rem',
               }}>
-                <span style={{ fontSize: '1.5rem' }}>⚽</span>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary-light)" strokeWidth="2" style={{ flexShrink: 0, marginTop: '2px' }}><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
                 <div>
                   <p style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'var(--primary-light)', marginBottom: '0.25rem' }}>
-                    إعداد أسعار وساعات حجز الملعب
+                    إعداد أوقات وأسعار {formData.stadiumName}
                   </p>
                   <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', margin: 0 }}>
-                    حدد سعر الساعة وساعات العمل لملعبك. يمكنك إضافة أراضٍ فرعية لاحقاً من لوحة التحكم إن وجدت.
+                    حدد سعر الساعة وساعات العمل اليومية. يمكنك إضافة أراضٍ فرعية لاحقاً من لوحة التحكم.
                   </p>
                 </div>
               </div>
 
               <Input
-                label="اسم الملعب / الأرضية *"
-                placeholder="اسم الملعب"
-                value={formData.fieldName}
-                onChange={(e) => setFormData({ ...formData, fieldName: e.target.value })}
-                error={errors.fieldName}
-                required
-              />
-
-              <Input
-                label="سعر الساعة بالجنيه المصري *"
+                label="سعر الساعة بالجنيه المصري"
                 type="number"
                 placeholder="مثال: 200"
                 value={formData.fieldPricePerHour}
@@ -554,7 +561,7 @@ function RegisterForm() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div className="form-group">
-                  <label className="form-label">وقت فتح الملعب *</label>
+                  <label className="form-label">وقت الفتح</label>
                   <input
                     type="time"
                     className="form-input"
@@ -564,7 +571,7 @@ function RegisterForm() {
                   {errors.fieldOpeningTime && <p className="form-error">⚠️ {errors.fieldOpeningTime}</p>}
                 </div>
                 <div className="form-group">
-                  <label className="form-label">وقت إغلاق الملعب *</label>
+                  <label className="form-label">وقت الإغلاق</label>
                   <input
                     type="time"
                     className="form-input"
@@ -576,7 +583,7 @@ function RegisterForm() {
               </div>
 
               <div className="form-group">
-                <label className="form-label">مدة كل حجز (دقيقة)</label>
+                <label className="form-label">مدة كل حجز</label>
                 <select
                   className="form-input form-select"
                   value={formData.fieldDuration}
@@ -586,47 +593,6 @@ function RegisterForm() {
                   <option value="90">ساعة ونصف (90 دقيقة)</option>
                   <option value="120">ساعتان (120 دقيقة)</option>
                 </select>
-              </div>
-
-              {/* Field Cover Image Upload */}
-              <div className="form-group">
-                <label className="form-label">صورة الملعب (اختياري)</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  {/* Preview */}
-                  <div style={{
-                    width: '100px', height: '60px',
-                    borderRadius: 'var(--radius-md)',
-                    background: 'var(--bg-elevated)',
-                    border: '1px dashed var(--border-default)',
-                    overflow: 'hidden',
-                    flexShrink: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}>
-                    {formData.fieldCoverImage ? (
-                      <img src={formData.fieldCoverImage} alt="صورة الملعب" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                      <span style={{ fontSize: '1.5rem' }}>⚽</span>
-                    )}
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1 }}>
-                    <label
-                      className="btn btn-secondary btn-sm"
-                      style={{ cursor: 'pointer', display: 'inline-block', margin: 0, padding: '0.4rem 0.8rem', fontSize: '0.8125rem' }}
-                    >
-                      {uploadingFieldCover ? 'جاري الرفع...' : '📸 رفع صورة الملعب'}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        style={{ display: 'none' }}
-                        disabled={uploadingFieldCover}
-                        onChange={handleUploadFieldCover}
-                      />
-                    </label>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>ستظهر في صفحة الحجز امام اللاعبين</span>
-                  </div>
-                </div>
               </div>
             </div>
           )}

@@ -237,12 +237,36 @@ export default function PublicBookingPage() {
               📍 {stadium?.city}{stadium?.address ? ` — ${stadium.address}` : ''}
             </p>
           </div>
-          {/* Quick contact badge */}
-          {stadium?.phone && (
-            <a href={`tel:${stadium.phone}`} className="hero-banner-phone">
-              📞 {stadium.phone}
-            </a>
-          )}
+          {/* Quick contact & location buttons */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+            {stadium?.googleMapsUrl && (
+              <a
+                href={stadium.googleMapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hero-banner-phone"
+                style={{
+                  background: 'rgba(34, 197, 94, 0.15)',
+                  borderColor: 'rgba(34, 197, 94, 0.35)',
+                  color: 'var(--primary-light)',
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+                </svg>
+                <span>الاتجاهات / الموقع 🗺️</span>
+              </a>
+            )}
+            {stadium?.phone && (
+              <a href={`tel:${stadium.phone}`} className="hero-banner-phone">
+                📞 {stadium.phone}
+              </a>
+            )}
+          </div>
         </div>
       </div>
 

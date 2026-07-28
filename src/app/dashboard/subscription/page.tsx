@@ -333,29 +333,88 @@ export default function StadiumCommissionPage() {
 
           <div>
             <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>
-              📸 صورة الإيصال / سكرين شوت التحويل <span style={{ color: 'var(--danger)' }}>*</span>
+              صورة الإيصال / سكرين شوت التحويل <span style={{ color: 'var(--danger)' }}>*</span>
             </label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              disabled={uploading}
+            <label
               style={{
-                padding: '0.5rem',
-                borderRadius: 'var(--radius-md)',
-                border: '1px dashed var(--border-color)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.6rem',
                 width: '100%',
-                cursor: 'pointer',
+                minHeight: screenshotUrl ? 'auto' : '130px',
+                borderRadius: 'var(--radius-md)',
+                border: screenshotUrl ? '2px solid var(--primary)' : '2px dashed rgba(255,255,255,0.15)',
+                background: screenshotUrl ? 'transparent' : 'linear-gradient(135deg, rgba(34,197,94,0.05) 0%, rgba(34,197,94,0.01) 100%)',
+                cursor: uploading ? 'not-allowed' : 'pointer',
+                overflow: 'hidden',
+                position: 'relative',
+                transition: 'all 0.25s ease',
+                padding: screenshotUrl ? '0' : '1.5rem 1rem',
                 boxSizing: 'border-box',
               }}
-            />
-            {uploading && <p style={{ fontSize: '0.8rem', color: 'var(--primary-light)', marginTop: '0.25rem' }}>⏳ جاري رفع الصورة...</p>}
-            {screenshotUrl && (
-              <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <img src={screenshotUrl} alt="إيصال السداد" style={{ maxHeight: '100px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }} />
-                <span style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: 600 }}>✅ تم رفع الصورة</span>
-              </div>
-            )}
+              className="upload-dropzone"
+            >
+              {uploading ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.6rem', padding: '1.5rem' }}>
+                  <div className="btn-spinner" style={{ width: '32px', height: '32px', borderColor: 'rgba(34,197,94,0.3)', borderTopColor: 'var(--primary)' }} />
+                  <span style={{ fontSize: '0.85rem', color: 'var(--primary-light)', fontWeight: 600 }}>جاري رفع الصورة...</span>
+                </div>
+              ) : screenshotUrl ? (
+                <>
+                  <img
+                    src={screenshotUrl}
+                    alt="إيصال السداد"
+                    style={{ width: '100%', maxHeight: '200px', objectFit: 'cover', display: 'block' }}
+                  />
+                  <div style={{
+                    position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    opacity: 0, transition: 'opacity 0.2s',
+                    color: 'white', fontSize: '0.8rem', gap: '0.4rem',
+                  }} className="upload-overlay">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <span style={{ fontWeight: 700 }}>تغيير الصورة</span>
+                  </div>
+                  <div style={{
+                    position: 'absolute', bottom: 0, left: 0, right: 0,
+                    background: 'linear-gradient(transparent, rgba(0,0,0,0.7))',
+                    padding: '0.5rem 0.75rem',
+                    display: 'flex', alignItems: 'center', gap: '0.4rem',
+                  }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 700 }}>تم رفع الصورة بنجاح</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{
+                    width: '52px', height: '52px',
+                    background: 'linear-gradient(135deg, rgba(34,197,94,0.22), rgba(34,197,94,0.08))',
+                    borderRadius: '14px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    border: '1px solid rgba(34,197,94,0.3)',
+                    marginBottom: '0.25rem',
+                  }}>
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--primary-light)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="16 16 12 12 8 16"/>
+                      <line x1="12" y1="12" x2="12" y2="21"/>
+                      <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+                    </svg>
+                  </div>
+                  <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-secondary)' }}>اضغط لرفع سكرين شوت التحويل</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>PNG / JPG / WEBP — حتى 10 ميجا</span>
+                </>
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                disabled={uploading}
+                style={{ display: 'none' }}
+              />
+            </label>
           </div>
 
           <Button

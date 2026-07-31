@@ -8,7 +8,8 @@ import { Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useToast } from '@/components/ui/Toast';
 import { FloatingWhatsApp } from '@/components/ui/FloatingWhatsApp';
-import { formatCurrency, formatDate, formatTime, formatWhatsAppNumber, compressImage } from '@/lib/utils';
+import { formatCurrency, formatDate, formatTime, formatWhatsAppNumber } from '@/lib/utils';
+
 
 interface Field {
   id: string; name: string; description: string;
@@ -58,10 +59,8 @@ export default function PublicBookingPage() {
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [notes, setNotes] = useState('');
-  const [paymentFile, setPaymentFile] = useState<File | null>(null);
-  const [paymentPreview, setPaymentPreview] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [bookingSuccess, setBookingSuccess] = useState(false);
+
 
   // Calendar state
   const [calYear, setCalYear] = useState(new Date().getFullYear());
@@ -97,23 +96,10 @@ export default function PublicBookingPage() {
 
   useEffect(() => { loadSlots(); }, [loadSlots]);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const compressed = await compressImage(file, 1600, 0.85);
-    setPaymentFile(compressed);
-    const reader = new FileReader();
-    reader.onload = ev => setPaymentPreview(ev.target?.result as string);
-    reader.readAsDataURL(compressed);
-  };
-
   const handleSubmitBooking = async () => {
     if (!customerName.trim()) { showToast('الاسم مطلوب', 'error'); return; }
     if (!customerPhone.trim() || !/^01[0-2,5]\d{8}$/.test(customerPhone.replace(/\s/g, ''))) {
-      showToast('يرجى إدخال رقم الهاتف الصحيح الذي قمت بالتحويل منه (01xxxxxxxxx)', 'error'); return;
-    }
-    if (!paymentFile) {
-      showToast('يرجى رفع صورة إيصال التحويل لتتمكن من تقديم طلب الحجز 📸', 'error'); return;
+      showToast('يرجى إدخال رقم الهاتف الصحيح (01xxxxxxxxx)', 'error'); return;
     }
     if (!selectedSlot || !selectedField || !selectedDate) { showToast('يرجى اختيار موعد أولاً', 'error'); return; }
 
@@ -130,20 +116,8 @@ export default function PublicBookingPage() {
 
     setSubmitting(true);
     try {
-      let paymentScreenshot = '';
-      const fd = new FormData();
-      fd.append('file', paymentFile);
-      const upRes = await fetch('/api/v1/upload', { method: 'POST', body: fd });
-      const upJson = await upRes.json();
-      if (upJson.success) {
-        paymentScreenshot = upJson.url;
-      } else {
-        showToast('فشل رفع صورة إيصال التحويل، يرجى المحاولة مجدداً', 'error');
-        setSubmitting(false);
-        return;
-      }
-
-      const res = await fetch('/api/v1/bookings', {
+      // Call PayMob initiate endpoint
+      const res = await fetch('/api/v1/payments/initiate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -156,22 +130,17 @@ export default function PublicBookingPage() {
           customerPhone: customerPhone.trim(),
           customerEmail: customerEmail.trim() || undefined,
           notes: notes.trim(),
-          paymentScreenshot,
         }),
       });
       const json = await res.json();
-      if (json.success) {
-        setBookingSuccess(true);
+      if (json.success && json.checkoutUrl) {
+        // Redirect to PayMob checkout
+        showToast('جاري تحويلك لبوابة الدفع... ⏳', 'info');
         setBookingOpen(false);
-        setDoubleSlot(false);
-        showToast('تم إرسال طلب حجزك بنجاح! ⚽', 'success');
-        setCustomerName(''); setCustomerPhone(''); setCustomerEmail(''); setNotes('');
-        setPaymentFile(null); setPaymentPreview('');
-        if (typeof window !== 'undefined') {
-          const fileInput = document.getElementById('receipt-upload-input') as HTMLInputElement;
-          if (fileInput) fileInput.value = '';
-        }
-        loadSlots();
+        // Small delay so toast is visible before redirect
+        setTimeout(() => {
+          window.location.href = json.checkoutUrl;
+        }, 700);
       } else {
         showToast(json.error || 'فشل إرسال طلب الحجز', 'error');
       }

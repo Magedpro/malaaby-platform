@@ -114,7 +114,7 @@ export interface Field {
   createdAt: string;
 }
 
-export type BookingStatus = 'pending' | 'confirmed' | 'rejected' | 'cancelled' | 'completed';
+export type BookingStatus = 'pending' | 'confirmed' | 'rejected' | 'cancelled' | 'completed' | 'payment_pending' | 'payment_failed';
 
 export interface Booking {
   id: string;
@@ -128,12 +128,32 @@ export interface Booking {
   startTime: string;
   endTime: string;
   amount: number;
-  commissionAmount?: number; // E.g., 5 EGP
-  paymentScreenshot?: string;
+  netAmount?: number;         // amount after 10 EGP platform deduction
+  commissionAmount?: number;  // Platform commission (5 EGP)
+  paymobOrderId?: string;     // PayMob order ID for tracking
+  paymentScreenshot?: string; // Legacy — kept for owner-dashboard bookings
   status: BookingStatus;
   rejectionReason?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+// ── Payment record (one per booking attempt) ─────────────────────────────────
+export type PaymentStatus = 'pending' | 'success' | 'failed' | 'refunded';
+
+export interface Payment {
+  id: string;
+  bookingId: string;
+  stadiumSlug: string;
+  paymobOrderId?: string;
+  paymobTransactionId?: string;
+  amount: number;          // Full amount paid by customer
+  netAmount: number;       // amount - 10 EGP (what stadium owner receives)
+  commission: number;      // Platform commission (5 EGP)
+  paymobFee: number;       // PayMob fee portion (5 EGP)
+  status: PaymentStatus;
+  data: Record<string, unknown>; // Raw PayMob callback data
+  createdAt: string;
 }
 
 export interface BrowserPushSubscription {

@@ -17,14 +17,14 @@ export const BOOKING_STATUSES = {
   rejected: { label: 'مرفوض', color: 'danger' },
   cancelled: { label: 'ملغي', color: 'muted' },
   completed: { label: 'مكتمل', color: 'info' },
+  payment_pending: { label: 'في انتظار الدفع', color: 'warning' },
+  payment_failed: { label: 'فشل الدفع', color: 'danger' },
 } as const;
 
 export const REJECTION_REASONS = [
-  'لم يتم استلام الدفع',
-  'المبلغ غير صحيح',
-  'صورة الإيصال غير واضحة',
-  'دفع مكرر',
   'الوقت محجوز مسبقاً',
+  'دفع مكرر',
+  'فشل التحقق من الدفع',
   'أخرى',
 ];
 
@@ -82,3 +82,8 @@ export const PLATFORM_PAYMENT_PHONE     = '01126947405';        // Local EG form
 export const PLATFORM_PAYMENT_PHONE_INTL = '201126947405';      // Without + (for wa.me links)
 export const PLATFORM_WHATSAPP_LINK      = 'https://wa.me/201126947405';
 
+// ── PayMob Commission Config ──────────────────────────────────────────────────────
+// Fixed deductions from each confirmed booking:
+export const PLATFORM_COMMISSION_EGP = 5;   // Platform profit per booking
+export const PAYMOB_FEE_FLAT_EGP     = 5;   // Approx PayMob fee (covered by platform)
+export const TOTAL_DEDUCTION_EGP     = 10;  // Total deducted from stadium owner

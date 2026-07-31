@@ -91,7 +91,8 @@ export async function POST(request: NextRequest) {
     const amount = Math.round((fieldObj.pricePerHour * durationMinutes) / 60);
     const netAmount = Math.max(amount - TOTAL_DEDUCTION_EGP, 0);
 
-    // ── 5. Create booking with payment_pending status ─────────────────────
+    // ── 5. Create booking ────────────────────────────────────────────────
+    const isWalletFlow = paymentMethod === 'wallet' || paymentMethod === undefined;
     const booking = await Bookings.create({
       fieldId,
       stadiumSlug,
@@ -106,10 +107,21 @@ export async function POST(request: NextRequest) {
       netAmount,
       commissionAmount: PLATFORM_COMMISSION_EGP,
       paymentScreenshot: '',
-      status: 'payment_pending',
+      status: isWalletFlow ? 'pending' : 'payment_pending',
     });
 
-    // ── 6. Initiate PayMob payment ────────────────────────────────────────
+    if (isWalletFlow) {
+      return NextResponse.json({
+        success: true,
+        bookingId: booking.id,
+        amount,
+        netAmount,
+        walletFlow: true,
+        message: 'تم تسجيل الحجز بنجاح. يرجى إتمام التحويل على المحفظة وسيتم مراجعة الطلب من الإدارة قريباً.',
+      });
+    }
+
+    // ── 6. Initiate PayMob payment for card flow ────────────────────────
     let checkoutUrl: string;
     let paymobOrderId: number;
 
@@ -120,14 +132,12 @@ export async function POST(request: NextRequest) {
         customerName: customerName.trim(),
         customerPhone: customerPhone.trim(),
         customerEmail: customerEmail?.trim(),
-        paymentMethod: paymentMethod === 'wallet' ? 'wallet' : 'card',
+        paymentMethod: 'card',
       });
       checkoutUrl = result.checkoutUrl;
       paymobOrderId = result.paymobOrderId;
     } catch (paymobErr) {
-      // Clean up the pending booking if PayMob fails
       console.error('[PayMob] Failed to initiate payment:', paymobErr);
-      // Update booking to payment_failed
       await Bookings.update(booking.id, { status: 'payment_failed' });
       return NextResponse.json(
         { success: false, error: 'فشل الاتصال ببوابة الدفع، يرجى المحاولة مجدداً' },

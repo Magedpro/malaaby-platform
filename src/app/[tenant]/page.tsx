@@ -59,7 +59,7 @@ export default function PublicBookingPage() {
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [notes, setNotes] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'wallet' | 'card'>('wallet');
+  const paymentMethod = 'wallet' as const;
   const [submitting, setSubmitting] = useState(false);
 
 
@@ -135,14 +135,22 @@ export default function PublicBookingPage() {
         }),
       });
       const json = await res.json();
-      if (json.success && json.checkoutUrl) {
-        // Redirect to PayMob checkout
-        showToast('جاري تحويلك لبوابة الدفع... ⏳', 'info');
-        setBookingOpen(false);
-        // Small delay so toast is visible before redirect
-        setTimeout(() => {
-          window.location.href = json.checkoutUrl;
-        }, 700);
+      if (json.success) {
+        if (json.walletFlow) {
+          showToast(json.message || 'تم تسجيل الحجز بنجاح', 'success');
+          setBookingOpen(false);
+          setTimeout(() => {
+            window.location.href = `/${tenant}/my-bookings`;
+          }, 700);
+        } else if (json.checkoutUrl) {
+          showToast('جاري تحويلك لبوابة الدفع... ⏳', 'info');
+          setBookingOpen(false);
+          setTimeout(() => {
+            window.location.href = json.checkoutUrl;
+          }, 700);
+        } else {
+          showToast(json.error || 'فشل إرسال طلب الحجز', 'error');
+        }
       } else {
         showToast(json.error || 'فشل إرسال طلب الحجز', 'error');
       }
@@ -593,84 +601,22 @@ export default function PublicBookingPage() {
               );
             })()}
 
-            {/* Payment Methods - Wallet vs Card */}
+            {/* Payment Method - Wallet Only */}
             <div className="booking-card">
-              <h3 style={{ fontWeight: 700, marginBottom: '1rem', fontSize: '1rem' }}>💳 اختر طريقة الدفع</h3>
-              
-              {/* Payment Method Selector */}
-              <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                {/* Wallet Option */}
-                <button
-                  onClick={() => setPaymentMethod('wallet')}
-                  style={{
-                    flex: 1, padding: '0.875rem', border: 'none',
-                    borderRadius: 'var(--radius-md)',
-                    cursor: 'pointer',
-                    background: paymentMethod === 'wallet' ? 'var(--primary)' : 'var(--bg-elevated)',
-                    color: paymentMethod === 'wallet' ? 'white' : 'var(--text-primary)',
-                    fontWeight: 600, fontSize: '0.9375rem',
-                    transition: 'all 0.2s ease',
-                    border: paymentMethod === 'wallet' ? '2px solid var(--primary)' : '1px solid var(--border-default)'
-                  }}
-                  onMouseEnter={(e) => { if (paymentMethod !== 'wallet') e.currentTarget.style.background = 'var(--bg-hover)'; }}
-                  onMouseLeave={(e) => { if (paymentMethod !== 'wallet') e.currentTarget.style.background = 'var(--bg-elevated)'; }}
-                >
-                  👛 المحافظ الرقمية
-                </button>
-
-                {/* Card Option */}
-                <button
-                  onClick={() => setPaymentMethod('card')}
-                  style={{
-                    flex: 1, padding: '0.875rem', border: 'none',
-                    borderRadius: 'var(--radius-md)',
-                    cursor: 'pointer',
-                    background: paymentMethod === 'card' ? 'var(--primary)' : 'var(--bg-elevated)',
-                    color: paymentMethod === 'card' ? 'white' : 'var(--text-primary)',
-                    fontWeight: 600, fontSize: '0.9375rem',
-                    transition: 'all 0.2s ease',
-                    border: paymentMethod === 'card' ? '2px solid var(--primary)' : '1px solid var(--border-default)'
-                  }}
-                  onMouseEnter={(e) => { if (paymentMethod !== 'card') e.currentTarget.style.background = 'var(--bg-hover)'; }}
-                  onMouseLeave={(e) => { if (paymentMethod !== 'card') e.currentTarget.style.background = 'var(--bg-elevated)'; }}
-                >
-                  💳 البطاقات البنكية
-                </button>
+              <h3 style={{ fontWeight: 700, marginBottom: '1rem', fontSize: '1rem' }}>👛 الدفع عبر المحافظ الرقمية</h3>
+              <div style={{
+                background: 'rgba(249, 115, 22, 0.08)', padding: '1rem',
+                borderRadius: 'var(--radius-md)', border: '1px solid rgba(249, 115, 22, 0.25)',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>👛</div>
+                <div style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+                  سيتم حفظ الحجز مباشرة بعد إتمام التحويل على المحفظة
+                </div>
+                <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                  لا تحتاج إلى الخروج إلى صفحة دفع خارجية. سيتم مراجعة الطلب من الإدارة بعد إتمام التحويل.
+                </div>
               </div>
-
-              {/* Payment Info - Wallet */}
-              {paymentMethod === 'wallet' && (
-                <div style={{
-                  background: 'rgba(249, 115, 22, 0.08)', padding: '1rem',
-                  borderRadius: 'var(--radius-md)', border: '1px solid rgba(249, 115, 22, 0.25)',
-                  textAlign: 'center'
-                }}>
-                  <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>👛</div>
-                  <div style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-                    دفع آمن عبر المحافظ الرقمية
-                  </div>
-                  <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                    ستتم إعادة توجيهك لبوابة دفع آمنة لإتمام العملية. جميع بيانات محفظتك محمية بشكل كامل.
-                  </div>
-                </div>
-              )}
-
-              {/* Payment Details - Card */}
-              {paymentMethod === 'card' && (
-                <div style={{
-                  background: 'rgba(34, 197, 94, 0.08)', padding: '1rem',
-                  borderRadius: 'var(--radius-md)', border: '1px solid rgba(34, 197, 94, 0.25)',
-                  textAlign: 'center'
-                }}>
-                  <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>✅</div>
-                  <div style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-                    دفع آمن عبر البطاقات البنكية
-                  </div>
-                  <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                    ستتم إعادة توجيهك لبوابة دفع آمنة معتمدة لإتمام العملية. جميع بيانات بطاقتك محمية بشكل كامل.
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* How to book steps */}
@@ -813,6 +759,21 @@ export default function PublicBookingPage() {
                     <span style={{ color: 'var(--primary-light)', fontSize: '1.25rem', fontWeight: 900 }}>
                       {formatCurrency(totalAmount)}
                     </span>
+                  </div>
+                  <div style={{
+                    gridColumn: '1/-1',
+                    background: 'rgba(34, 197, 94, 0.08)',
+                    border: '1px solid rgba(34, 197, 94, 0.2)',
+                    borderRadius: 'var(--radius-sm)',
+                    padding: '0.625rem 0.875rem',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    fontWeight: 800,
+                    color: 'var(--primary-light)',
+                  }}>
+                    <span>📱 طريقة الدفع المتاحة:</span>
+                    <span>فودافون كاش والمحافظ الإلكترونية</span>
                   </div>
                 </div>
               </div>

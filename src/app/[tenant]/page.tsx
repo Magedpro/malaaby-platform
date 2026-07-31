@@ -59,6 +59,7 @@ export default function PublicBookingPage() {
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [notes, setNotes] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<'wallet' | 'card'>('wallet');
   const [submitting, setSubmitting] = useState(false);
 
 
@@ -130,6 +131,7 @@ export default function PublicBookingPage() {
           customerPhone: customerPhone.trim(),
           customerEmail: customerEmail.trim() || undefined,
           notes: notes.trim(),
+          paymentMethod,
         }),
       });
       const json = await res.json();
@@ -591,16 +593,59 @@ export default function PublicBookingPage() {
               );
             })()}
 
-            {/* Payment Methods */}
-            {(stadium?.vodafoneCash || stadium?.instaPay) && (
-              <div className="booking-card">
-                <h3 style={{ fontWeight: 700, marginBottom: '1rem', fontSize: '1rem' }}>💳 طرق الدفع</h3>
+            {/* Payment Methods - Wallet vs Card */}
+            <div className="booking-card">
+              <h3 style={{ fontWeight: 700, marginBottom: '1rem', fontSize: '1rem' }}>💳 اختر طريقة الدفع</h3>
+              
+              {/* Payment Method Selector */}
+              <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                {/* Wallet Option */}
+                <button
+                  onClick={() => setPaymentMethod('wallet')}
+                  style={{
+                    flex: 1, padding: '0.875rem', border: 'none',
+                    borderRadius: 'var(--radius-md)',
+                    cursor: 'pointer',
+                    background: paymentMethod === 'wallet' ? 'var(--primary)' : 'var(--bg-elevated)',
+                    color: paymentMethod === 'wallet' ? 'white' : 'var(--text-primary)',
+                    fontWeight: 600, fontSize: '0.9375rem',
+                    transition: 'all 0.2s ease',
+                    border: paymentMethod === 'wallet' ? '2px solid var(--primary)' : '1px solid var(--border-default)'
+                  }}
+                  onMouseEnter={(e) => { if (paymentMethod !== 'wallet') e.currentTarget.style.background = 'var(--bg-hover)'; }}
+                  onMouseLeave={(e) => { if (paymentMethod !== 'wallet') e.currentTarget.style.background = 'var(--bg-elevated)'; }}
+                >
+                  👛 المحافظ الرقمية
+                </button>
+
+                {/* Card Option */}
+                <button
+                  onClick={() => setPaymentMethod('card')}
+                  style={{
+                    flex: 1, padding: '0.875rem', border: 'none',
+                    borderRadius: 'var(--radius-md)',
+                    cursor: 'pointer',
+                    background: paymentMethod === 'card' ? 'var(--primary)' : 'var(--bg-elevated)',
+                    color: paymentMethod === 'card' ? 'white' : 'var(--text-primary)',
+                    fontWeight: 600, fontSize: '0.9375rem',
+                    transition: 'all 0.2s ease',
+                    border: paymentMethod === 'card' ? '2px solid var(--primary)' : '1px solid var(--border-default)'
+                  }}
+                  onMouseEnter={(e) => { if (paymentMethod !== 'card') e.currentTarget.style.background = 'var(--bg-hover)'; }}
+                  onMouseLeave={(e) => { if (paymentMethod !== 'card') e.currentTarget.style.background = 'var(--bg-elevated)'; }}
+                >
+                  💳 البطاقات البنكية
+                </button>
+              </div>
+
+              {/* Payment Details - Wallet */}
+              {paymentMethod === 'wallet' && (stadium?.vodafoneCash || stadium?.instaPay) && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
                   {stadium.vodafoneCash && (
                     <div style={{
                       display: 'flex', alignItems: 'center', gap: '0.875rem',
-                      background: 'var(--bg-elevated)', padding: '0.875rem',
-                      borderRadius: 'var(--radius-md)', border: '1px solid var(--border-default)'
+                      background: 'rgba(249, 115, 22, 0.08)', padding: '0.875rem',
+                      borderRadius: 'var(--radius-md)', border: '1px solid rgba(249, 115, 22, 0.25)'
                     }}>
                       <div style={{ fontSize: '1.75rem', flexShrink: 0 }}>📱</div>
                       <div>
@@ -612,8 +657,8 @@ export default function PublicBookingPage() {
                   {stadium.instaPay && (
                     <div style={{
                       display: 'flex', alignItems: 'center', gap: '0.875rem',
-                      background: 'var(--bg-elevated)', padding: '0.875rem',
-                      borderRadius: 'var(--radius-md)', border: '1px solid var(--border-default)'
+                      background: 'rgba(59, 130, 246, 0.08)', padding: '0.875rem',
+                      borderRadius: 'var(--radius-md)', border: '1px solid rgba(59, 130, 246, 0.25)'
                     }}>
                       <div style={{ fontSize: '1.75rem', flexShrink: 0 }}>💳</div>
                       <div>
@@ -632,8 +677,25 @@ export default function PublicBookingPage() {
                     </p>
                   )}
                 </div>
-              </div>
-            )}
+              )}
+
+              {/* Payment Details - Card */}
+              {paymentMethod === 'card' && (
+                <div style={{
+                  background: 'rgba(34, 197, 94, 0.08)', padding: '1rem',
+                  borderRadius: 'var(--radius-md)', border: '1px solid rgba(34, 197, 94, 0.25)',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>✅</div>
+                  <div style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+                    دفع آمن عبر البطاقات البنكية
+                  </div>
+                  <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                    ستتم إعادة توجيهك لبوابة دفع آمنة معتمدة لإتمام العملية. جميع بيانات بطاقتك محمية بشكل كامل.
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* How to book steps */}
             <div style={{

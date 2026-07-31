@@ -148,7 +148,7 @@ export async function initiatePaymobPayment(params: InitiatePaymobParams): Promi
   checkoutUrl: string;
   paymobOrderId: number;
 }> {
-  const { amountEGP, bookingId, customerName, customerPhone, customerEmail, paymentMethod = 'card' } = params;
+  const { amountEGP, bookingId, customerName, customerPhone, customerEmail, paymentMethod = 'wallet' } = params;
   const amountCents = Math.round(amountEGP * 100);
 
   // Split name into first/last (Arabic names handled gracefully)

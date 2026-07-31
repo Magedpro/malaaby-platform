@@ -135,22 +135,12 @@ export default function PublicBookingPage() {
         }),
       });
       const json = await res.json();
-      if (json.success) {
-        if (json.walletFlow) {
-          showToast(json.message || 'تم تسجيل الحجز بنجاح', 'success');
-          setBookingOpen(false);
-          setTimeout(() => {
-            window.location.href = `/${tenant}/my-bookings`;
-          }, 700);
-        } else if (json.checkoutUrl) {
-          showToast('جاري تحويلك لبوابة الدفع... ⏳', 'info');
-          setBookingOpen(false);
-          setTimeout(() => {
-            window.location.href = json.checkoutUrl;
-          }, 700);
-        } else {
-          showToast(json.error || 'فشل إرسال طلب الحجز', 'error');
-        }
+      if (json.success && json.checkoutUrl) {
+        showToast('جاري تحويلك لبوابة الدفع... ⏳', 'info');
+        setBookingOpen(false);
+        setTimeout(() => {
+          window.location.href = json.checkoutUrl;
+        }, 700);
       } else {
         showToast(json.error || 'فشل إرسال طلب الحجز', 'error');
       }

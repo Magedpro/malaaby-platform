@@ -92,7 +92,6 @@ export async function POST(request: NextRequest) {
     const netAmount = Math.max(amount - TOTAL_DEDUCTION_EGP, 0);
 
     // ── 5. Create booking ────────────────────────────────────────────────
-    const isWalletFlow = paymentMethod === 'wallet' || paymentMethod === undefined;
     const booking = await Bookings.create({
       fieldId,
       stadiumSlug,
@@ -107,19 +106,8 @@ export async function POST(request: NextRequest) {
       netAmount,
       commissionAmount: PLATFORM_COMMISSION_EGP,
       paymentScreenshot: '',
-      status: isWalletFlow ? 'pending' : 'payment_pending',
+      status: 'payment_pending',
     });
-
-    if (isWalletFlow) {
-      return NextResponse.json({
-        success: true,
-        bookingId: booking.id,
-        amount,
-        netAmount,
-        walletFlow: true,
-        message: 'تم تسجيل الحجز بنجاح. يرجى إتمام التحويل على المحفظة وسيتم مراجعة الطلب من الإدارة قريباً.',
-      });
-    }
 
     // ── 6. Initiate PayMob payment for card flow ────────────────────────
     let checkoutUrl: string;
@@ -132,7 +120,7 @@ export async function POST(request: NextRequest) {
         customerName: customerName.trim(),
         customerPhone: customerPhone.trim(),
         customerEmail: customerEmail?.trim(),
-        paymentMethod: 'card',
+        paymentMethod: paymentMethod === 'card' ? 'card' : 'wallet',
       });
       checkoutUrl = result.checkoutUrl;
       paymobOrderId = result.paymobOrderId;

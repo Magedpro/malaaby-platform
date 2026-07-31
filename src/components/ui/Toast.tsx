@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { classNames } from '@/lib/utils';
 
-export type ToastType = 'success' | 'warning' | 'error';
+export type ToastType = 'success' | 'warning' | 'error' | 'info';
 
 interface ToastMessage {
   id: string;
@@ -40,6 +40,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               {toast.type === 'success' && '🟢'}
               {toast.type === 'warning' && '🟡'}
               {toast.type === 'error' && '🔴'}
+              {toast.type === 'info' && 'ℹ️'}
             </span>
             <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>{toast.message}</div>
             <button

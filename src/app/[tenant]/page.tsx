@@ -803,76 +803,10 @@ export default function PublicBookingPage() {
               <label className="form-label">ملاحظات إضافية (اختياري)</label>
               <textarea className="form-input form-textarea" placeholder="أي ملاحظات للمسؤول..." value={notes} onChange={e => setNotes(e.target.value)} style={{ minHeight: '70px' }} />
             </div>
-
-            {/* Payment upload */}
-            <div className="form-group">
-              <label className="form-label" style={{ fontWeight: 700 }}>📸 صورة إيصال الدفع والتحويل *</label>
-              <div
-                className={`upload-zone ${paymentPreview ? 'dragover' : ''}`}
-                onClick={() => document.getElementById('payment-upload')?.click()}
-                style={{ border: '2px dashed var(--primary-light)' }}
-              >
-                {paymentPreview ? (
-                  <img src={paymentPreview} alt="إيصال الدفع" className="upload-preview" />
-                ) : (
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>📤</div>
-                    <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 600 }}>انقر هنا لرفع لقطة شاشة إيصال التحويل (إجباري)</p>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>JPG, PNG, WEBP — حتى 10MB</p>
-                  </div>
-                )}
-              </div>
-              <input id="payment-upload" type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
-            </div>
           </div>
         );
       })()}
       </Modal>
-
-      {/* ═══ SUCCESS ═══ */}
-      {bookingSuccess && (
-        <div className="modal-overlay" onClick={() => setBookingSuccess(false)}>
-          <div className="modal-panel animate-scaleIn" style={{ maxWidth: '460px', textAlign: 'center', padding: '3rem 2rem' }} onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: '4.5rem', marginBottom: '1rem' }}>🎉</div>
-            <h2 style={{ fontSize: '1.625rem', fontWeight: 900, marginBottom: '0.75rem' }}>تم إرسال طلب حجزك!</h2>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: 1.8 }}>
-              سيتم مراجعة طلبك والتحقق من إيصال الدفع خلال وقت قصير.
-            </p>
-            {/* Track booking CTA */}
-            <div style={{
-              background: 'rgba(34,197,94,0.08)',
-              border: '1px solid rgba(34,197,94,0.25)',
-              borderRadius: 'var(--radius-md)',
-              padding: '1rem',
-              marginBottom: '1.25rem',
-              fontSize: '0.875rem',
-              color: 'var(--text-secondary)',
-              lineHeight: 1.7,
-            }}>
-              💡 يمكنك متابعة حالة حجزك في أي وقت عبر صفحة التتبع
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <a
-                href={`/${tenant}/my-bookings`}
-                style={{
-                  display: 'block',
-                  background: 'var(--primary)',
-                  color: 'white',
-                  padding: '0.8rem 1.5rem',
-                  borderRadius: 'var(--radius-md)',
-                  fontWeight: 800,
-                  textDecoration: 'none',
-                  fontSize: '1rem',
-                  transition: 'opacity 0.2s',
-                }}
-              >
-                📋 تتبع حجوزاتي
-              </a>
-              <Button variant="secondary" fullWidth onClick={() => setBookingSuccess(false)}>عد للصفحة</Button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ═══ FLOATING WHATSAPP ═══ */}
       {stadium?.whatsapp && (

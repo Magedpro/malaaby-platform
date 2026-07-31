@@ -638,44 +638,20 @@ export default function PublicBookingPage() {
                 </button>
               </div>
 
-              {/* Payment Details - Wallet */}
-              {paymentMethod === 'wallet' && (stadium?.vodafoneCash || stadium?.instaPay) && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
-                  {stadium.vodafoneCash && (
-                    <div style={{
-                      display: 'flex', alignItems: 'center', gap: '0.875rem',
-                      background: 'rgba(249, 115, 22, 0.08)', padding: '0.875rem',
-                      borderRadius: 'var(--radius-md)', border: '1px solid rgba(249, 115, 22, 0.25)'
-                    }}>
-                      <div style={{ fontSize: '1.75rem', flexShrink: 0 }}>📱</div>
-                      <div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.125rem' }}>فودافون كاش</div>
-                        <div style={{ fontWeight: 800, fontSize: '1.0625rem', direction: 'ltr', textAlign: 'right' }}>{stadium.vodafoneCash}</div>
-                      </div>
-                    </div>
-                  )}
-                  {stadium.instaPay && (
-                    <div style={{
-                      display: 'flex', alignItems: 'center', gap: '0.875rem',
-                      background: 'rgba(59, 130, 246, 0.08)', padding: '0.875rem',
-                      borderRadius: 'var(--radius-md)', border: '1px solid rgba(59, 130, 246, 0.25)'
-                    }}>
-                      <div style={{ fontSize: '1.75rem', flexShrink: 0 }}>💳</div>
-                      <div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.125rem' }}>إنستا باي</div>
-                        <div style={{ fontWeight: 800, fontSize: '1.0625rem', direction: 'ltr', textAlign: 'right' }}>{stadium.instaPay}</div>
-                      </div>
-                    </div>
-                  )}
-                  {stadium.paymentInstructions && (
-                    <p style={{
-                      fontSize: '0.8125rem', color: 'var(--text-secondary)',
-                      marginTop: '0.5rem', lineHeight: 1.75,
-                      borderTop: '1px solid var(--border-subtle)', paddingTop: '0.875rem'
-                    }}>
-                      ℹ️ {stadium.paymentInstructions}
-                    </p>
-                  )}
+              {/* Payment Info - Wallet */}
+              {paymentMethod === 'wallet' && (
+                <div style={{
+                  background: 'rgba(249, 115, 22, 0.08)', padding: '1rem',
+                  borderRadius: 'var(--radius-md)', border: '1px solid rgba(249, 115, 22, 0.25)',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>👛</div>
+                  <div style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+                    دفع آمن عبر المحافظ الرقمية
+                  </div>
+                  <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                    ستتم إعادة توجيهك لبوابة دفع آمنة لإتمام العملية. جميع بيانات محفظتك محمية بشكل كامل.
+                  </div>
                 </div>
               )}
 
